@@ -1,0 +1,256 @@
+export type ModelSummary = {
+  model_id: string
+  dataset_id: string
+  dataset_name: string
+  geography: string
+  model_type: string
+  test_roc_auc?: number
+  test_pr_auc?: number
+  calibration_status: string
+  inference_ready: boolean
+}
+
+export type FeatureField = {
+  type: 'numeric' | 'categorical'
+  description: string
+  required: boolean
+  unit?: string
+  range?: number[]
+  values?: number[]
+  value_labels?: Record<string, string>
+}
+
+export type ModelSchema = {
+  model_id: string
+  raw_features: Record<string, FeatureField>
+  engineered_features?: string[]
+}
+
+export type ModelDetails = {
+  model_id: string
+  dataset_id: string
+  dataset_name: string
+  geography: string
+  time_coverage: string
+  target: string
+  target_meaning: string
+  model_type: string
+  calibration_status: string
+  calibration_method?: string | null
+  limitations: string[]
+  inference_ready: boolean
+  global_feature_importance?: { feature: string; importance: number }[]
+}
+
+export type FeatureContribution = {
+  feature: string
+  contribution: number
+  direction: string
+}
+
+export type Prediction = {
+  model_id: string
+  dataset_id: string
+  dataset_name: string
+  geography: string
+  target: string
+  target_meaning: string
+  prediction_timestamp: string
+  predicted_class: string
+  probability: number
+  risk_category: string
+  threshold: number
+  calibrated: boolean
+  calibration_method: string | null
+  limitations: string[]
+  feature_contributions: FeatureContribution[] | null
+}
+
+export type CurvePoint = {
+  x: number
+  y: number
+}
+
+export type CalibrationBin = {
+  bin: number
+  pred_raw: number
+  true_raw: number
+  pred_cal: number | null
+  true_cal: number | null
+}
+
+export type ThresholdSweepRow = {
+  threshold: number
+  accuracy: number
+  precision: number
+  recall: number
+  f1_score: number
+  tn: number
+  fp: number
+  fn: number
+  tp: number
+}
+
+export type DecileRow = {
+  decile: number
+  borrowers: number
+  defaults: number
+  empirical_default_rate: number
+  mean_calibrated_pd: number
+  mean_raw_score: number
+}
+
+export type ModelComparisonRow = {
+  model_name: string
+  roc_auc: number
+  pr_auc: number
+  brier_score: number
+  log_loss: number
+  ks_statistic: number
+  gini_coefficient: number
+  accuracy: number
+  precision: number
+  recall: number
+  f1_score: number
+  is_calibrated: boolean
+}
+
+export type EvaluationArtifact = {
+  metadata: {
+    dataset_id: string
+    dataset_name: string
+    geography: string
+    time_coverage: string
+    target: string
+    target_meaning: string
+    split_design: string
+    random_seed: number
+    test_sample_count: number
+    test_defaults: number
+    test_prevalence: number
+    evaluation_date: string
+    primary_model: string
+    calibration_status: string
+    calibration_method: string
+    calibrator_params?: { slope: number; intercept: number }
+  }
+  summary_metrics: {
+    test_roc_auc: number
+    test_pr_auc: number
+    brier_score_raw: number
+    brier_score_calibrated: number
+    brier_improvement_pct: number
+    log_loss_raw: number
+    log_loss_calibrated: number
+    ks_statistic: number
+    gini_coefficient: number
+    accuracy_at_0_5: number
+    precision_at_0_5: number
+    recall_at_0_5: number
+    f1_at_0_5: number
+  }
+  confusion_matrix_default: {
+    threshold: number
+    true_negative: number
+    false_positive: number
+    false_negative: number
+    true_positive: number
+    total: number
+  }
+  curves: {
+    roc: {
+      title: string
+      auc: number
+      baseline_auc: number
+      points: CurvePoint[]
+    }
+    pr: {
+      title: string
+      auc: number
+      baseline_prevalence: number
+      points: CurvePoint[]
+    }
+    calibration: {
+      title: string
+      bins: CalibrationBin[]
+    }
+    threshold_sweep: ThresholdSweepRow[]
+  }
+  risk_deciles: DecileRow[]
+  model_comparison: ModelComparisonRow[]
+  global_feature_importance: { feature: string; importance: number }[]
+  limitations: string[]
+}
+
+export type SystemStatus = {
+  backend_connectivity: 'connected' | 'disconnected'
+  models_registered: number
+  research_inference_ready: boolean
+  indian_production_scoring: 'not_validated'
+}
+
+const CONFIGURED_API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const targets = CONFIGURED_API_BASE
+    ? [CONFIGURED_API_BASE, 'http://127.0.0.1:8000', '']
+    : ['', 'http://127.0.0.1:8000', 'http://localhost:8000']
+
+  let lastError: Error | null = null
+
+  for (const base of targets) {
+    try {
+      const url = `${base}${path}`
+      const response = await fetch(url, init)
+      if (!response.ok) {
+        let detail = `Request failed (${response.status}).`
+        try {
+          const body = (await response.json()) as { detail?: unknown; error?: { message?: string } }
+          if (typeof body.detail === 'string') detail = body.detail
+          else if (body.error?.message) detail = body.error.message
+        } catch {
+          /* keep status message */
+        }
+        throw new Error(detail)
+      }
+      return (await response.json()) as T
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      // If it was a non-network error (e.g. 422 validation or 404), throw immediately
+      if (err instanceof Error && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
+        throw err
+      }
+    }
+  }
+
+  throw new Error(
+    lastError?.message ||
+      'The research API is unreachable. Check that the FastAPI backend is running (e.g. on port 8000), then retry.'
+  )
+}
+
+export const researchApi = {
+  health: () => request<{ status: string; scoring: string }>('/health'),
+  status: () => request<SystemStatus>('/v1/status'),
+  models: () => request<{ models: ModelSummary[]; count: number }>('/v1/models'),
+  details: (id: string) => request<ModelDetails>(`/v1/models/${encodeURIComponent(id)}`),
+  schema: (id: string) => request<ModelSchema>(`/v1/models/${encodeURIComponent(id)}/schema`),
+  evaluation: async (id: string): Promise<EvaluationArtifact> => {
+    try {
+      return await request<EvaluationArtifact>(`/v1/models/${encodeURIComponent(id)}/evaluation`)
+    } catch (apiErr) {
+      // Graceful fallback to verified static JSON artifact in public/data
+      const staticRes = await fetch('/data/uci_taiwan_eval.json')
+      if (staticRes.ok) {
+        return (await staticRes.json()) as EvaluationArtifact
+      }
+      throw apiErr
+    }
+  },
+  predict: (model_id: string, features: Record<string, number>) =>
+    request<Prediction>('/v1/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model_id, features }),
+    }),
+}

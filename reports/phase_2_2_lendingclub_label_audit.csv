@@ -1,0 +1,11 @@
+loan_status_value,count,percentage,proposed_classification,inclusion_status,rationale
+Fully Paid,1076751,47.6291,Good / Non-Default,Included,Loan fully repaid principal and interest to maturity
+Current,878317,38.8515,Ambiguous / Active,Excluded,Active ongoing loan; outcome not yet observed (unseasoned)
+Charged Off,268559,11.8795,Bad / Default,Included,Verified default written off by lender
+Late (31-120 days),21467,0.9496,Ambiguous / Delinquent,Excluded,In-flight severe delinquency; default/cure not yet final
+In Grace Period,8436,0.3732,Ambiguous / Delinquent,Excluded,1-15 days late; active unseasoned status
+Late (16-30 days),4349,0.1924,Ambiguous / Delinquent,Excluded,16-30 days late; active unseasoned status
+Does not meet the credit policy. Status:Fully Paid,1988,0.0879,Good / Non-Default,Included,Legacy pre-2010 loan fully repaid under older underwriting criteria
+Does not meet the credit policy. Status:Charged Off,761,0.0337,Bad / Default,Included,Legacy pre-2010 loan charged off under older underwriting criteria
+Default,40,0.0018,Bad / Default,Included,Declared loan default
+nan,33,0.0015,Ambiguous / Missing,Excluded,Missing status string / corrupted row

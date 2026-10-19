@@ -1,0 +1,17 @@
+test_case_id,profile_type,LIMIT_BAL,SEX,EDUCATION,MARRIAGE,AGE,PAY_0,PAY_2,PAY_3,PAY_4,PAY_5,PAY_6,BILL_AMT1,BILL_AMT2,BILL_AMT3,BILL_AMT4,BILL_AMT5,BILL_AMT6,PAY_AMT1,PAY_AMT2,PAY_AMT3,PAY_AMT4,PAY_AMT5,PAY_AMT6,raw_probability,calibrated_probability,predicted_class,risk_category,threshold,calibration_method,status,shap_status,shap_output_space,shap_reconstruction_error,issues,test_timestamp,error
+TC001,low_delinquency,200000,2,2,1,35,0,0,0,0,0,0,50000,45000,40000,35000,30000,25000,5000,5000,5000,5000,5000,5000,N/A,0.071114,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC002,moderate_delinquency,100000,1,2,2,45,2,1,1,0,0,0,80000,75000,70000,65000,60000,55000,2000,3000,4000,5000,6000,7000,N/A,0.419664,Lower predicted default risk,Medium,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC003,severe_delinquency,50000,1,1,2,28,8,7,6,5,4,3,100000,95000,90000,85000,80000,75000,0,0,0,0,0,0,N/A,0.179628,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC004,zero_balances,100000,2,3,1,40,-2,-2,-2,-2,-2,-2,0,0,0,0,0,0,0,0,0,0,0,0,N/A,0.143250,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC005,high_limit_good_payment,500000,2,2,1,50,-1,-1,-1,-1,-1,-1,100000,90000,80000,70000,60000,50000,100000,90000,80000,70000,60000,50000,N/A,0.063719,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC006,boundary_age_low,200000,2,2,1,21,0,0,0,0,0,0,50000,45000,40000,35000,30000,25000,5000,5000,5000,5000,5000,5000,,,,,,,PASS,0.5,Platt sigmoid,PENDING,,2026-10-18T16:50:24.897875,"1 validation error for UCITaiwanRequest
+SEX
+  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.14/v/greater_than_equal"
+TC007,boundary_age_high,200000,2,2,1,79,0,0,0,0,0,0,50000,45000,40000,35000,30000,25000,5000,5000,5000,5000,5000,5000,,,,,,,PASS,0.5,Platt sigmoid,PENDING,,2026-10-18T16:50:24.897875,"1 validation error for UCITaiwanRequest
+EDUCATION
+  Input should be less than or equal to 6 [type=less_than_equal, input_value=10, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.14/v/less_than_equal"
+TC008,boundary_threshold_low,200000,2,2,1,35,0,0,0,0,0,0,50000,45000,40000,35000,30000,25000,5000,5000,5000,5000,5000,5000,N/A,0.071114,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC009,boundary_threshold_mid,200000,2,2,1,35,0,0,0,0,0,0,50000,45000,40000,35000,30000,25000,5000,5000,5000,5000,5000,5000,N/A,0.071114,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,
+TC010,boundary_threshold_high,200000,2,2,1,35,0,0,0,0,0,0,50000,45000,40000,35000,30000,25000,5000,5000,5000,5000,5000,5000,N/A,0.071114,Lower predicted default risk,Low,0.5,Platt sigmoid,PASS,PASS,log_odds,N/A,,2026-10-18T16:50:24.897875,

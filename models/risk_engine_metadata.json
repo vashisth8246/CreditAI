@@ -1,0 +1,208 @@
+{
+  "model_version": "0.1.0-synthetic",
+  "model_type": "Random Forest",
+  "training_dataset": "synthetic financial behavior (development only)",
+  "data_version": "synthetic-v1",
+  "training_date_utc": "2026-10-09T04:43:09.506312+00:00",
+  "python_version": "3.11.9",
+  "package_versions": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "scikit-learn": "1.9.0",
+    "xgboost": "3.2.0",
+    "shap": "0.51.0"
+  },
+  "random_seed": 42,
+  "model_hyperparameters": {
+    "Logistic Regression": {
+      "class_weight": "balanced",
+      "max_iter": 1000,
+      "standard_scaler": true
+    },
+    "Random Forest": {
+      "n_estimators": 160,
+      "max_depth": 8,
+      "min_samples_leaf": 5,
+      "class_weight": "balanced",
+      "random_state": 42
+    },
+    "XGBoost": {
+      "n_estimators": 140,
+      "max_depth": 3,
+      "learning_rate": 0.045,
+      "subsample": 0.85,
+      "colsample_bytree": 0.85,
+      "reg_lambda": 2,
+      "random_state": 42
+    }
+  },
+  "feature_count": 42,
+  "feature_names": [
+    "total_income",
+    "avg_monthly_income",
+    "income_std",
+    "income_cv",
+    "income_months",
+    "income_consistency",
+    "income_growth",
+    "total_expense",
+    "avg_monthly_expense",
+    "expense_std",
+    "expense_ratio",
+    "essential_expense_ratio",
+    "discretionary_expense_ratio",
+    "total_cashflow",
+    "avg_monthly_cashflow",
+    "cashflow_std",
+    "cashflow_volatility",
+    "negative_cashflow_months",
+    "cashflow_gap_count",
+    "cashflow_surplus_ratio",
+    "avg_balance",
+    "minimum_balance",
+    "maximum_balance",
+    "balance_volatility",
+    "low_balance_days",
+    "transaction_count",
+    "credit_transaction_count",
+    "debit_transaction_count",
+    "avg_transaction_amount",
+    "median_transaction_amount",
+    "transaction_frequency",
+    "unique_counterparties",
+    "counterparty_diversity",
+    "top_counterparty_share",
+    "emi_count",
+    "emi_amount",
+    "emi_to_income_ratio",
+    "debt_payment_ratio",
+    "income_stability_index",
+    "spending_consistency",
+    "financial_buffer_ratio",
+    "income_expense_gap"
+  ],
+  "split_counts": {
+    "train": 560,
+    "validation": 120,
+    "test": 120
+  },
+  "validation_metrics": [
+    {
+      "model": "Random Forest",
+      "roc_auc": 0.589517625231911,
+      "pr_auc": 0.2759127302478931,
+      "ks": 0.2152133580705009,
+      "gini": 0.17903525046382196,
+      "brier_score": 0.19413664243996404,
+      "f1": 0.2857142857142857,
+      "precision": 0.25925925925925924,
+      "recall": 0.3181818181818182,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          78,
+          20
+        ],
+        [
+          15,
+          7
+        ]
+      ]
+    },
+    {
+      "model": "XGBoost",
+      "roc_auc": 0.5366419294990723,
+      "pr_auc": 0.23514273770003577,
+      "ks": 0.13636363636363635,
+      "gini": 0.0732838589981446,
+      "brier_score": 0.16231846809387207,
+      "f1": 0.07692307692307693,
+      "precision": 0.25,
+      "recall": 0.045454545454545456,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          95,
+          3
+        ],
+        [
+          21,
+          1
+        ]
+      ]
+    },
+    {
+      "model": "Logistic Regression",
+      "roc_auc": 0.476808905380334,
+      "pr_auc": 0.22184356831595498,
+      "ks": 0.1103896103896104,
+      "gini": -0.04638218923933202,
+      "brier_score": 0.2357947111836724,
+      "f1": 0.18518518518518517,
+      "precision": 0.15625,
+      "recall": 0.22727272727272727,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          71,
+          27
+        ],
+        [
+          17,
+          5
+        ]
+      ]
+    }
+  ],
+  "test_metrics": {
+    "raw": {
+      "roc_auc": 0.5396825396825398,
+      "pr_auc": 0.2356929833529736,
+      "ks": 0.1385281385281385,
+      "gini": 0.07936507936507953,
+      "brier_score": 0.19944661642360426,
+      "f1": 0.2127659574468085,
+      "precision": 0.19230769230769232,
+      "recall": 0.23809523809523808,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          78,
+          21
+        ],
+        [
+          16,
+          5
+        ]
+      ]
+    },
+    "calibrated": {
+      "roc_auc": 0.5396825396825398,
+      "pr_auc": 0.2356929833529736,
+      "ks": 0.1385281385281385,
+      "gini": 0.07936507936507953,
+      "brier_score": 0.14410773624164708,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "threshold": 0.5,
+      "confusion_matrix": [
+        [
+          99,
+          0
+        ],
+        [
+          21,
+          0
+        ]
+      ]
+    }
+  },
+  "calibration_method": "Platt sigmoid fitted to validation predictions",
+  "validation_brier_raw": 0.19413664243996404,
+  "validation_brier_calibrated": 0.14713164909902215,
+  "test_brier_raw": 0.19944661642360426,
+  "test_brier_calibrated": 0.14410773624164708,
+  "threshold": 0.5,
+  "limitations": "Synthetic outcomes and transactions; no real lending validation."
+}

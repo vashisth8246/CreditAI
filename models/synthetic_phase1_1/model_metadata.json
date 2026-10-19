@@ -1,0 +1,167 @@
+{
+  "model_version": "1.1.0-synthetic",
+  "model_type": "Prevalence Dummy",
+  "training_dataset": "synthetic financial behavior only",
+  "training_date_utc": "2026-10-09T05:00:44.405523+00:00",
+  "python_version": "3.11.9",
+  "package_versions": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "scikit-learn": "1.9.0",
+    "xgboost": "3.2.0",
+    "shap": "0.51.0"
+  },
+  "random_seed": 42,
+  "observation_window_months": 12,
+  "split_counts": {
+    "train": 560,
+    "validation": 120,
+    "test": 120
+  },
+  "default_prevalence": {
+    "train": 0.1767857142857143,
+    "validation": 0.18333333333333332,
+    "test": 0.175
+  },
+  "feature_count": 40,
+  "feature_names": [
+    "total_income",
+    "avg_monthly_income",
+    "income_std",
+    "income_cv",
+    "income_months",
+    "income_stability_index",
+    "income_growth",
+    "total_expense",
+    "avg_monthly_expense",
+    "expense_std",
+    "expense_ratio",
+    "essential_expense_ratio",
+    "discretionary_expense_ratio",
+    "total_cashflow",
+    "avg_monthly_cashflow",
+    "cashflow_std",
+    "cashflow_volatility",
+    "negative_cashflow_months",
+    "cashflow_surplus_ratio",
+    "mean_observed_transaction_balance",
+    "minimum_observed_transaction_balance",
+    "maximum_observed_transaction_balance",
+    "observed_transaction_balance_volatility",
+    "low_balance_transaction_dates",
+    "transaction_count",
+    "credit_transaction_count",
+    "debit_transaction_count",
+    "avg_transaction_amount",
+    "median_transaction_amount",
+    "transaction_frequency",
+    "unique_counterparties",
+    "counterparty_diversity",
+    "top_counterparty_share",
+    "emi_count",
+    "emi_amount",
+    "emi_to_income_ratio",
+    "emi_share_of_expenses",
+    "spending_consistency",
+    "financial_buffer_ratio",
+    "income_expense_gap"
+  ],
+  "selected_threshold": 0.18333303980702004,
+  "threshold_objective": "maximize validation-set F1; ties favor precision then larger threshold; experimental only, not a lending policy",
+  "calibration": "Platt sigmoid fitted only on selected model's validation predictions",
+  "validation_calibration_is_in_sample": true,
+  "validation_brier": {
+    "raw": 0.14976509353741502,
+    "calibrated": 0.14972222222230833,
+    "train_prevalence_baseline": 0.14976509353741502
+  },
+  "test_metrics": {
+    "prevalence_baseline": {
+      "roc_auc": 0.5,
+      "pr_auc": 0.175,
+      "ks": 0.0,
+      "gini": 0.0,
+      "brier_score": 0.1443781887755102,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "threshold": 0.18333303980702004,
+      "confusion_matrix": [
+        [
+          99,
+          0
+        ],
+        [
+          21,
+          0
+        ]
+      ]
+    },
+    "raw": {
+      "roc_auc": 0.5,
+      "pr_auc": 0.175,
+      "ks": 0.0,
+      "gini": 0.0,
+      "brier_score": 0.1443781887755102,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "threshold": 0.18333303980702004,
+      "confusion_matrix": [
+        [
+          99,
+          0
+        ],
+        [
+          21,
+          0
+        ]
+      ]
+    },
+    "calibrated": {
+      "roc_auc": 0.5,
+      "pr_auc": 0.175,
+      "ks": 0.0,
+      "gini": 0.0,
+      "brier_score": 0.14444443955242534,
+      "f1": 0.2978723404255319,
+      "precision": 0.175,
+      "recall": 1.0,
+      "threshold": 0.18333303980702004,
+      "confusion_matrix": [
+        [
+          0,
+          99
+        ],
+        [
+          0,
+          21
+        ]
+      ]
+    }
+  },
+  "test_brier_baseline": 0.1443781887755102,
+  "test_probability_distribution": {
+    "raw": {
+      "min": 0.1767857142857143,
+      "p10": 0.1767857142857143,
+      "median": 0.1767857142857143,
+      "mean": 0.1767857142857143,
+      "p90": 0.1767857142857143,
+      "max": 0.1767857142857143,
+      "share_at_or_above_0_50": 0.0
+    },
+    "calibrated": {
+      "min": 0.18333303980702004,
+      "p10": 0.18333303980702004,
+      "median": 0.18333303980702004,
+      "mean": 0.18333303980702007,
+      "p90": 0.18333303980702004,
+      "max": 0.18333303980702004,
+      "share_at_or_above_0_50": 0.0
+    }
+  },
+  "xgboost_available": true,
+  "limitations": "Synthetic features and outcomes; no real lender or Indian thin-file validation.",
+  "shap_status": "Not applicable: validation selected prevalence baseline; no borrower-specific tree model was selected."
+}

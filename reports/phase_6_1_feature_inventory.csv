@@ -1,0 +1,152 @@
+﻿dataset_id,feature,availability_time,leakage_risk,phase_2_2_recommendation,phase_2_3_decision,missing_percentage_all_source_rows,meaning,decision_reason,proposed_ui_use
+DS001,id,Origination/Metadata,Identifier/PII,Exclude,Excluded,0.0,Loan ID string,Unique loan identifier; risk of split leakage,Excluded from record-level display; feature metadata only
+DS001,member_id,Origination/Metadata,Identifier/PII,Exclude,Excluded,100.0,Borrower member ID,Direct borrower identifier; risk of borrower leakage,Excluded from record-level display; feature metadata only
+DS001,loan_amnt,Application,None/Low,Include,Included,0.0,Requested loan amount,Point-in-time loan request amount,Model field only; no raw record display
+DS001,funded_amnt,Origination,None/Low,Include,Included,0.0,Funded loan amount,Amount committed at origination,Model field only; no raw record display
+DS001,funded_amnt_inv,Origination,None/Low,Include,Included,0.0,Investor funded amount,Investor commitment amount at origination,Model field only; no raw record display
+DS001,term,Origination,None/Low,Include,Included,0.0,Loan term (36 or 60 months),Underwriting contract term,Model field only; no raw record display
+DS001,int_rate,Origination,None/Low,Include,Included,0.0,Assigned interest rate,Risk-priced interest rate at origination,Model field only; no raw record display
+DS001,installment,Origination,None/Low,Include,Included,0.0,Monthly installment payment,Required monthly payment calculated at origination,Model field only; no raw record display
+DS001,grade,Origination,None/Low,Include,Included,0.0,LendingClub assigned grade,Underwriting risk tier at origination,Model field only; no raw record display
+DS001,sub_grade,Origination,None/Low,Include,Included,0.0,LendingClub assigned sub-grade,Detailed risk tier at origination,Model field only; no raw record display
+DS001,emp_title,Application,Identifier/PII,Exclude,Excluded,7.39,Employer job title,Unstructured high-cardinality text; privacy/PII risk,Excluded from record-level display; feature metadata only
+DS001,emp_length,Application,None/Low,Include,Included,6.5,Employment length years,Applicant-reported tenure at application,Model field only; no raw record display
+DS001,home_ownership,Application,None/Low,Include,Included,0.0,Home ownership status,Applicant housing status at application,Model field only; no raw record display
+DS001,annual_inc,Application,None/Low,Include,Included,0.0,Self-reported annual income,Applicant annual income at application,Model field only; no raw record display
+DS001,verification_status,Application,None/Low,Include,Included,0.0,Income verification status,LendingClub income verification category,Model field only; no raw record display
+DS001,issue_d,Origination,None/Low,Include,Excluded,0.0,Loan origination date,Timestamp used for observation window and chronological splitting,Excluded from record-level display; feature metadata only
+DS001,loan_status,Outcome/Metadata,High (Target Leakage),Target Label,Excluded,0.0,Current loan status,Ground truth outcome target for audit mapping,Excluded from record-level display; feature metadata only
+DS001,pymnt_plan,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Payment plan indicator,Indicates post-delinquency payment plan modification,Excluded from record-level display; feature metadata only
+DS001,url,Origination/Metadata,Identifier/PII,Exclude,Excluded,0.0,LendingClub loan URL,Contains loan ID; direct link/identifier,Excluded from record-level display; feature metadata only
+DS001,desc,Application,Identifier/PII,Exclude,Excluded,94.42,Borrower application text,Free-text field with personal disclosures,Excluded from record-level display; feature metadata only
+DS001,purpose,Application,None/Low,Include,Included,0.0,Stated loan purpose,Stated reason for borrowing,Model field only; no raw record display
+DS001,title,Application,Identifier/PII,Exclude,Excluded,1.03,Loan title provided by borrower,Unstructured free-text field,Excluded from record-level display; feature metadata only
+DS001,zip_code,Application,Identifier/PII,Exclude,Excluded,0.0,First 3 digits of ZIP code,Coarse geographic location identifier,Excluded from record-level display; feature metadata only
+DS001,addr_state,Application,None/Low,Include,Included,0.0,Borrower state code,Borrower US state location,Model field only; no raw record display
+DS001,dti,Application,None/Low,Include,Included,0.08,Debt-to-income ratio,Applicant DTI calculated at application,Model field only; no raw record display
+DS001,delinq_2yrs,Application/Bureau,None/Low,Include,Included,0.0,Delinquencies in past 2 years,Bureau trade line history at application,Model field only; no raw record display
+DS001,earliest_cr_line,Application/Bureau,None/Low,Include,Excluded,0.0,Earliest credit line date,Used to compute credit history age at origination,Excluded from record-level display; feature metadata only
+DS001,fico_range_low,Application/Bureau,None/Low,Include,Included,0.0,Bureau FICO score lower bound,Underwriting FICO score at application,Model field only; no raw record display
+DS001,fico_range_high,Application/Bureau,None/Low,Include,Included,0.0,Bureau FICO score upper bound,Underwriting FICO score at application,Model field only; no raw record display
+DS001,inq_last_6mths,Application/Bureau,None/Low,Include,Included,0.0,Inquiries in last 6 months,Recent bureau credit inquiries,Model field only; no raw record display
+DS001,mths_since_last_delinq,Application/Bureau,None/Low,Include,Excluded,51.25,Months since last delinquency,Historical delinquency recency at application,Excluded from record-level display; feature metadata only
+DS001,mths_since_last_record,Application/Bureau,None/Low,Include,Excluded,84.11,Months since last public record,Public record recency at application,Excluded from record-level display; feature metadata only
+DS001,open_acc,Application/Bureau,None/Low,Include,Included,0.0,Number of open credit lines,Active bureau accounts at application,Model field only; no raw record display
+DS001,pub_rec,Application/Bureau,None/Low,Include,Included,0.0,Number of derogatory public records,Public record count at application,Model field only; no raw record display
+DS001,revol_bal,Application/Bureau,None/Low,Include,Included,0.0,Total credit revolving balance,Revolving debt balance at application,Model field only; no raw record display
+DS001,revol_util,Application/Bureau,None/Low,Include,Included,0.08,Revolving line utilization rate,Revolving line utilization at application,Model field only; no raw record display
+DS001,total_acc,Application/Bureau,None/Low,Include,Included,0.0,Total credit lines,Total historical bureau accounts,Model field only; no raw record display
+DS001,initial_list_status,Origination,None/Low,Include,Included,0.0,Initial listing status (W/F),Origination loan allocation status,Model field only; no raw record display
+DS001,out_prncp,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Remaining outstanding principal,Post-origination principal balance snapshot,Excluded from record-level display; feature metadata only
+DS001,out_prncp_inv,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Remaining principal funded by investors,Post-origination investor principal balance,Excluded from record-level display; feature metadata only
+DS001,total_pymnt,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Total payments received to date,Direct function of post-origination repayment performance,Excluded from record-level display; feature metadata only
+DS001,total_pymnt_inv,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Total payments received by investors,Post-origination investor payment total,Excluded from record-level display; feature metadata only
+DS001,total_rec_prncp,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Principal received to date,Post-origination principal repayment cumulative sum,Excluded from record-level display; feature metadata only
+DS001,total_rec_int,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Interest received to date,Post-origination interest repayment cumulative sum,Excluded from record-level display; feature metadata only
+DS001,total_rec_late_fee,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Late fees received to date,Direct indicator of post-origination delinquency,Excluded from record-level display; feature metadata only
+DS001,recoveries,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Post-chargeoff recoveries,Generated strictly post-default/charge-off,Excluded from record-level display; feature metadata only
+DS001,collection_recovery_fee,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Post-chargeoff collection fee,Generated strictly post-default/charge-off,Excluded from record-level display; feature metadata only
+DS001,last_pymnt_d,Post-Origination,High (Target Leakage),Exclude,Excluded,0.11,Last payment date,Post-origination timestamp,Excluded from record-level display; feature metadata only
+DS001,last_pymnt_amnt,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Last payment amount,Post-origination payment amount,Excluded from record-level display; feature metadata only
+DS001,next_pymnt_d,Post-Origination,High (Target Leakage),Exclude,Excluded,59.51,Next scheduled payment date,Post-origination tracking timestamp,Excluded from record-level display; feature metadata only
+DS001,last_credit_pull_d,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Last credit pull date,Post-origination bureau pull timestamp,Excluded from record-level display; feature metadata only
+DS001,last_fico_range_high,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Last credit pull high FICO,Updated post-origination credit score,Excluded from record-level display; feature metadata only
+DS001,last_fico_range_low,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Last credit pull low FICO,Updated post-origination credit score,Excluded from record-level display; feature metadata only
+DS001,collections_12_mths_ex_med,Post-Origination,High (Target Leakage),Exclude,Excluded,0.01,Collections in last 12 months,Updated credit bureau collection indicator,Excluded from record-level display; feature metadata only
+DS001,mths_since_last_major_derog,Application/Bureau,None/Low,Include,Excluded,74.31,Months since last major derog rating,Recency of major derogatory credit rating at application,Excluded from record-level display; feature metadata only
+DS001,policy_code,Origination/Metadata,None/Low,Exclude,Excluded,0.0,Policy code indicator,Constant metadata value (1.0),Excluded from record-level display; feature metadata only
+DS001,application_type,Application,None/Low,Include,Included,0.0,Individual or Joint application,Single vs co-borrower application indicator,Model field only; no raw record display
+DS001,annual_inc_joint,Application,None/Low,Include,Excluded,94.66,Joint applicant annual income,Co-borrower income at application,Excluded from record-level display; feature metadata only
+DS001,dti_joint,Application,None/Low,Include,Excluded,94.66,Joint debt-to-income ratio,Co-borrower DTI at application,Excluded from record-level display; feature metadata only
+DS001,verification_status_joint,Application,None/Low,Include,Excluded,94.88,Joint income verification,Co-borrower income verification status,Excluded from record-level display; feature metadata only
+DS001,acc_now_delinq,Application/Bureau,None/Low,Include,Excluded,0.0,Accounts currently delinquent,Delinquent account count at application,Excluded from record-level display; feature metadata only
+DS001,tot_coll_amt,Application/Bureau,None/Low,Include,Excluded,3.11,Total collection amounts ever,Historical collection balance at application,Excluded from record-level display; feature metadata only
+DS001,tot_cur_bal,Application/Bureau,None/Low,Include,Included,3.11,Total current balance all accounts,Total bureau balance at application,Model field only; no raw record display
+DS001,open_acc_6m,Application/Bureau,None/Low,Include,Excluded,38.31,Open trades in last 6 months,Recent trade line openings,Excluded from record-level display; feature metadata only
+DS001,open_act_il,Application/Bureau,None/Low,Include,Excluded,38.31,Active installment trades,Active installment accounts at application,Excluded from record-level display; feature metadata only
+DS001,open_il_12m,Application/Bureau,None/Low,Include,Excluded,38.31,Installment trades opened in 12m,Recent installment trade openings,Excluded from record-level display; feature metadata only
+DS001,open_il_24m,Application/Bureau,None/Low,Include,Excluded,38.31,Installment trades opened in 24m,Recent installment trade openings,Excluded from record-level display; feature metadata only
+DS001,mths_since_rcnt_il,Application/Bureau,None/Low,Include,Excluded,40.25,Months since recent installment,Installment account recency,Excluded from record-level display; feature metadata only
+DS001,total_bal_il,Application/Bureau,None/Low,Include,Excluded,38.31,Total balance installment trades,Installment debt balance at application,Excluded from record-level display; feature metadata only
+DS001,il_util,Application/Bureau,None/Low,Include,Excluded,47.28,Installment balance to high credit,Installment line utilization,Excluded from record-level display; feature metadata only
+DS001,open_rv_12m,Application/Bureau,None/Low,Include,Excluded,38.31,Revolving trades opened in 12m,Recent revolving openings,Excluded from record-level display; feature metadata only
+DS001,open_rv_24m,Application/Bureau,None/Low,Include,Excluded,38.31,Revolving trades opened in 24m,Recent revolving openings,Excluded from record-level display; feature metadata only
+DS001,max_bal_bc,Application/Bureau,None/Low,Include,Excluded,38.31,Maximum balance on bankcard,Peak bankcard balance at application,Excluded from record-level display; feature metadata only
+DS001,all_util,Application/Bureau,None/Low,Include,Excluded,38.32,Balance to credit limit all trades,Total credit utilization at application,Excluded from record-level display; feature metadata only
+DS001,total_rev_hi_lim,Application/Bureau,None/Low,Include,Included,3.11,Total revolving high credit limit,Total revolving credit limit,Model field only; no raw record display
+DS001,inq_fi,Application/Bureau,None/Low,Include,Excluded,38.31,Finance inquiries,Financial bureau inquiries count,Excluded from record-level display; feature metadata only
+DS001,total_cu_tl,Application/Bureau,None/Low,Include,Excluded,38.31,Finance trade accounts,Credit union trade accounts count,Excluded from record-level display; feature metadata only
+DS001,inq_last_12m,Application/Bureau,None/Low,Include,Excluded,38.31,Credit inquiries in last 12 months,Total inquiries in last 12 months,Excluded from record-level display; feature metadata only
+DS001,acc_open_past_24mths,Application/Bureau,None/Low,Include,Included,2.21,Accounts opened in past 24m,Trade line velocity in past 2 years,Model field only; no raw record display
+DS001,avg_cur_bal,Application/Bureau,None/Low,Include,Included,3.11,Average current balance,Mean account balance at application,Model field only; no raw record display
+DS001,bc_open_to_buy,Application/Bureau,None/Low,Include,Included,3.32,Bankcard open to buy amount,Available bankcard credit limit,Model field only; no raw record display
+DS001,bc_util,Application/Bureau,None/Low,Include,Included,3.37,Bankcard utilization ratio,Bankcard line utilization at application,Model field only; no raw record display
+DS001,chargeoff_within_12_mths,Application/Bureau,None/Low,Include,Included,0.01,Charge-offs in last 12 months,Recent bureau charge-offs count,Model field only; no raw record display
+DS001,delinq_amnt,Application/Bureau,None/Low,Include,Included,0.0,Delinquent amount,Past-due dollar amount at application,Model field only; no raw record display
+DS001,mo_sin_old_il_acct,Application/Bureau,None/Low,Include,Included,6.15,Months since oldest installment,Oldest installment account age,Model field only; no raw record display
+DS001,mo_sin_old_rev_tl_op,Application/Bureau,None/Low,Include,Included,3.11,Months since oldest revolving,Oldest revolving account age,Model field only; no raw record display
+DS001,mo_sin_rcnt_rev_tl_op,Application/Bureau,None/Low,Include,Included,3.11,Months since recent revolving,Recent revolving account opening,Model field only; no raw record display
+DS001,mo_sin_rcnt_tl,Application/Bureau,None/Low,Include,Included,3.11,Months since recent account open,Most recent account opening age,Model field only; no raw record display
+DS001,mort_acc,Application/Bureau,None/Low,Include,Included,2.21,Number of mortgage accounts,Mortgage accounts count at application,Model field only; no raw record display
+DS001,mths_since_recent_bc,Application/Bureau,None/Low,Include,Included,3.25,Months since recent bankcard,Bankcard account recency,Model field only; no raw record display
+DS001,mths_since_recent_bc_dlq,Application/Bureau,None/Low,Include,Excluded,77.01,Months since recent bankcard delinq,Bankcard delinquency recency,Excluded from record-level display; feature metadata only
+DS001,mths_since_recent_inq,Application/Bureau,None/Low,Include,Excluded,13.07,Months since recent inquiry,Recency of last bureau inquiry,Excluded from record-level display; feature metadata only
+DS001,mths_since_recent_revol_delinq,Application/Bureau,None/Low,Include,Excluded,67.25,Months since recent revol delinq,Revolving delinquency recency,Excluded from record-level display; feature metadata only
+DS001,num_accts_ever_120_pd,Application/Bureau,None/Low,Include,Included,3.11,Accounts ever 120+ days past due,Severe delinquency history count,Model field only; no raw record display
+DS001,num_actv_bc_tl,Application/Bureau,None/Low,Include,Included,3.11,Active bankcard trades,Currently active bankcard accounts,Model field only; no raw record display
+DS001,num_actv_rev_tl,Application/Bureau,None/Low,Include,Included,3.11,Active revolving trades,Currently active revolving accounts,Model field only; no raw record display
+DS001,num_bc_sats,Application/Bureau,None/Low,Include,Included,2.59,Satisfactory bankcard trades,Clean bankcard trade count,Model field only; no raw record display
+DS001,num_bc_tl,Application/Bureau,None/Low,Include,Included,3.11,Total bankcard trades,Total historical bankcard trades,Model field only; no raw record display
+DS001,num_il_tl,Application/Bureau,None/Low,Include,Included,3.11,Total installment trades,Total historical installment trades,Model field only; no raw record display
+DS001,num_op_rev_tl,Application/Bureau,None/Low,Include,Included,3.11,Open revolving trades,Active open revolving trades,Model field only; no raw record display
+DS001,num_rev_accts,Application/Bureau,None/Low,Include,Included,3.11,Total revolving accounts,Total historical revolving accounts,Model field only; no raw record display
+DS001,num_rev_tl_bal_gt_0,Application/Bureau,None/Low,Include,Included,3.11,Revolving trades with balance > 0,Carrying-balance revolving trades,Model field only; no raw record display
+DS001,num_sats,Application/Bureau,None/Low,Include,Included,2.59,Satisfactory trades,Clean historical bureau trades count,Model field only; no raw record display
+DS001,num_tl_120dpd_2m,Application/Bureau,None/Low,Include,Included,6.8,Accounts 120+ dpd in past 2 months,Recent severe delinquency count,Model field only; no raw record display
+DS001,num_tl_30dpd,Application/Bureau,None/Low,Include,Included,3.11,Accounts 30+ dpd currently,Current 30-day delinquency count,Model field only; no raw record display
+DS001,num_tl_90g_dpd_24m,Application/Bureau,None/Low,Include,Included,3.11,Trades 90+ dpd in past 24 months,24-month severe delinquency count,Model field only; no raw record display
+DS001,num_tl_op_past_12m,Application/Bureau,None/Low,Include,Included,3.11,Trades opened in past 12 months,1-year trade opening velocity,Model field only; no raw record display
+DS001,pct_tl_nvr_dlq,Application/Bureau,None/Low,Include,Included,3.12,Percent trade lines never delinquent,Historical clean trade ratio,Model field only; no raw record display
+DS001,percent_bc_gt_75,Application/Bureau,None/Low,Include,Included,3.34,Bankcard trades > 75% limit,High-utilization bankcard ratio,Model field only; no raw record display
+DS001,pub_rec_bankruptcies,Application/Bureau,None/Low,Include,Included,0.06,Public record bankruptcies,Historical bankruptcy filings count,Model field only; no raw record display
+DS001,tax_liens,Application/Bureau,None/Low,Include,Included,0.01,Tax liens count,Historical tax lien count,Model field only; no raw record display
+DS001,tot_hi_cred_lim,Application/Bureau,None/Low,Include,Included,3.11,Total high credit limit,Aggregate high credit limit,Model field only; no raw record display
+DS001,total_bal_ex_mort,Application/Bureau,None/Low,Include,Included,2.21,Total balance excluding mortgage,Non-mortgage debt balance,Model field only; no raw record display
+DS001,total_bc_limit,Application/Bureau,None/Low,Include,Included,2.21,Total bankcard credit limit,Aggregate bankcard limit,Model field only; no raw record display
+DS001,total_il_high_credit_limit,Application/Bureau,None/Low,Include,Included,3.11,Total installment high credit limit,Aggregate installment limit,Model field only; no raw record display
+DS001,revol_bal_joint,Application/Bureau,None/Low,Include,Excluded,95.22,Joint revolving debt balance,Co-borrower revolving debt,Excluded from record-level display; feature metadata only
+DS001,sec_app_fico_range_low,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant FICO low,Co-borrower FICO score,Excluded from record-level display; feature metadata only
+DS001,sec_app_fico_range_high,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant FICO high,Co-borrower FICO score,Excluded from record-level display; feature metadata only
+DS001,sec_app_earliest_cr_line,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant earliest credit line,Co-borrower credit history start date,Excluded from record-level display; feature metadata only
+DS001,sec_app_inq_last_6mths,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant inquiries 6m,Co-borrower recent inquiries,Excluded from record-level display; feature metadata only
+DS001,sec_app_mort_acc,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant mortgage accounts,Co-borrower mortgage accounts count,Excluded from record-level display; feature metadata only
+DS001,sec_app_open_acc,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant open accounts,Co-borrower open accounts count,Excluded from record-level display; feature metadata only
+DS001,sec_app_revol_util,Application/Bureau,None/Low,Include,Excluded,95.3,Joint applicant revolving utilization,Co-borrower revolving utilization,Excluded from record-level display; feature metadata only
+DS001,sec_app_open_act_il,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant active installment,Co-borrower active installment trades,Excluded from record-level display; feature metadata only
+DS001,sec_app_num_rev_accts,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant revolving accounts,Co-borrower revolving accounts count,Excluded from record-level display; feature metadata only
+DS001,sec_app_chargeoff_within_12_mths,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant chargeoffs 12m,Co-borrower recent chargeoffs,Excluded from record-level display; feature metadata only
+DS001,sec_app_collections_12_mths_ex_med,Application/Bureau,None/Low,Include,Excluded,95.22,Joint applicant collections 12m,Co-borrower recent collections,Excluded from record-level display; feature metadata only
+DS001,sec_app_mths_since_last_major_derog,Application/Bureau,None/Low,Include,Excluded,98.41,Joint applicant months major derog,Co-borrower major derog recency,Excluded from record-level display; feature metadata only
+DS001,hardship_flag,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Hardship plan flag,Post-origination distress accommodation flag,Excluded from record-level display; feature metadata only
+DS001,hardship_type,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship accommodation type,Post-origination distress program details,Excluded from record-level display; feature metadata only
+DS001,hardship_reason,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship reason,Post-origination borrower hardship reason,Excluded from record-level display; feature metadata only
+DS001,hardship_status,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship status,Post-origination hardship state,Excluded from record-level display; feature metadata only
+DS001,deferral_term,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship deferral months,Post-origination loan term modification,Excluded from record-level display; feature metadata only
+DS001,hardship_amount,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship payment amount,Post-origination modified payment amount,Excluded from record-level display; feature metadata only
+DS001,hardship_start_date,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship start date,Post-origination event date,Excluded from record-level display; feature metadata only
+DS001,hardship_end_date,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship end date,Post-origination event date,Excluded from record-level display; feature metadata only
+DS001,payment_plan_start_date,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Payment plan start date,Post-origination plan start date,Excluded from record-level display; feature metadata only
+DS001,hardship_length,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Hardship duration months,Post-origination duration,Excluded from record-level display; feature metadata only
+DS001,hardship_dpd,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Days past due at hardship entry,Post-origination delinquency state,Excluded from record-level display; feature metadata only
+DS001,hardship_loan_status,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Loan status prior to hardship,Post-origination status snapshot,Excluded from record-level display; feature metadata only
+DS001,orig_projected_additional_accrued_interest,Post-Origination,High (Target Leakage),Exclude,Excluded,99.62,Projected hardship interest,Post-origination interest calculation,Excluded from record-level display; feature metadata only
+DS001,hardship_payoff_balance_amount,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Payoff balance at hardship,Post-origination balance snapshot,Excluded from record-level display; feature metadata only
+DS001,hardship_last_payment_amount,Post-Origination,High (Target Leakage),Exclude,Excluded,99.52,Last payment prior to hardship,Post-origination payment amount,Excluded from record-level display; feature metadata only
+DS001,disbursement_method,Origination,None/Low,Include,Included,0.0,Disbursement method (Cash/DirectPay),Loan disbursement channel,Model field only; no raw record display
+DS001,debt_settlement_flag,Post-Origination,High (Target Leakage),Exclude,Excluded,0.0,Debt settlement flag,Indicates post-default debt restructuring,Excluded from record-level display; feature metadata only
+DS001,debt_settlement_flag_date,Post-Origination,High (Target Leakage),Exclude,Excluded,98.49,Settlement flag date,Post-default settlement timestamp,Excluded from record-level display; feature metadata only
+DS001,settlement_status,Post-Origination,High (Target Leakage),Exclude,Excluded,98.49,Settlement program status,Post-default settlement status,Excluded from record-level display; feature metadata only
+DS001,settlement_date,Post-Origination,High (Target Leakage),Exclude,Excluded,98.49,Settlement agreement date,Post-default settlement agreement date,Excluded from record-level display; feature metadata only
+DS001,settlement_amount,Post-Origination,High (Target Leakage),Exclude,Excluded,98.49,Settlement agreement amount,Post-default settlement negotiated amount,Excluded from record-level display; feature metadata only
+DS001,settlement_percentage,Post-Origination,High (Target Leakage),Exclude,Excluded,98.49,Settlement waiver percentage,Post-default settlement terms,Excluded from record-level display; feature metadata only
+DS001,settlement_term,Post-Origination,High (Target Leakage),Exclude,Excluded,98.49,Settlement payment terms,Post-default settlement period,Excluded from record-level display; feature metadata only

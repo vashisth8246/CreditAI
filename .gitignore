@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Model artifacts (large binaries - use DVC or MLflow in production)
+# models/*.joblib   # Uncomment to exclude saved models from git
+
+# Data files - raw datasets should not be in git
+data/credit_default/*.xls
+data/credit_default/*.xlsx
+Data/
+
+# Reports / generated figures
+reports/figures/*.png
+reports/figures/*.jpg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

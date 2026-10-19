@@ -1,0 +1,10 @@
+model_name,split_name,total_samples_expected,cm_sum,confusion_matrix_reconciles,roc_auc_saved,pr_auc_saved,prevalence,brier_saved,log_loss_saved,ks_saved,gini_saved,selected_threshold,precision,recall_saved,f1_saved,baseline_ranking_metrics_nan,verification_status
+Prevalence Baseline,Train,230706,230706,True,,0.1565,0.1565,0.132,0.4338,,,0.5,0.0,0.0,0.0,True,VERIFIED
+Prevalence Baseline,Validation,598649,598649,True,,0.1954,0.1954,0.1587,0.4993,,,0.5,0.0,0.0,0.0,True,VERIFIED
+Prevalence Baseline,Test,518744,518744,True,,0.2242,0.2242,0.1785,0.5479,,,0.5,0.0,0.0,0.0,True,VERIFIED
+Logistic Regression,Train,230706,230706,True,0.6937,0.2885,0.1565,0.1235,0.4023,0.2803,0.3874,0.16,0.2509,0.6253,0.3581,,VERIFIED
+Logistic Regression,Validation,598649,598649,True,0.7195,0.3818,0.1954,0.1451,0.4564,0.3204,0.439,0.16,0.3419,0.5912,0.4332,,VERIFIED
+Logistic Regression,Test,518744,518744,True,0.7005,0.3886,0.2242,0.1662,0.5153,0.2929,0.401,0.16,0.3739,0.5383,0.4413,,VERIFIED
+HistGradientBoosting,Train,230706,230706,True,0.7332,0.3457,0.1565,0.1191,0.3873,0.3423,0.4664,0.17,0.2777,0.6562,0.3902,,VERIFIED
+HistGradientBoosting,Validation,598649,598649,True,0.7244,0.3837,0.1954,0.143,0.4485,0.3287,0.4488,0.17,0.3317,0.6383,0.4365,,VERIFIED
+HistGradientBoosting,Test,518744,518744,True,0.7056,0.3947,0.2242,0.1636,0.5035,0.2976,0.4112,0.17,0.365,0.5799,0.448,,VERIFIED

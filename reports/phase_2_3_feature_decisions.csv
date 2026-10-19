@@ -1,0 +1,152 @@
+column,category,decision,reason
+id,Origination/Metadata,Excluded,Unique loan identifier; risk of split leakage
+member_id,Origination/Metadata,Excluded,Direct borrower identifier; risk of borrower leakage
+loan_amnt,Application,Included,Point-in-time loan request amount
+funded_amnt,Origination,Included,Amount committed at origination
+funded_amnt_inv,Origination,Included,Investor commitment amount at origination
+term,Origination,Included,Underwriting contract term
+int_rate,Origination,Included,Risk-priced interest rate at origination
+installment,Origination,Included,Required monthly payment calculated at origination
+grade,Origination,Included,Underwriting risk tier at origination
+sub_grade,Origination,Included,Detailed risk tier at origination
+emp_title,Application,Excluded,Unstructured high-cardinality text; privacy/PII risk
+emp_length,Application,Included,Applicant-reported tenure at application
+home_ownership,Application,Included,Applicant housing status at application
+annual_inc,Application,Included,Applicant annual income at application
+verification_status,Application,Included,LendingClub income verification category
+issue_d,Origination,Excluded,Timestamp used for observation window and chronological splitting
+loan_status,Outcome/Metadata,Excluded,Ground truth outcome target for audit mapping
+pymnt_plan,Post-Origination,Excluded,Indicates post-delinquency payment plan modification
+url,Origination/Metadata,Excluded,Contains loan ID; direct link/identifier
+desc,Application,Excluded,Free-text field with personal disclosures
+purpose,Application,Included,Stated reason for borrowing
+title,Application,Excluded,Unstructured free-text field
+zip_code,Application,Excluded,Coarse geographic location identifier
+addr_state,Application,Included,Borrower US state location
+dti,Application,Included,Applicant DTI calculated at application
+delinq_2yrs,Application/Bureau,Included,Bureau trade line history at application
+earliest_cr_line,Application/Bureau,Excluded,Used to compute credit history age at origination
+fico_range_low,Application/Bureau,Included,Underwriting FICO score at application
+fico_range_high,Application/Bureau,Included,Underwriting FICO score at application
+inq_last_6mths,Application/Bureau,Included,Recent bureau credit inquiries
+mths_since_last_delinq,Application/Bureau,Excluded,Historical delinquency recency at application
+mths_since_last_record,Application/Bureau,Excluded,Public record recency at application
+open_acc,Application/Bureau,Included,Active bureau accounts at application
+pub_rec,Application/Bureau,Included,Public record count at application
+revol_bal,Application/Bureau,Included,Revolving debt balance at application
+revol_util,Application/Bureau,Included,Revolving line utilization at application
+total_acc,Application/Bureau,Included,Total historical bureau accounts
+initial_list_status,Origination,Included,Origination loan allocation status
+out_prncp,Post-Origination,Excluded,Post-origination principal balance snapshot
+out_prncp_inv,Post-Origination,Excluded,Post-origination investor principal balance
+total_pymnt,Post-Origination,Excluded,Direct function of post-origination repayment performance
+total_pymnt_inv,Post-Origination,Excluded,Post-origination investor payment total
+total_rec_prncp,Post-Origination,Excluded,Post-origination principal repayment cumulative sum
+total_rec_int,Post-Origination,Excluded,Post-origination interest repayment cumulative sum
+total_rec_late_fee,Post-Origination,Excluded,Direct indicator of post-origination delinquency
+recoveries,Post-Origination,Excluded,Generated strictly post-default/charge-off
+collection_recovery_fee,Post-Origination,Excluded,Generated strictly post-default/charge-off
+last_pymnt_d,Post-Origination,Excluded,Post-origination timestamp
+last_pymnt_amnt,Post-Origination,Excluded,Post-origination payment amount
+next_pymnt_d,Post-Origination,Excluded,Post-origination tracking timestamp
+last_credit_pull_d,Post-Origination,Excluded,Post-origination bureau pull timestamp
+last_fico_range_high,Post-Origination,Excluded,Updated post-origination credit score
+last_fico_range_low,Post-Origination,Excluded,Updated post-origination credit score
+collections_12_mths_ex_med,Post-Origination,Excluded,Updated credit bureau collection indicator
+mths_since_last_major_derog,Application/Bureau,Excluded,Recency of major derogatory credit rating at application
+policy_code,Origination/Metadata,Excluded,Constant metadata value (1.0)
+application_type,Application,Included,Single vs co-borrower application indicator
+annual_inc_joint,Application,Excluded,Co-borrower income at application
+dti_joint,Application,Excluded,Co-borrower DTI at application
+verification_status_joint,Application,Excluded,Co-borrower income verification status
+acc_now_delinq,Application/Bureau,Excluded,Delinquent account count at application
+tot_coll_amt,Application/Bureau,Excluded,Historical collection balance at application
+tot_cur_bal,Application/Bureau,Included,Total bureau balance at application
+open_acc_6m,Application/Bureau,Excluded,Recent trade line openings
+open_act_il,Application/Bureau,Excluded,Active installment accounts at application
+open_il_12m,Application/Bureau,Excluded,Recent installment trade openings
+open_il_24m,Application/Bureau,Excluded,Recent installment trade openings
+mths_since_rcnt_il,Application/Bureau,Excluded,Installment account recency
+total_bal_il,Application/Bureau,Excluded,Installment debt balance at application
+il_util,Application/Bureau,Excluded,Installment line utilization
+open_rv_12m,Application/Bureau,Excluded,Recent revolving openings
+open_rv_24m,Application/Bureau,Excluded,Recent revolving openings
+max_bal_bc,Application/Bureau,Excluded,Peak bankcard balance at application
+all_util,Application/Bureau,Excluded,Total credit utilization at application
+total_rev_hi_lim,Application/Bureau,Included,Total revolving credit limit
+inq_fi,Application/Bureau,Excluded,Financial bureau inquiries count
+total_cu_tl,Application/Bureau,Excluded,Credit union trade accounts count
+inq_last_12m,Application/Bureau,Excluded,Total inquiries in last 12 months
+acc_open_past_24mths,Application/Bureau,Included,Trade line velocity in past 2 years
+avg_cur_bal,Application/Bureau,Included,Mean account balance at application
+bc_open_to_buy,Application/Bureau,Included,Available bankcard credit limit
+bc_util,Application/Bureau,Included,Bankcard line utilization at application
+chargeoff_within_12_mths,Application/Bureau,Included,Recent bureau charge-offs count
+delinq_amnt,Application/Bureau,Included,Past-due dollar amount at application
+mo_sin_old_il_acct,Application/Bureau,Included,Oldest installment account age
+mo_sin_old_rev_tl_op,Application/Bureau,Included,Oldest revolving account age
+mo_sin_rcnt_rev_tl_op,Application/Bureau,Included,Recent revolving account opening
+mo_sin_rcnt_tl,Application/Bureau,Included,Most recent account opening age
+mort_acc,Application/Bureau,Included,Mortgage accounts count at application
+mths_since_recent_bc,Application/Bureau,Included,Bankcard account recency
+mths_since_recent_bc_dlq,Application/Bureau,Excluded,Bankcard delinquency recency
+mths_since_recent_inq,Application/Bureau,Excluded,Recency of last bureau inquiry
+mths_since_recent_revol_delinq,Application/Bureau,Excluded,Revolving delinquency recency
+num_accts_ever_120_pd,Application/Bureau,Included,Severe delinquency history count
+num_actv_bc_tl,Application/Bureau,Included,Currently active bankcard accounts
+num_actv_rev_tl,Application/Bureau,Included,Currently active revolving accounts
+num_bc_sats,Application/Bureau,Included,Clean bankcard trade count
+num_bc_tl,Application/Bureau,Included,Total historical bankcard trades
+num_il_tl,Application/Bureau,Included,Total historical installment trades
+num_op_rev_tl,Application/Bureau,Included,Active open revolving trades
+num_rev_accts,Application/Bureau,Included,Total historical revolving accounts
+num_rev_tl_bal_gt_0,Application/Bureau,Included,Carrying-balance revolving trades
+num_sats,Application/Bureau,Included,Clean historical bureau trades count
+num_tl_120dpd_2m,Application/Bureau,Included,Recent severe delinquency count
+num_tl_30dpd,Application/Bureau,Included,Current 30-day delinquency count
+num_tl_90g_dpd_24m,Application/Bureau,Included,24-month severe delinquency count
+num_tl_op_past_12m,Application/Bureau,Included,1-year trade opening velocity
+pct_tl_nvr_dlq,Application/Bureau,Included,Historical clean trade ratio
+percent_bc_gt_75,Application/Bureau,Included,High-utilization bankcard ratio
+pub_rec_bankruptcies,Application/Bureau,Included,Historical bankruptcy filings count
+tax_liens,Application/Bureau,Included,Historical tax lien count
+tot_hi_cred_lim,Application/Bureau,Included,Aggregate high credit limit
+total_bal_ex_mort,Application/Bureau,Included,Non-mortgage debt balance
+total_bc_limit,Application/Bureau,Included,Aggregate bankcard limit
+total_il_high_credit_limit,Application/Bureau,Included,Aggregate installment limit
+revol_bal_joint,Application/Bureau,Excluded,Co-borrower revolving debt
+sec_app_fico_range_low,Application/Bureau,Excluded,Co-borrower FICO score
+sec_app_fico_range_high,Application/Bureau,Excluded,Co-borrower FICO score
+sec_app_earliest_cr_line,Application/Bureau,Excluded,Co-borrower credit history start date
+sec_app_inq_last_6mths,Application/Bureau,Excluded,Co-borrower recent inquiries
+sec_app_mort_acc,Application/Bureau,Excluded,Co-borrower mortgage accounts count
+sec_app_open_acc,Application/Bureau,Excluded,Co-borrower open accounts count
+sec_app_revol_util,Application/Bureau,Excluded,Co-borrower revolving utilization
+sec_app_open_act_il,Application/Bureau,Excluded,Co-borrower active installment trades
+sec_app_num_rev_accts,Application/Bureau,Excluded,Co-borrower revolving accounts count
+sec_app_chargeoff_within_12_mths,Application/Bureau,Excluded,Co-borrower recent chargeoffs
+sec_app_collections_12_mths_ex_med,Application/Bureau,Excluded,Co-borrower recent collections
+sec_app_mths_since_last_major_derog,Application/Bureau,Excluded,Co-borrower major derog recency
+hardship_flag,Post-Origination,Excluded,Post-origination distress accommodation flag
+hardship_type,Post-Origination,Excluded,Post-origination distress program details
+hardship_reason,Post-Origination,Excluded,Post-origination borrower hardship reason
+hardship_status,Post-Origination,Excluded,Post-origination hardship state
+deferral_term,Post-Origination,Excluded,Post-origination loan term modification
+hardship_amount,Post-Origination,Excluded,Post-origination modified payment amount
+hardship_start_date,Post-Origination,Excluded,Post-origination event date
+hardship_end_date,Post-Origination,Excluded,Post-origination event date
+payment_plan_start_date,Post-Origination,Excluded,Post-origination plan start date
+hardship_length,Post-Origination,Excluded,Post-origination duration
+hardship_dpd,Post-Origination,Excluded,Post-origination delinquency state
+hardship_loan_status,Post-Origination,Excluded,Post-origination status snapshot
+orig_projected_additional_accrued_interest,Post-Origination,Excluded,Post-origination interest calculation
+hardship_payoff_balance_amount,Post-Origination,Excluded,Post-origination balance snapshot
+hardship_last_payment_amount,Post-Origination,Excluded,Post-origination payment amount
+disbursement_method,Origination,Included,Loan disbursement channel
+debt_settlement_flag,Post-Origination,Excluded,Indicates post-default debt restructuring
+debt_settlement_flag_date,Post-Origination,Excluded,Post-default settlement timestamp
+settlement_status,Post-Origination,Excluded,Post-default settlement status
+settlement_date,Post-Origination,Excluded,Post-default settlement agreement date
+settlement_amount,Post-Origination,Excluded,Post-default settlement negotiated amount
+settlement_percentage,Post-Origination,Excluded,Post-default settlement terms
+settlement_term,Post-Origination,Excluded,Post-default settlement period

@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "evaluation_date": "2026-10-18",
+    "model_id": "uci_taiwan_xgb",
+    "dataset": "UCI Default of Credit Card Clients",
+    "geography": "Taiwan",
+    "test_sample_count": 4500,
+    "test_defaults": 996,
+    "test_prevalence": 0.22133333333333333,
+    "split_design": "Stratified 70% Train / 15% Validation / 15% Test",
+    "random_seed": 42
+  },
+  "historical_benchmark": {
+    "test_roc_auc": 0.7807,
+    "test_pr_auc": 0.5588,
+    "brier_score_calibrated": 0.1441,
+    "log_loss_calibrated": 0.4508,
+    "ks_statistic": 0.4255,
+    "gini_coefficient": 0.5613
+  },
+  "reproduced_metrics": {
+    "raw": {
+      "roc_auc": 0.78065343566045,
+      "pr_auc": 0.5587941969234171,
+      "brier_score": 0.17094272375106812,
+      "log_loss": 0.5205290913581848,
+      "ks_statistic": 0.4255308906860318,
+      "gini_coefficient": 0.5613068713209
+    },
+    "calibrated": {
+      "roc_auc": 0.78065343566045,
+      "pr_auc": 0.5587941969234171,
+      "brier_score": 0.14412179090099117,
+      "log_loss": 0.45076500505181494,
+      "ks_statistic": 0.4255308906860318,
+      "gini_coefficient": 0.5613068713209
+    }
+  },
+  "metrics_at_threshold_0_5": {
+    "accuracy": 0.7886666666666666,
+    "precision": 0.9090909090909091,
+    "recall": 0.050200803212851405,
+    "f1_score": 0.09514747859181731,
+    "confusion_matrix": {
+      "true_negative": 3499,
+      "false_positive": 5,
+      "false_negative": 946,
+      "true_positive": 50
+    }
+  },
+  "verification": {
+    "calibration_fitted_on_validation": true,
+    "test_set_not_used_for_fitting": true,
+    "metrics_match_historical": {
+      "roc_auc": true,
+      "pr_auc": true,
+      "brier_calibrated": true
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "evaluation_date": "2026-10-18",
+    "calibration_status": "Calibrated with Platt sigmoid",
+    "calibration_fitting_data": "Validation split (not test labels)",
+    "test_data_status": "Held-out, not used for fitting"
+  },
+  "calibration_fit_parameters": {
+    "slope": 0.47414481616618126,
+    "intercept": -1.2645029152597382
+  },
+  "validation_metrics": {
+    "brier_score_raw": 0.17112314701080322,
+    "brier_score_calibrated": 0.14428136715781856,
+    "log_loss_raw": 0.5220490097999573,
+    "log_loss_calibrated": 0.45168625692789877,
+    "improvement_pct": 15.685651135956558
+  },
+  "test_metrics": {
+    "brier_score_raw": 0.17094272375106812,
+    "brier_score_calibrated": 0.14412179090099117,
+    "brier_score_baseline": 0.22133333333333333,
+    "log_loss_raw": 0.5205290913581848,
+    "log_loss_calibrated": 0.45076500505181494,
+    "improvement_pct": 15.690011403547299,
+    "roc_auc_raw": 0.78065343566045,
+    "roc_auc_calibrated": 0.78065343566045,
+    "pr_auc_raw": 0.5587941969234171,
+    "pr_auc_calibrated": 0.5587941969234171
+  },
+  "test_calibration_curve": [
+    {
+      "bin": 1,
+      "pred_raw": 0.07140862439819076,
+      "true_raw": 0.05042016806722689,
+      "pred_cal": 0.08242142093350681,
+      "true_cal": 0.04770992366412214
+    },
+    {
+      "bin": 2,
+      "pred_raw": 0.1505923823580234,
+      "true_raw": 0.06627218934911243,
+      "pred_cal": 0.1479841847234488,
+      "true_cal": 0.12521008403361344
+    },
+    {
+      "bin": 3,
+      "pred_raw": 0.24935113347094992,
+      "true_raw": 0.11180124223602485,
+      "pred_cal": 0.24211239915267269,
+      "true_cal": 0.28240252897787144
+    },
+    {
+      "bin": 4,
+      "pred_raw": 0.34745687409036463,
+      "true_raw": 0.1724137931034483,
+      "pred_cal": 0.3468337679320435,
+      "true_cal": 0.5379746835443038
+    },
+    {
+      "bin": 5,
+      "pred_raw": 0.44670117664928277,
+      "true_raw": 0.19834710743801653,
+      "pred_cal": 0.4472272219206165,
+      "true_cal": 0.6702898550724637
+    },
+    {
+      "bin": 6,
+      "pred_raw": 0.5462940384041179,
+      "true_raw": 0.23939393939393938,
+      "pred_cal": 0.5206768402239611,
+      "true_cal": 0.9090909090909091
+    },
+    {
+      "bin": 7,
+      "pred_raw": 0.6486691912386647,
+      "true_raw": 0.3894080996884735,
+      "pred_cal": null,
+      "true_cal": null
+    },
+    {
+      "bin": 8,
+      "pred_raw": 0.7457665848605176,
+      "true_raw": 0.5106382978723404,
+      "pred_cal": null,
+      "true_cal": null
+    },
+    {
+      "bin": 9,
+      "pred_raw": 0.8534769306468607,
+      "true_raw": 0.5767790262172284,
+      "pred_cal": null,
+      "true_cal": null
+    },
+    {
+      "bin": 10,
+      "pred_raw": 0.924137424443655,
+      "true_raw": 0.782608695652174,
+      "pred_cal": null,
+      "true_cal": null
+    }
+  ],
+  "tc003_pattern_analysis": {
+    "util_gt_1_count": 335,
+    "severe_delinquency_count": 3,
+    "both_conditions_count": 2,
+    "pattern_default_rate": 1.0
+  },
+  "conclusions": {
+    "calibration_fitted_on_validation": true,
+    "test_set_not_used_for_fitting": true,
+    "calibration_reduces_brier_on_test": true,
+    "calibration_preserves_ranking": true
+  }
+}

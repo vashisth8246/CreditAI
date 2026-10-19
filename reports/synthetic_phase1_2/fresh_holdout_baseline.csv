@@ -1,0 +1,2 @@
+model,prediction,fresh_holdout_prevalence,validation_selected_model,validation_threshold,roc_auc,pr_auc,ks,gini,brier_score,f1,precision,recall,threshold,confusion_matrix
+Prevalence Dummy,train prevalence,0.15,Random Forest,0.1365866235651121,0.5,0.15,0.0,0.0,0.12830138948961936,0.2608695652173913,0.15,1.0,0.1365866235651121,"[[0, 204], [0, 36]]"

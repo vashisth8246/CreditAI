@@ -1,0 +1,7 @@
+metric,value,historical,match
+ROC-AUC (Raw),0.78065343566045,0.7807,True
+PR-AUC (Raw),0.5587941969234171,0.5588,True
+Brier Score (Calibrated),0.14412179090099117,0.1441,True
+Log Loss (Calibrated),0.45076500505181494,0.4508,True
+KS Statistic (Calibrated),0.4255308906860318,0.4255,True
+Gini Coefficient (Calibrated),0.5613068713209,0.5613,True
