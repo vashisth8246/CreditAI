@@ -5,9 +5,10 @@ import { availabilityState, dataSourceLabel, filterInventory, formatMetric, form
 import { DatasetInventoryTable } from './DatasetInventoryTable'
 import { PredictionWorkspace } from './PredictionWorkspace'
 import { ModelPerformanceLab } from './ModelPerformanceLab'
+import { BatchEvaluation } from './BatchEvaluation'
 import './App.css'
 
-type Page = 'overview' | 'prediction' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'architecture'
+type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'architecture'
 type Segment = 'vintage' | 'grade' | 'purpose'
 type MetricRow = Record<string, string | number | null>
 type SegmentRow = { segment: string; records: number; closed: number; defaults: number; observed_closed_default_rate: number | null }
@@ -24,6 +25,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 const nav: { id: Page; title: string; icon: string; section?: string }[] = [
   { id: 'overview', title: 'Executive overview', icon: '◫', section: 'WORKSPACE' },
   { id: 'prediction', title: 'Borrower prediction', icon: '◎' },
+  { id: 'batch', title: 'Batch evaluation', icon: '▤' },
   { id: 'discovery', title: 'Data discovery', icon: '◈' },
   { id: 'portfolio', title: 'Portfolio intelligence', icon: '▤' },
   { id: 'lab', title: 'Model lab', icon: '⌁', section: 'RESEARCH' },
@@ -120,9 +122,9 @@ function App() {
     let active = true
     void checkHealth()
     Promise.all([
-      fetch('/data/phase_6_1_lendingclub_summary.json').then((response) => { if (!response.ok) throw new Error('The verified research summary is unavailable.'); return response.json() as Promise<Summary> }),
-      fetch('/data/phase_6_1_dataset_inventory.json').then((response) => { if (!response.ok) throw new Error('The dataset inventory is unavailable.'); return response.json() as Promise<InventoryItem[]> }),
-      fetch('/data/phase_6_1_feature_inventory.json').then((response) => { if (!response.ok) throw new Error('The feature profile is unavailable.'); return response.json() as Promise<Feature[]> }),
+      fetch('/data/phase_9_lendingclub_summary.json').then((response) => { if (!response.ok) throw new Error('The verified research summary is unavailable.'); return response.json() as Promise<Summary> }),
+      fetch('/data/phase_9_dataset_inventory.json').then((response) => { if (!response.ok) throw new Error('The dataset inventory is unavailable.'); return response.json() as Promise<InventoryItem[]> }),
+      fetch('/data/phase_9_feature_inventory.json').then((response) => { if (!response.ok) throw new Error('The feature profile is unavailable.'); return response.json() as Promise<Feature[]> }),
     ]).then(([loadedSummary, loadedInventory, loadedFeatures]) => {
       if (!active) return
       setSummary(loadedSummary); setInventory(loadedInventory); setFeatures(loadedFeatures); setLoading(false); setRetryCount(0)
@@ -136,9 +138,9 @@ function App() {
     setLoadError(null)
     let active = true
     Promise.all([
-      fetch('/data/phase_6_1_lendingclub_summary.json').then((response) => { if (!response.ok) throw new Error('The verified research summary is unavailable.'); return response.json() as Promise<Summary> }),
-      fetch('/data/phase_6_1_dataset_inventory.json').then((response) => { if (!response.ok) throw new Error('The dataset inventory is unavailable.'); return response.json() as Promise<InventoryItem[]> }),
-      fetch('/data/phase_6_1_feature_inventory.json').then((response) => { if (!response.ok) throw new Error('The feature profile is unavailable.'); return response.json() as Promise<Feature[]> }),
+      fetch('/data/phase_9_lendingclub_summary.json').then((response) => { if (!response.ok) throw new Error('The verified research summary is unavailable.'); return response.json() as Promise<Summary> }),
+      fetch('/data/phase_9_dataset_inventory.json').then((response) => { if (!response.ok) throw new Error('The dataset inventory is unavailable.'); return response.json() as Promise<InventoryItem[]> }),
+      fetch('/data/phase_9_feature_inventory.json').then((response) => { if (!response.ok) throw new Error('The feature profile is unavailable.'); return response.json() as Promise<Feature[]> }),
     ]).then(([loadedSummary, loadedInventory, loadedFeatures]) => {
       if (!active) return
       setSummary(loadedSummary); setInventory(loadedInventory); setFeatures(loadedFeatures); setLoading(false)
@@ -154,13 +156,13 @@ function App() {
       const keyMap: Record<string, Page> = {
         '1': 'overview',
         '2': 'prediction',
-        '3': 'discovery',
-        '4': 'portfolio',
-        '5': 'lab',
-        '6': 'performance',
-        '7': 'explorer',
-        '8': 'explainability',
-        '9': 'monitoring',
+        '3': 'batch',
+        '4': 'discovery',
+        '5': 'portfolio',
+        '6': 'lab',
+        '7': 'performance',
+        '8': 'explorer',
+        '9': 'explainability',
       }
       if (keyMap[event.key]) {
         go(keyMap[event.key])
@@ -200,15 +202,16 @@ function App() {
   return <div className="shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark"><span>c</span><i /></div><div><strong>creditai</strong><small>RISK WORKBENCH</small></div></div>
-      <div className="workspace-switch"><span className="workspace-dot" /><div><strong>Research workspace</strong><small>Phase 7.2 · Taiwan research</small></div><span className="chevron">⌄</span></div>
+      <div className="workspace-switch"><span className="workspace-dot" /><div><strong>Research workspace</strong><small>Phase 9 · Research</small></div><span className="chevron">⌄</span></div>
       <nav className="side-nav" aria-label="Main navigation">{nav.map((item, index) => <div key={item.id}>{item.section && <div className="nav-section">{item.section}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => go(item.id)} aria-current={page === item.id ? 'page' : undefined} title={index < 9 ? `Press ${index + 1} to navigate` : item.title}><span className="nav-symbol" aria-hidden="true">{item.icon}</span><span>{item.title}</span>{item.id === 'explorer' && <span className="nav-pill">LAB</span>}{index < 9 && <span className="nav-shortcut" aria-hidden="true">{index + 1}</span>}</button></div>)}</nav>
-      <div className="sidebar-foot"><div className="foot-status"><span className="pulse-dot" /><span>Research environment</span></div><p>Historical analysis only<br />Production risk score disabled</p><div className="sidebar-version">CREDITAI <span>·</span> 7.2</div></div>
+      <div className="sidebar-foot"><div className="foot-status"><span className="pulse-dot" /><span>Research environment</span></div><p>Historical analysis only<br />Production risk score disabled</p><div className="sidebar-version">CREDITAI <span>·</span> 9</div></div>
     </aside>
 
     <main className="main-shell">
       <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date">Snapshot · 13 Oct 2026</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : 'not validated'}</div><button className="icon-button" aria-label="Check API health" onClick={checkHealth} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
 
       {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
+        : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
         : page === 'performance' ? <div className="page-body"><ModelPerformanceLab /></div>
         : viewState === 'loading' ? <div className="page-body"><EmptyState title="Preparing research workspace" message="Loading verified summaries and qualification metadata." icon="◌" /></div>
         : viewState === 'error' || viewState === 'empty' || !summary || !inventory || !features ? <div className="page-body"><SourceTag source="unavailable" /><EmptyState title="Research data unavailable" message={loadError ?? 'The sanitized local research artifacts were empty. Rebuild the Phase 6.1 summaries and try again.'} icon="!" />{retryCount > 0 && <p style={{ marginTop: '0.5rem', fontSize: '12px', color: '#617984' }}>Retry attempts: {retryCount}</p>}<button className="button-secondary" onClick={retryLoad} style={{ marginTop: '1rem' }}>Retry loading</button></div>

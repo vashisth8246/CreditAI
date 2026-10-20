@@ -1,4 +1,4 @@
-export type ModelSummary = {
+﻿export type ModelSummary = {
   model_id: string
   dataset_id: string
   dataset_name: string
@@ -189,6 +189,35 @@ export type SystemStatus = {
   indian_production_scoring: 'not_validated'
 }
 
+export type BatchRowResult = {
+  row_index: number
+  borrower_reference: string | number | null
+  status: 'success' | 'error'
+  prediction?: {
+    model_id: string
+    probability: number
+    predicted_class: string
+    risk_category: string
+    calibrated: boolean
+    threshold: number
+  }
+  error_message?: string
+}
+
+export type BatchPredictionResult = {
+  model_id: string
+  results: BatchRowResult[]
+}
+
+export const BATCH_PATH = '/v1/research/taiwan/batch-predict'
+
+export const TAIWAN_REQUIRED_FIELDS = [
+  'LIMIT_BAL', 'SEX', 'EDUCATION', 'MARRIAGE', 'AGE',
+  'PAY_0', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6',
+  'BILL_AMT1', 'BILL_AMT2', 'BILL_AMT3', 'BILL_AMT4', 'BILL_AMT5', 'BILL_AMT6',
+  'PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6',
+] as const
+
 const CONFIGURED_API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -253,4 +282,37 @@ export const researchApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model_id, features }),
     }),
+  batchPredict: async (file: File): Promise<BatchPredictionResult> => {
+    const form = new FormData()
+    form.append('file', file)
+    // Let the browser set the multipart boundary; only retry on network failure.
+    const targets = CONFIGURED_API_BASE
+      ? [CONFIGURED_API_BASE, 'http://127.0.0.1:8000', '']
+      : ['', 'http://127.0.0.1:8000']
+    let lastError: Error | null = null
+    for (const base of targets) {
+      try {
+        const response = await fetch(`${base}${BATCH_PATH}`, { method: 'POST', body: form })
+        if (!response.ok) {
+          let detail = `Batch request failed (${response.status}).`
+          try {
+            const body = (await response.json()) as { detail?: unknown; error?: { message?: string } }
+            if (typeof body.detail === 'string') detail = body.detail
+            else if (body.detail) detail = JSON.stringify(body.detail)
+            else if (body.error?.message) detail = body.error.message
+          } catch {
+            /* keep status message */
+          }
+          throw new Error(detail)
+        }
+        return (await response.json()) as BatchPredictionResult
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err))
+        if (err instanceof Error && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
+          throw err
+        }
+      }
+    }
+    throw new Error(lastError?.message || 'The batch research API is unreachable. Check that the FastAPI backend is running on port 8000.')
+  },
 }

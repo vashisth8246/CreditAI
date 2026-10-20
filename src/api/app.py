@@ -14,6 +14,7 @@ from ..inference import (
     get_available_models,
     get_model_info,
     get_feature_schema,
+    validate_input,
     predict,
     ArtifactNotFoundError,
     InvalidInputError,
@@ -201,11 +202,16 @@ async def batch_predict_endpoint(file: UploadFile = File(...)):
     if ext not in {"csv", "xlsx"}:
         raise HTTPException(status_code=415, detail="Unsupported file type. Use .csv or .xlsx.")
     try:
+        max_upload_bytes = 10 * 1024 * 1024  # 10 MB
         content = await file.read()
+        if len(content) > max_upload_bytes:
+            raise HTTPException(status_code=413, detail="Uploaded file exceeds the 10 MB limit.")
         if ext == "csv":
             df = pd.read_csv(pd.io.common.BytesIO(content))
         else:
             df = pd.read_excel(pd.io.common.BytesIO(content))
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse uploaded file: {e}")
 
