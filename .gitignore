@@ -30,7 +30,7 @@ env/
 # Data files - raw datasets should not be in git
 data/credit_default/*.xls
 data/credit_default/*.xlsx
-Data/
+/Data//
 
 # Reports / generated figures
 reports/figures/*.png
