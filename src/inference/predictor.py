@@ -371,12 +371,19 @@ def get_risk_category(probability: float, threshold: float = 0.5) -> str:
         return "High"
 
 
-def predict(model_id: str, input_features: Dict[str, Any]) -> PredictionResponse:
+def predict(
+    model_id: str,
+    input_features: Dict[str, Any],
+    include_explanations: bool = True,
+) -> PredictionResponse:
     """End-to-end prediction pipeline.
 
     Args:
         model_id: Model identifier.
         input_features: Input feature dictionary (raw features for UCI).
+        include_explanations: Compute per-row SHAP values. Batch inference passes
+            False because batch exports do not include SHAP and TreeExplainer on
+            every row is needlessly expensive.
 
     Returns:
         PredictionResponse with prediction results.
@@ -423,13 +430,17 @@ def predict(model_id: str, input_features: Dict[str, Any]) -> PredictionResponse
 
     risk_category = get_risk_category(probability, threshold)
 
-    # Compute genuine SHAP explanations
-    feature_contributions = compute_prediction_explanations(
-        model=model,
-        model_id=model_id,
-        feature_dict=all_features,
-        feature_names=feature_names,
-        top_k=6,
+    # Compute genuine SHAP explanations (single-borrower inference only by default)
+    feature_contributions = (
+        compute_prediction_explanations(
+            model=model,
+            model_id=model_id,
+            feature_dict=all_features,
+            feature_names=feature_names,
+            top_k=6,
+        )
+        if include_explanations
+        else None
     )
 
     # Build response

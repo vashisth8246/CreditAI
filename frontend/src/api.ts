@@ -1,4 +1,8 @@
-﻿export type ModelSummary = {
+﻿import type { BatchInspectResponse, BatchPredictionResult, Mapping } from './batch'
+
+export type { BatchPredictionResult, BatchRowResult } from './batch'
+
+export type ModelSummary = {
   model_id: string
   dataset_id: string
   dataset_name: string
@@ -189,34 +193,12 @@ export type SystemStatus = {
   indian_production_scoring: 'not_validated'
 }
 
-export type BatchRowResult = {
-  row_index: number
-  borrower_reference: string | number | null
-  status: 'success' | 'error'
-  prediction?: {
-    model_id: string
-    probability: number
-    predicted_class: string
-    risk_category: string
-    calibrated: boolean
-    threshold: number
-  }
-  error_message?: string
-}
-
-export type BatchPredictionResult = {
-  model_id: string
-  results: BatchRowResult[]
-}
-
 export const BATCH_PATH = '/v1/research/taiwan/batch-predict'
+export const BATCH_INSPECT_PATH = '/v1/research/taiwan/batch/inspect'
+export const BATCH_ANALYZE_PATH = '/v1/research/taiwan/batch/analyze'
+export const BATCH_EXPORT_XLSX_PATH = '/v1/research/taiwan/batch/export/xlsx'
 
-export const TAIWAN_REQUIRED_FIELDS = [
-  'LIMIT_BAL', 'SEX', 'EDUCATION', 'MARRIAGE', 'AGE',
-  'PAY_0', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6',
-  'BILL_AMT1', 'BILL_AMT2', 'BILL_AMT3', 'BILL_AMT4', 'BILL_AMT5', 'BILL_AMT6',
-  'PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6',
-] as const
+export { TAIWAN_REQUIRED_FIELDS } from './batch'
 
 const CONFIGURED_API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -282,30 +264,33 @@ export const researchApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model_id, features }),
     }),
-  batchPredict: async (file: File): Promise<BatchPredictionResult> => {
-    const form = new FormData()
-    form.append('file', file)
-    // Let the browser set the multipart boundary; only retry on network failure.
-    const targets = CONFIGURED_API_BASE
-      ? [CONFIGURED_API_BASE, 'http://127.0.0.1:8000', '']
-      : ['', 'http://127.0.0.1:8000']
+  batchInspect: (file: File, sheet?: string, mapping?: Mapping) =>
+    uploadBatchFile<BatchInspectResponse>(BATCH_INSPECT_PATH, file, {
+      ...(sheet ? { sheet } : {}),
+      ...(mapping ? { mapping: JSON.stringify(mapping) } : {}),
+    }),
+  batchAnalyze: (file: File, sheet: string, mapping: Mapping) =>
+    uploadBatchFile<BatchInspectResponse>(BATCH_ANALYZE_PATH, file, {
+      sheet,
+      mapping: JSON.stringify(mapping),
+    }),
+  batchPredict: (file: File, sheets?: { name: string; mapping: Mapping }[]) =>
+    uploadBatchFile<BatchPredictionResult>(BATCH_PATH, file, sheets && sheets.length
+      ? { sheets: JSON.stringify(sheets) }
+      : {}),
+  batchExportXlsx: async (payload: unknown): Promise<Blob> => {
     let lastError: Error | null = null
-    for (const base of targets) {
+    for (const base of batchTargets()) {
       try {
-        const response = await fetch(`${base}${BATCH_PATH}`, { method: 'POST', body: form })
+        const response = await fetch(`${base}${BATCH_EXPORT_XLSX_PATH}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
         if (!response.ok) {
-          let detail = `Batch request failed (${response.status}).`
-          try {
-            const body = (await response.json()) as { detail?: unknown; error?: { message?: string } }
-            if (typeof body.detail === 'string') detail = body.detail
-            else if (body.detail) detail = JSON.stringify(body.detail)
-            else if (body.error?.message) detail = body.error.message
-          } catch {
-            /* keep status message */
-          }
-          throw new Error(detail)
+          throw new Error(await batchDetail(response, `Excel export failed (${response.status}).`))
         }
-        return (await response.json()) as BatchPredictionResult
+        return await response.blob()
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err))
         if (err instanceof Error && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
@@ -315,4 +300,46 @@ export const researchApi = {
     }
     throw new Error(lastError?.message || 'The batch research API is unreachable. Check that the FastAPI backend is running on port 8000.')
   },
+}
+
+function batchTargets(): string[] {
+  return CONFIGURED_API_BASE
+    ? [CONFIGURED_API_BASE, 'http://127.0.0.1:8000', '']
+    : ['', 'http://127.0.0.1:8000', 'http://localhost:8000']
+}
+
+async function batchDetail(response: Response, fallback: string): Promise<string> {
+  let detail = fallback
+  try {
+    const body = (await response.json()) as { detail?: unknown; error?: { message?: string } }
+    if (typeof body.detail === 'string') detail = body.detail
+    else if (body.detail) detail = JSON.stringify(body.detail)
+    else if (body.error?.message) detail = body.error.message
+  } catch {
+    /* keep the status-based fallback */
+  }
+  return detail
+}
+
+async function uploadBatchFile<T>(path: string, file: File, fields: Record<string, string>): Promise<T> {
+  let lastError: Error | null = null
+  for (const base of batchTargets()) {
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      for (const [key, value] of Object.entries(fields)) form.append(key, value)
+      const response = await fetch(`${base}${path}`, { method: 'POST', body: form })
+      if (!response.ok) {
+        throw new Error(await batchDetail(response, `Batch request failed (${response.status}).`))
+      }
+      return (await response.json()) as T
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      // Retry only when the request never reached the backend.
+      if (err instanceof Error && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
+        throw err
+      }
+    }
+  }
+  throw new Error(lastError?.message || 'The batch research API is unreachable. Check that the FastAPI backend is running on port 8000.')
 }

@@ -1,13 +1,22 @@
 """FastAPI adapter. Install the API dependencies listed in requirements.txt."""
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
+import json
 import os
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .contract import ContractError, not_validated_response, validate_request
+from .batch_service import (
+    BatchError,
+    MAX_UPLOAD_BYTES,
+    build_csv,
+    build_xlsx,
+    inspect_workbook,
+    predict_workbook,
+)
 
 # Import inference modules
 from ..inference import (
@@ -180,104 +189,122 @@ async def predict_endpoint(request: PredictionRequest):
 
 
 # ---------------------------------------------------------------------------
-# Batch prediction endpoint for Taiwan research model
+# Batch research inference (Taiwan UCI benchmark)
 # ---------------------------------------------------------------------------
-# duplicate import removed
-import pandas as pd
-from typing import List
+# The service layer lives in batch_service.py. These endpoints only handle HTTP
+# concerns: upload limits, form parsing and file responses.
+
+class BatchExportRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    results: list[dict] = Field(default_factory=list)
+    summary: dict = Field(default_factory=dict)
+    metadata: dict = Field(default_factory=dict)
+
+
+async def _read_upload(file: UploadFile) -> tuple[bytes, str]:
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Uploaded file exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit.",
+        )
+    filename = file.filename or "upload.csv"
+    return content, filename
+
+
+def _parse_mapping(raw: str | None) -> dict | None:
+    if raw is None or raw.strip() == "":
+        return None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=422, detail="The column mapping is not valid JSON.") from exc
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=422, detail="The column mapping must be a JSON object.")
+    return parsed
+
+
+@app.post("/v1/research/taiwan/batch/inspect")
+async def batch_inspect_endpoint(
+    file: UploadFile = File(...),
+    sheet: str | None = Form(None),
+    mapping: str | None = Form(None),
+):
+    """Inspect a CSV/Excel workbook and validate one worksheet.
+
+    Returns every worksheet's metadata plus a detailed preview, header report,
+    column mapping and row validation for the selected sheet. Sheets are never
+    combined automatically.
+    """
+    content, filename = await _read_upload(file)
+    try:
+        return inspect_workbook(content, filename, selected_sheet=sheet, mapping=_parse_mapping(mapping))
+    except BatchError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+
+
+@app.post("/v1/research/taiwan/batch/analyze")
+async def batch_analyze_endpoint(
+    file: UploadFile = File(...),
+    sheet: str = Form(...),
+    mapping: str = Form(...),
+):
+    """Re-validate a worksheet after an explicit column-mapping change."""
+    content, filename = await _read_upload(file)
+    try:
+        return inspect_workbook(content, filename, selected_sheet=sheet, mapping=_parse_mapping(mapping))
+    except BatchError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+
 
 @app.post("/v1/research/taiwan/batch-predict")
-async def batch_predict_endpoint(file: UploadFile = File(...)):
-    """Accept an Excel or CSV file, validate rows, and return per‑row predictions.
+async def batch_predict_endpoint(
+    file: UploadFile = File(...),
+    sheets: str | None = Form(None),
+):
+    """Score one or more worksheets with the Taiwan research model.
 
-    The file must contain the 23 raw UCI Taiwan fields. An optional column
-    `borrower_reference` can be included for identification but is never used as a
-    model feature.
+    ``sheets`` is a JSON array of ``{"name": "Sheet1", "mapping": {"0": "LIMIT_BAL"}}``.
+    When omitted, the first non-empty worksheet is scored using automatic header
+    matching (kept for backwards compatibility).
     """
-    # -------------------------------------------------------------------
-    # 1. Load file into a DataFrame (support .xlsx and .csv)
-    # -------------------------------------------------------------------
-    filename = file.filename
-    ext = filename.split('.')[-1].lower()
-    if ext not in {"csv", "xlsx"}:
-        raise HTTPException(status_code=415, detail="Unsupported file type. Use .csv or .xlsx.")
-    try:
-        max_upload_bytes = 10 * 1024 * 1024  # 10 MB
-        content = await file.read()
-        if len(content) > max_upload_bytes:
-            raise HTTPException(status_code=413, detail="Uploaded file exceeds the 10 MB limit.")
-        if ext == "csv":
-            df = pd.read_csv(pd.io.common.BytesIO(content))
-        else:
-            df = pd.read_excel(pd.io.common.BytesIO(content))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to parse uploaded file: {e}")
-
-    # -------------------------------------------------------------------
-    # 2. Basic sanity checks (empty, size, row count)
-    # -------------------------------------------------------------------
-    if df.empty:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-    max_rows = 5000
-    if len(df) > max_rows:
-        raise HTTPException(status_code=400, detail=f"File contains {len(df)} rows; maximum allowed is {max_rows}.")
-
-    # -------------------------------------------------------------------
-    # 3. Validate required columns against the feature schema
-    # -------------------------------------------------------------------
-    model_id = "uci_taiwan_xgb"
-    schema = get_feature_schema(model_id)
-    raw_features = schema.get("raw_features", {})
-    required_cols = [name for name, meta in raw_features.items() if meta.get("required", False)]
-    missing = [col for col in required_cols if col not in df.columns]
-    if missing:
-        raise HTTPException(status_code=422, detail={"missing_columns": missing})
-
-    # Optional reference column – keep for output but drop from model input
-    reference_col = None
-    if "borrower_reference" in df.columns:
-        reference_col = "borrower_reference"
-
-    # -------------------------------------------------------------------
-    # 4. Process each row individually, preserving order and row number
-    # -------------------------------------------------------------------
-    results: List[dict] = []
-    for idx, row in df.iterrows():
-        row_number = idx + 2  # +2 because pandas is 0‑based and header is line 1
-        raw_dict = row.to_dict()
-        # Remove reference column before validation / prediction
-        borrower_ref = None
-        if reference_col:
-            borrower_ref = raw_dict.pop(reference_col, None)
-        # Cast to native Python types (pandas may use numpy scalars)
-        raw_dict = {k: (v.item() if hasattr(v, "item") else v) for k, v in raw_dict.items()}
+    content, filename = await _read_upload(file)
+    selections = None
+    if sheets is not None and sheets.strip() != "":
         try:
-            # Validate using the same routine as single‑borrower
-            validate_input(raw_dict, schema)
-            pred = predict(model_id, raw_dict)
-            result_entry = {
-                "row_index": row_number,
-                "borrower_reference": borrower_ref,
-                "status": "success",
-                "prediction": {
-                    "model_id": pred.model_id,
-                    "probability": pred.probability,
-                    "predicted_class": pred.predicted_class,
-                    "risk_category": pred.risk_category,
-                    "calibrated": pred.calibrated,
-                    "threshold": pred.threshold,
-                },
-            }
-        except Exception as e:
-            # Capture validation / prediction failures without exposing internals
-            result_entry = {
-                "row_index": row_number,
-                "borrower_reference": borrower_ref,
-                "status": "error",
-                "error_message": str(e),
-            }
-        results.append(result_entry)
+            parsed = json.loads(sheets)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=422, detail="The sheet selection is not valid JSON.") from exc
+        if not isinstance(parsed, list):
+            raise HTTPException(status_code=422, detail="The sheet selection must be a JSON array.")
+        selections = parsed
+    try:
+        return predict_workbook(content, filename, selections or [])
+    except BatchError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
-    return {"model_id": model_id, "results": results}
+
+@app.post("/v1/research/taiwan/batch/export/xlsx")
+async def batch_export_xlsx_endpoint(payload: BatchExportRequest):
+    """Return a formula-injection-safe predictions workbook with a summary sheet."""
+    if len(payload.results) > 20_000:
+        raise HTTPException(status_code=400, detail="Too many result rows to export.")
+    content = build_xlsx(payload.model_dump())
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="creditai_batch_predictions.xlsx"'},
+    )
+
+
+@app.post("/v1/research/taiwan/batch/export/csv")
+async def batch_export_csv_endpoint(payload: BatchExportRequest):
+    """Return a formula-injection-safe predictions CSV."""
+    if len(payload.results) > 20_000:
+        raise HTTPException(status_code=400, detail="Too many result rows to export.")
+    content = build_csv(payload.model_dump())
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="creditai_batch_predictions.csv"'},
+    )
