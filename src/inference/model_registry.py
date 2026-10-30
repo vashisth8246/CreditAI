@@ -66,6 +66,47 @@ MODELS: Dict[str, Dict[str, Any]] = {
         "source_url": "https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients",
         "license": "CC BY 4.0",
     },
+    "uci_taiwan_knn": {
+        "model_id": "uci_taiwan_knn",
+        "artifact_path": "models/creditai_knn_model.joblib",
+        "calibration_path": "models/calibration_knn_model.joblib",
+        "feature_names_path": "models/feature_names.json",
+        "metadata_path": "models/knn_model_metadata.json",
+        "dataset_id": "DS003",
+        "dataset_name": "Default of Credit Card Clients",
+        "dataset_path": "Data/credit_default/default of credit card clients.xls",
+        "geography": "Taiwan",
+        "time_coverage": "April - September 2005",
+        "target": "default payment next month",
+        "target_meaning": "1 = Default next month, 0 = Repaid",
+        "target_prevalence": "22.12% (6,636/30,000)",
+        "feature_count": 50,
+        "raw_feature_count": 23,
+        "engineered_feature_count": 27,
+        "model_type": "K-Nearest Neighbors",
+        "training_date": "2026-10-27",
+        "random_seed": 42,
+        "train_val_test_split": "70% / 15% / 15% (stratified)",
+        "test_roc_auc": 0.7649,
+        "test_pr_auc": 0.5235,
+        "calibration_status": "Calibrated — Platt scaling fitted on validation split (slope: 0.8633, intercept: -0.1464)",
+        "calibration_method": "Platt sigmoid",
+        "limitations": [
+            "Taiwan credit card portfolio behavior from 2005",
+            "Not validated for Indian borrowers",
+            "Distance metric sensitive to feature scaling and collinearity",
+            "Historical offline benchmark only",
+            "Target is next-month default, not multi-year horizon",
+            "Population is credit card holders, not general Indian loan applicants",
+            "No Indian transfer claim or regulatory clearance",
+        ],
+        "inference_ready": True,
+        "shap_available": False,
+        "explanation_method": "KNN Local Neighbor Variance Attribution",
+        "source": "UCI Machine Learning Repository",
+        "source_url": "https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients",
+        "license": "CC BY 4.0",
+    },
 }
 
 
@@ -173,7 +214,7 @@ def get_feature_schema(model_id: str) -> Dict[str, Any]:
 
     # For UCI Taiwan model, provide detailed schema for raw features
     # Engineered features are computed server-side
-    if model_id == "uci_taiwan_xgb":
+    if model_id in ["uci_taiwan_xgb", "uci_taiwan_knn"]:
         raw_features = {
             "LIMIT_BAL": {
                 "type": "numeric",

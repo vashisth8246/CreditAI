@@ -312,9 +312,9 @@ def predict_proba(model: Any, features: Dict[str, float], feature_names: List[st
     Returns:
         Raw probability of positive class.
     """
-    # Extract actual model if saved as dict (common with CalibratedClassifierCV)
+    # Extract actual model if saved as dict (common with CalibratedClassifierCV or model bundles)
     if isinstance(model, dict):
-        model = model.get("base_model", model)
+        model = model.get("base_model", model.get("model", model))
 
     # Convert to DataFrame in correct feature order
     feature_array = np.array([features.get(name, 0) for name in feature_names])
@@ -430,18 +430,24 @@ def predict(
 
     risk_category = get_risk_category(probability, threshold)
 
-    # Compute genuine SHAP explanations (single-borrower inference only by default)
-    feature_contributions = (
-        compute_prediction_explanations(
-            model=model,
-            model_id=model_id,
-            feature_dict=all_features,
-            feature_names=feature_names,
-            top_k=6,
-        )
-        if include_explanations
-        else None
-    )
+    # Compute genuine explanations (SHAP for tree models; local neighbor attribution for KNN)
+    if include_explanations:
+        if model_id == "uci_taiwan_knn":
+            explainer = model.get("explainer") if isinstance(model, dict) else None
+            if explainer is not None and hasattr(explainer, "explain_instance"):
+                feature_contributions, _ = explainer.explain_instance(all_features, k=15, top_features=6)
+            else:
+                feature_contributions = None
+        else:
+            feature_contributions = compute_prediction_explanations(
+                model=model,
+                model_id=model_id,
+                feature_dict=all_features,
+                feature_names=feature_names,
+                top_k=6,
+            )
+    else:
+        feature_contributions = None
 
     # Build response
     response = PredictionResponse(

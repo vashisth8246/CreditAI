@@ -54,12 +54,11 @@ class ScoreRequest(BaseModel):
 
 app = FastAPI(title="CreditAI Score API", version="1.0.0")
 
-# Keep local Vite development usable on any loopback port; deployments can add
-# explicit web origins through CORS_ORIGINS without opening the API globally.
+# Vite development uses a same-origin proxy. Cross-origin deployments must
+# explicitly list their frontend origins instead of allowing all loopback ports.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.getenv("CORS_ORIGINS", "").split(",") if origin.strip()],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -156,9 +155,9 @@ async def get_model_evaluation_endpoint(model_id: str):
     """Get reproducible evaluation artifacts (ROC/PR curves, confusion matrix, deciles)."""
     import json
     from pathlib import Path
-    if model_id != "uci_taiwan_xgb":
+    if model_id not in ["uci_taiwan_xgb", "uci_taiwan_knn"]:
         raise HTTPException(status_code=404, detail=f"Evaluation artifacts not found for '{model_id}'")
-    eval_path = Path("models/uci_taiwan_eval.json")
+    eval_path = Path("models/uci_taiwan_knn_eval.json" if model_id == "uci_taiwan_knn" else "models/uci_taiwan_eval.json")
     if not eval_path.exists():
         raise HTTPException(status_code=404, detail="Evaluation artifact not found on disk")
     try:

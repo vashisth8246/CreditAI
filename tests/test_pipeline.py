@@ -11,6 +11,7 @@ Verifies:
 """
 
 import unittest
+import pytest
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -23,7 +24,7 @@ from src.config import (
     TEST_RATIO,
     RANDOM_STATE,
 )
-from src.data_loader import load_uci_credit_card_data
+from src.data_loader import find_dataset_path, load_uci_credit_card_data
 from src.preprocessing import preprocess_data
 from src.feature_engineering import engineer_credit_features
 
@@ -32,6 +33,14 @@ class TestCreditAIPipeline(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Loads and preprocessed data once for the test suite."""
+        try:
+            find_dataset_path()
+        except FileNotFoundError:
+            pytest.skip(
+                "UCI Taiwan integration dataset is unavailable; provide "
+                "Data/credit_default/.../default of credit card clients.xls "
+                "or data/credit_default/default of credit card clients.xls"
+            )
         cls.raw_df = load_uci_credit_card_data(verbose=False)
         cls.X_pre, cls.y = preprocess_data(cls.raw_df, is_training=True, verbose=False)
         cls.X_feat = engineer_credit_features(cls.X_pre, verbose=False)

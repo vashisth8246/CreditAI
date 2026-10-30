@@ -135,12 +135,12 @@ export type BatchSummary = {
 export type HistogramBin = { label: string; count: number; low: number; high: number }
 
 export const HISTOGRAM_BINS = [
-  { label: '0â€“5%', low: 0, high: 0.05 },
-  { label: '5â€“10%', low: 0.05, high: 0.1 },
-  { label: '10â€“20%', low: 0.1, high: 0.2 },
-  { label: '20â€“40%', low: 0.2, high: 0.4 },
-  { label: '40â€“60%', low: 0.4, high: 0.6 },
-  { label: '60â€“100%', low: 0.6, high: 1.0000001 },
+  { label: '0\u20135%', low: 0, high: 0.05 },
+  { label: '5\u201310%', low: 0.05, high: 0.1 },
+  { label: '10\u201320%', low: 0.1, high: 0.2 },
+  { label: '20\u201340%', low: 0.2, high: 0.4 },
+  { label: '40\u201360%', low: 0.4, high: 0.6 },
+  { label: '60\u2013100%', low: 0.6, high: 1.0000001 },
 ] as const
 
 export type SheetStats = {
@@ -258,12 +258,12 @@ export function buildResultCsv(result: BatchPredictionResult): string {
 }
 
 export function formatProbability(probability: number | null | undefined, digits = 1): string {
-  if (probability === null || probability === undefined || !Number.isFinite(probability)) return 'â€”'
+  if (probability === null || probability === undefined || !Number.isFinite(probability)) return '\u2014'
   return `${(probability * 100).toFixed(digits)}%`
 }
 
 export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return 'â€”'
+  if (!Number.isFinite(bytes) || bytes < 0) return '\u2014'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
@@ -608,7 +608,7 @@ export function buildAnalysisReport(
     '',
     '## Limitations',
     '',
-    '- The Taiwan benchmark covers Aprilâ€“September 2005; it does not represent Indian borrowers or current credit behaviour.',
+    '- The Taiwan benchmark covers April\u2013September 2005; it does not represent Indian borrowers or current credit behaviour.',
     '- Predicted default probabilities are model outputs. Without verified outcome labels, this report cannot compute actual defaults, actual losses, model accuracy, or portfolio performance.',
     '- The batch endpoint scores rows in memory and does not persist borrower data.',
     '- The production `/v1/score` endpoint remains disabled (`not_validated`); this batch report is research output, not a production credit decision.',

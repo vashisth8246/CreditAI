@@ -1,73 +1,132 @@
-name: CI
+name: CreditAI CI and CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+
+concurrency:
+  group: creditai-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   backend:
     name: Backend Tests
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-      
+          cache: pip
+          cache-dependency-path: requirements.txt
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+      - name: Verify application imports
+        run: python -c "import src.data.generate, src.data.preprocessing, src.data.validation; from src.api.app import app; print(app.title)"
       - name: Run backend tests
-        run: |
-          pytest tests/ -v --tb=short
-        continue-on-error: false
+        run: python -m pytest tests/ -v --tb=short
 
   frontend:
-    name: Frontend Tests and Build
+    name: Frontend Tests, Lint, TypeScript, and Build
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-      
       - name: Install frontend dependencies
-        working-directory: ./frontend
+        working-directory: frontend
         run: npm ci
-      
       - name: Run frontend tests
-        working-directory: ./frontend
+        working-directory: frontend
         run: npm test
-        continue-on-error: false
-      
       - name: Run frontend lint
-        working-directory: ./frontend
+        working-directory: frontend
         run: npm run lint
-        continue-on-error: false
-      
       - name: TypeScript check
-        working-directory: ./frontend
+        working-directory: frontend
         run: npx tsc -b
-        continue-on-error: false
-      
-      - name: Frontend production build
-        working-directory: ./frontend
+      - name: Build production frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
         run: npm run build
-        continue-on-error: false
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  package:
+    name: Package Immutable Release
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download tested frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: frontend/dist/
+      - name: Package application and build metadata
+        run: python scripts/package_release.py
+      - name: Upload immutable release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: creditai-release-${{ github.sha }}
+          path: release/creditai-${{ github.sha }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  deployment-pending:
+    name: Deployment Pending Provider Selection
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOYMENT_PROVIDER == ''
+    needs: [backend, frontend, package]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report provider-neutral status
+        run: |
+          echo 'No deployment provider configured. CI completed successfully; deployment is pending provider configuration.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No deployment was attempted.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy and Verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOYMENT_PROVIDER != ''
+    needs: [backend, frontend, package]
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download this commit's release bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: creditai-release-${{ github.sha }}
+          path: release/
+      - name: Validate configured provider adapter
+        env:
+          DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
+        run: python -c "from src.cicd.deployment import load_configured_adapter; load_configured_adapter()"
+      - name: Deploy exact tested release and verify health
+        env:
+          DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
+          CREDITAI_DEPLOYMENT_TOKEN: ${{ secrets.CREDITAI_DEPLOYMENT_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python scripts/deploy_release.py "release/creditai-${GITHUB_SHA}.zip"

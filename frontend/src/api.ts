@@ -201,15 +201,16 @@ export const BATCH_EXPORT_XLSX_PATH = '/v1/research/taiwan/batch/export/xlsx'
 export { TAIWAN_REQUIRED_FIELDS } from './batch'
 
 const CONFIGURED_API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+const API_BASES = CONFIGURED_API_BASE
+  ? [CONFIGURED_API_BASE]
+  : import.meta.env.DEV
+    ? ['', 'http://127.0.0.1:8000', 'http://localhost:8000']
+    : ['']
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const targets = CONFIGURED_API_BASE
-    ? [CONFIGURED_API_BASE, 'http://127.0.0.1:8000', '']
-    : ['', 'http://127.0.0.1:8000', 'http://localhost:8000']
-
   let lastError: Error | null = null
 
-  for (const base of targets) {
+  for (const base of API_BASES) {
     try {
       const url = `${base}${path}`
       const response = await fetch(url, init)
@@ -303,9 +304,7 @@ export const researchApi = {
 }
 
 function batchTargets(): string[] {
-  return CONFIGURED_API_BASE
-    ? [CONFIGURED_API_BASE, 'http://127.0.0.1:8000', '']
-    : ['', 'http://127.0.0.1:8000', 'http://localhost:8000']
+  return API_BASES
 }
 
 async function batchDetail(response: Response, fallback: string): Promise<string> {

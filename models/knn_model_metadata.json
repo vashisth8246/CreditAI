@@ -1,0 +1,37 @@
+{
+  "dataset_id": "DS003",
+  "dataset_name": "Default of Credit Card Clients",
+  "geography": "Taiwan",
+  "time_coverage": "April - September 2005",
+  "target": "default payment next month",
+  "target_meaning": "1 = Default, 0 = Repaid",
+  "split_design": "Stratified 70% Train (21,000) / 15% Validation (4,500) / 15% Test (4,500)",
+  "random_seed": 42,
+  "test_sample_count": 4500,
+  "test_defaults": 996,
+  "test_prevalence": 0.2213,
+  "evaluation_date": "2026-10-27",
+  "primary_model": "K-Nearest Neighbors",
+  "hyperparameters": {
+    "n_neighbors": 51,
+    "metric": "manhattan",
+    "weights": "uniform",
+    "cv_splits": 5,
+    "cv_best_roc_auc": 0.7721,
+    "cv_std_roc_auc": 0.0095
+  },
+  "calibration_status": "Calibrated",
+  "calibration_method": "Platt scaling (sigmoid)",
+  "calibrator_params": {
+    "slope": 0.8633,
+    "intercept": -0.1464
+  },
+  "selected_f1_threshold": 0.28,
+  "limitations": [
+    "Taiwan credit card portfolio behavior from 2005",
+    "Not validated for Indian borrowers",
+    "Non-parametric distance-based model; sensitive to metric and feature scaling",
+    "Historical offline benchmark only",
+    "No Indian regulatory or underwriting clearance"
+  ]
+}

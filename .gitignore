@@ -30,7 +30,8 @@ env/
 # Data files - raw datasets should not be in git
 data/credit_default/*.xls
 data/credit_default/*.xlsx
-/Data//
+/Data/
+/release/
 
 # Reports / generated figures
 reports/figures/*.png
@@ -46,4 +47,5 @@ Thumbs.db
 htmlcov/
 
 # Logs
+/logs/
 *.log

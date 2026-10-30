@@ -1,0 +1,928 @@
+{
+  "metadata": {
+    "dataset_id": "DS003",
+    "dataset_name": "Default of Credit Card Clients",
+    "geography": "Taiwan",
+    "time_coverage": "April - September 2005",
+    "target": "default payment next month",
+    "target_meaning": "1 = Default, 0 = Repaid",
+    "split_design": "Stratified 70% Train (21,000) / 15% Validation (4,500) / 15% Test (4,500)",
+    "random_seed": 42,
+    "test_sample_count": 4500,
+    "test_defaults": 996,
+    "test_prevalence": 0.2213,
+    "evaluation_date": "2026-10-27",
+    "primary_model": "K-Nearest Neighbors",
+    "hyperparameters": {
+      "n_neighbors": 51,
+      "metric": "manhattan",
+      "weights": "uniform",
+      "cv_splits": 5,
+      "cv_best_roc_auc": 0.7721,
+      "cv_std_roc_auc": 0.0095
+    },
+    "calibration_status": "Calibrated",
+    "calibration_method": "Platt scaling (sigmoid)",
+    "calibrator_params": {
+      "slope": 0.8633,
+      "intercept": -0.1464
+    },
+    "selected_f1_threshold": 0.28,
+    "limitations": [
+      "Taiwan credit card portfolio behavior from 2005",
+      "Not validated for Indian borrowers",
+      "Non-parametric distance-based model; sensitive to metric and feature scaling",
+      "Historical offline benchmark only",
+      "No Indian regulatory or underwriting clearance"
+    ]
+  },
+  "summary_metrics": {
+    "test_roc_auc": 0.7649,
+    "test_pr_auc": 0.5235,
+    "brier_score_raw": 0.1385,
+    "brier_score_calibrated": 0.1387,
+    "brier_improvement_pct": -0.11,
+    "log_loss_raw": 0.4686,
+    "log_loss_calibrated": 0.4472,
+    "ks_statistic": 0.4174,
+    "gini_coefficient": 0.5297,
+    "accuracy_at_0_5": 0.8111,
+    "precision_at_0_5": 0.6547,
+    "recall_at_0_5": 0.3102,
+    "f1_at_0_5": 0.421,
+    "optimal_threshold": 0.28,
+    "accuracy_at_opt": 0.7827,
+    "precision_at_opt": 0.5082,
+    "recall_at_opt": 0.5602,
+    "f1_at_opt": 0.533
+  },
+  "confusion_matrix_default": {
+    "threshold": 0.5,
+    "true_negative": 3341,
+    "false_positive": 163,
+    "false_negative": 687,
+    "true_positive": 309,
+    "total": 4500
+  },
+  "confusion_matrix_optimal": {
+    "threshold": 0.28,
+    "true_negative": 2964,
+    "false_positive": 540,
+    "false_negative": 438,
+    "true_positive": 558,
+    "total": 4500
+  },
+  "curves": {
+    "roc": {
+      "title": "ROC Curve (K-Nearest Neighbors)",
+      "auc": 0.7649,
+      "baseline_auc": 0.5,
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 0.0,
+          "y": 0.003
+        },
+        {
+          "x": 0.0,
+          "y": 0.004
+        },
+        {
+          "x": 0.0006,
+          "y": 0.005
+        },
+        {
+          "x": 0.0009,
+          "y": 0.0131
+        },
+        {
+          "x": 0.002,
+          "y": 0.0201
+        },
+        {
+          "x": 0.0026,
+          "y": 0.0361
+        },
+        {
+          "x": 0.0049,
+          "y": 0.0612
+        },
+        {
+          "x": 0.0057,
+          "y": 0.0853
+        },
+        {
+          "x": 0.0077,
+          "y": 0.1044
+        },
+        {
+          "x": 0.0111,
+          "y": 0.1265
+        },
+        {
+          "x": 0.014,
+          "y": 0.1536
+        },
+        {
+          "x": 0.0183,
+          "y": 0.1777
+        },
+        {
+          "x": 0.0257,
+          "y": 0.1958
+        },
+        {
+          "x": 0.0303,
+          "y": 0.2199
+        },
+        {
+          "x": 0.0337,
+          "y": 0.246
+        },
+        {
+          "x": 0.0362,
+          "y": 0.2671
+        },
+        {
+          "x": 0.04,
+          "y": 0.2851
+        },
+        {
+          "x": 0.0431,
+          "y": 0.3012
+        },
+        {
+          "x": 0.0465,
+          "y": 0.3102
+        },
+        {
+          "x": 0.0499,
+          "y": 0.3233
+        },
+        {
+          "x": 0.0551,
+          "y": 0.3404
+        },
+        {
+          "x": 0.0594,
+          "y": 0.3594
+        },
+        {
+          "x": 0.0636,
+          "y": 0.3805
+        },
+        {
+          "x": 0.0685,
+          "y": 0.3966
+        },
+        {
+          "x": 0.0742,
+          "y": 0.4147
+        },
+        {
+          "x": 0.0799,
+          "y": 0.4378
+        },
+        {
+          "x": 0.0888,
+          "y": 0.4548
+        },
+        {
+          "x": 0.1005,
+          "y": 0.4829
+        },
+        {
+          "x": 0.1124,
+          "y": 0.503
+        },
+        {
+          "x": 0.1256,
+          "y": 0.5211
+        },
+        {
+          "x": 0.1384,
+          "y": 0.5452
+        },
+        {
+          "x": 0.1541,
+          "y": 0.5602
+        },
+        {
+          "x": 0.1715,
+          "y": 0.5863
+        },
+        {
+          "x": 0.1981,
+          "y": 0.6064
+        },
+        {
+          "x": 0.236,
+          "y": 0.6265
+        },
+        {
+          "x": 0.2754,
+          "y": 0.6606
+        },
+        {
+          "x": 0.3273,
+          "y": 0.7038
+        },
+        {
+          "x": 0.389,
+          "y": 0.755
+        },
+        {
+          "x": 0.4649,
+          "y": 0.7972
+        },
+        {
+          "x": 0.5362,
+          "y": 0.8424
+        },
+        {
+          "x": 0.6253,
+          "y": 0.8775
+        },
+        {
+          "x": 0.71,
+          "y": 0.9267
+        },
+        {
+          "x": 0.7982,
+          "y": 0.9518
+        },
+        {
+          "x": 0.873,
+          "y": 0.9779
+        },
+        {
+          "x": 0.9404,
+          "y": 0.992
+        },
+        {
+          "x": 0.9797,
+          "y": 0.996
+        },
+        {
+          "x": 1.0,
+          "y": 1.0
+        }
+      ]
+    },
+    "pr": {
+      "title": "Precision-Recall Curve (K-Nearest Neighbors)",
+      "auc": 0.5235,
+      "baseline_prevalence": 0.2213,
+      "points": [
+        {
+          "x": 0.0,
+          "y": 1.0
+        },
+        {
+          "x": 0.003,
+          "y": 1.0
+        },
+        {
+          "x": 0.004,
+          "y": 1.0
+        },
+        {
+          "x": 0.005,
+          "y": 0.7143
+        },
+        {
+          "x": 0.0131,
+          "y": 0.8125
+        },
+        {
+          "x": 0.0201,
+          "y": 0.7407
+        },
+        {
+          "x": 0.0361,
+          "y": 0.8
+        },
+        {
+          "x": 0.0612,
+          "y": 0.7821
+        },
+        {
+          "x": 0.0853,
+          "y": 0.8095
+        },
+        {
+          "x": 0.1044,
+          "y": 0.7939
+        },
+        {
+          "x": 0.1265,
+          "y": 0.7636
+        },
+        {
+          "x": 0.1536,
+          "y": 0.7574
+        },
+        {
+          "x": 0.1777,
+          "y": 0.7344
+        },
+        {
+          "x": 0.1958,
+          "y": 0.6842
+        },
+        {
+          "x": 0.2199,
+          "y": 0.6738
+        },
+        {
+          "x": 0.246,
+          "y": 0.6749
+        },
+        {
+          "x": 0.2671,
+          "y": 0.6768
+        },
+        {
+          "x": 0.2851,
+          "y": 0.6698
+        },
+        {
+          "x": 0.3012,
+          "y": 0.6652
+        },
+        {
+          "x": 0.3102,
+          "y": 0.6547
+        },
+        {
+          "x": 0.3233,
+          "y": 0.6479
+        },
+        {
+          "x": 0.3404,
+          "y": 0.6372
+        },
+        {
+          "x": 0.3594,
+          "y": 0.6325
+        },
+        {
+          "x": 0.3805,
+          "y": 0.6296
+        },
+        {
+          "x": 0.3966,
+          "y": 0.622
+        },
+        {
+          "x": 0.4147,
+          "y": 0.6137
+        },
+        {
+          "x": 0.4378,
+          "y": 0.6089
+        },
+        {
+          "x": 0.4548,
+          "y": 0.5929
+        },
+        {
+          "x": 0.4829,
+          "y": 0.5774
+        },
+        {
+          "x": 0.503,
+          "y": 0.5598
+        },
+        {
+          "x": 0.5211,
+          "y": 0.5412
+        },
+        {
+          "x": 0.5452,
+          "y": 0.5282
+        },
+        {
+          "x": 0.5602,
+          "y": 0.5082
+        },
+        {
+          "x": 0.5863,
+          "y": 0.4928
+        },
+        {
+          "x": 0.6064,
+          "y": 0.4653
+        },
+        {
+          "x": 0.6265,
+          "y": 0.43
+        },
+        {
+          "x": 0.6606,
+          "y": 0.4054
+        },
+        {
+          "x": 0.7038,
+          "y": 0.3793
+        },
+        {
+          "x": 0.755,
+          "y": 0.3556
+        },
+        {
+          "x": 0.7972,
+          "y": 0.3277
+        },
+        {
+          "x": 0.8424,
+          "y": 0.3087
+        },
+        {
+          "x": 0.8775,
+          "y": 0.2852
+        },
+        {
+          "x": 0.9267,
+          "y": 0.2706
+        },
+        {
+          "x": 0.9518,
+          "y": 0.2531
+        },
+        {
+          "x": 0.9779,
+          "y": 0.2415
+        },
+        {
+          "x": 0.992,
+          "y": 0.2307
+        },
+        {
+          "x": 0.996,
+          "y": 0.2242
+        },
+        {
+          "x": 1.0,
+          "y": 0.2213
+        }
+      ]
+    },
+    "calibration": {
+      "title": "Calibration Curve (Reliability)",
+      "bins": [
+        {
+          "bin": 1,
+          "pred_raw": 0.0625,
+          "true_raw": 0.085,
+          "pred_cal": 0.0636,
+          "true_cal": 0.067
+        },
+        {
+          "bin": 2,
+          "pred_raw": 0.1532,
+          "true_raw": 0.1498,
+          "pred_cal": 0.1475,
+          "true_cal": 0.142
+        },
+        {
+          "bin": 3,
+          "pred_raw": 0.246,
+          "true_raw": 0.1933,
+          "pred_cal": 0.2352,
+          "true_cal": 0.1927
+        },
+        {
+          "bin": 4,
+          "pred_raw": 0.3506,
+          "true_raw": 0.3429,
+          "pred_cal": 0.3428,
+          "true_cal": 0.3662
+        },
+        {
+          "bin": 5,
+          "pred_raw": 0.4488,
+          "true_raw": 0.5272,
+          "pred_cal": 0.4442,
+          "true_cal": 0.5174
+        },
+        {
+          "bin": 6,
+          "pred_raw": 0.5482,
+          "true_raw": 0.5252,
+          "pred_cal": 0.5551,
+          "true_cal": 0.6096
+        },
+        {
+          "bin": 7,
+          "pred_raw": 0.6495,
+          "true_raw": 0.5916,
+          "pred_cal": 0.6438,
+          "true_cal": 0.6111
+        },
+        {
+          "bin": 8,
+          "pred_raw": 0.7432,
+          "true_raw": 0.7452,
+          "pred_cal": 0.7333,
+          "true_cal": 0.8163
+        },
+        {
+          "bin": 9,
+          "pred_raw": 0.8235,
+          "true_raw": 0.7857,
+          "pred_cal": 0.8314,
+          "true_cal": 0.7143
+        },
+        {
+          "bin": 10,
+          "pred_raw": 0.902,
+          "true_raw": 1.0,
+          "pred_cal": null,
+          "true_cal": null
+        }
+      ]
+    },
+    "threshold_sweep": [
+      {
+        "threshold": 0.1,
+        "accuracy": 0.4309,
+        "precision": 0.2706,
+        "recall": 0.9267,
+        "f1_score": 0.4189,
+        "tn": 1016,
+        "fp": 2488,
+        "fn": 73,
+        "tp": 923
+      },
+      {
+        "threshold": 0.15,
+        "accuracy": 0.5476,
+        "precision": 0.3087,
+        "recall": 0.8424,
+        "f1_score": 0.4518,
+        "tn": 1625,
+        "fp": 1879,
+        "fn": 157,
+        "tp": 839
+      },
+      {
+        "threshold": 0.2,
+        "accuracy": 0.6796,
+        "precision": 0.3793,
+        "recall": 0.7038,
+        "f1_score": 0.493,
+        "tn": 2357,
+        "fp": 1147,
+        "fn": 295,
+        "tp": 701
+      },
+      {
+        "threshold": 0.25,
+        "accuracy": 0.7587,
+        "precision": 0.4653,
+        "recall": 0.6064,
+        "f1_score": 0.5266,
+        "tn": 2810,
+        "fp": 694,
+        "fn": 392,
+        "tp": 604
+      },
+      {
+        "threshold": 0.3,
+        "accuracy": 0.7916,
+        "precision": 0.5282,
+        "recall": 0.5452,
+        "f1_score": 0.5366,
+        "tn": 3019,
+        "fp": 485,
+        "fn": 453,
+        "tp": 543
+      },
+      {
+        "threshold": 0.35,
+        "accuracy": 0.8073,
+        "precision": 0.5774,
+        "recall": 0.4829,
+        "f1_score": 0.526,
+        "tn": 3152,
+        "fp": 352,
+        "fn": 515,
+        "tp": 481
+      },
+      {
+        "threshold": 0.4,
+        "accuracy": 0.8127,
+        "precision": 0.6137,
+        "recall": 0.4147,
+        "f1_score": 0.4949,
+        "tn": 3244,
+        "fp": 260,
+        "fn": 583,
+        "tp": 413
+      },
+      {
+        "threshold": 0.45,
+        "accuracy": 0.812,
+        "precision": 0.6325,
+        "recall": 0.3594,
+        "f1_score": 0.4584,
+        "tn": 3296,
+        "fp": 208,
+        "fn": 638,
+        "tp": 358
+      },
+      {
+        "threshold": 0.5,
+        "accuracy": 0.8111,
+        "precision": 0.6547,
+        "recall": 0.3102,
+        "f1_score": 0.421,
+        "tn": 3341,
+        "fp": 163,
+        "fn": 687,
+        "tp": 309
+      },
+      {
+        "threshold": 0.55,
+        "accuracy": 0.8096,
+        "precision": 0.6768,
+        "recall": 0.2671,
+        "f1_score": 0.383,
+        "tn": 3377,
+        "fp": 127,
+        "fn": 730,
+        "tp": 266
+      },
+      {
+        "threshold": 0.6,
+        "accuracy": 0.802,
+        "precision": 0.6842,
+        "recall": 0.1958,
+        "f1_score": 0.3044,
+        "tn": 3414,
+        "fp": 90,
+        "fn": 801,
+        "tp": 195
+      },
+      {
+        "threshold": 0.65,
+        "accuracy": 0.798,
+        "precision": 0.7636,
+        "recall": 0.1265,
+        "f1_score": 0.2171,
+        "tn": 3465,
+        "fp": 39,
+        "fn": 870,
+        "tp": 126
+      },
+      {
+        "threshold": 0.7,
+        "accuracy": 0.7931,
+        "precision": 0.8095,
+        "recall": 0.0853,
+        "f1_score": 0.1544,
+        "tn": 3484,
+        "fp": 20,
+        "fn": 911,
+        "tp": 85
+      },
+      {
+        "threshold": 0.75,
+        "accuracy": 0.7816,
+        "precision": 0.7407,
+        "recall": 0.0201,
+        "f1_score": 0.0391,
+        "tn": 3497,
+        "fp": 7,
+        "fn": 976,
+        "tp": 20
+      },
+      {
+        "threshold": 0.8,
+        "accuracy": 0.7793,
+        "precision": 0.7143,
+        "recall": 0.005,
+        "f1_score": 0.01,
+        "tn": 3502,
+        "fp": 2,
+        "fn": 991,
+        "tp": 5
+      },
+      {
+        "threshold": 0.85,
+        "accuracy": 0.7793,
+        "precision": 1.0,
+        "recall": 0.003,
+        "f1_score": 0.006,
+        "tn": 3504,
+        "fp": 0,
+        "fn": 993,
+        "tp": 3
+      },
+      {
+        "threshold": 0.9,
+        "accuracy": 0.7787,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "tn": 3504,
+        "fp": 0,
+        "fn": 996,
+        "tp": 0
+      }
+    ]
+  },
+  "risk_deciles": [
+    {
+      "decile": 1,
+      "borrowers": 424,
+      "defaults": 284,
+      "empirical_default_rate": 0.6698,
+      "mean_calibrated_pd": 0.643,
+      "mean_raw_score": 0.6988
+    },
+    {
+      "decile": 2,
+      "borrowers": 471,
+      "defaults": 217,
+      "empirical_default_rate": 0.4607,
+      "mean_calibrated_pd": 0.412,
+      "mean_raw_score": 0.4394
+    },
+    {
+      "decile": 3,
+      "borrowers": 403,
+      "defaults": 103,
+      "empirical_default_rate": 0.2556,
+      "mean_calibrated_pd": 0.2837,
+      "mean_raw_score": 0.2885
+    },
+    {
+      "decile": 4,
+      "borrowers": 325,
+      "defaults": 54,
+      "empirical_default_rate": 0.1662,
+      "mean_calibrated_pd": 0.2289,
+      "mean_raw_score": 0.2249
+    },
+    {
+      "decile": 5,
+      "borrowers": 492,
+      "defaults": 94,
+      "empirical_default_rate": 0.1911,
+      "mean_calibrated_pd": 0.194,
+      "mean_raw_score": 0.1854
+    },
+    {
+      "decile": 6,
+      "borrowers": 308,
+      "defaults": 42,
+      "empirical_default_rate": 0.1364,
+      "mean_calibrated_pd": 0.1682,
+      "mean_raw_score": 0.1569
+    },
+    {
+      "decile": 7,
+      "borrowers": 642,
+      "defaults": 80,
+      "empirical_default_rate": 0.1246,
+      "mean_calibrated_pd": 0.1402,
+      "mean_raw_score": 0.1267
+    },
+    {
+      "decile": 8,
+      "borrowers": 346,
+      "defaults": 49,
+      "empirical_default_rate": 0.1416,
+      "mean_calibrated_pd": 0.1128,
+      "mean_raw_score": 0.098
+    },
+    {
+      "decile": 9,
+      "borrowers": 622,
+      "defaults": 51,
+      "empirical_default_rate": 0.082,
+      "mean_calibrated_pd": 0.084,
+      "mean_raw_score": 0.0694
+    },
+    {
+      "decile": 10,
+      "borrowers": 467,
+      "defaults": 22,
+      "empirical_default_rate": 0.0471,
+      "mean_calibrated_pd": 0.0364,
+      "mean_raw_score": 0.027
+    }
+  ],
+  "model_comparison": [
+    {
+      "model_name": "XGBoost (Calibrated)",
+      "roc_auc": 0.7807,
+      "pr_auc": 0.5588,
+      "brier_score": 0.1441,
+      "log_loss": 0.4508,
+      "ks_statistic": 0.4255,
+      "gini_coefficient": 0.5613,
+      "accuracy": 0.7887,
+      "precision": 0.9091,
+      "recall": 0.0502,
+      "f1_score": 0.0951,
+      "is_calibrated": true
+    },
+    {
+      "model_name": "XGBoost (Raw)",
+      "roc_auc": 0.7807,
+      "pr_auc": 0.5588,
+      "brier_score": 0.1709,
+      "log_loss": 0.5205,
+      "ks_statistic": 0.4255,
+      "gini_coefficient": 0.5613,
+      "accuracy": 0.7607,
+      "precision": 0.4692,
+      "recall": 0.6185,
+      "f1_score": 0.5336,
+      "is_calibrated": false
+    },
+    {
+      "model_name": "Random Forest",
+      "roc_auc": 0.7797,
+      "pr_auc": 0.5594,
+      "brier_score": 0.1348,
+      "log_loss": 0.4292,
+      "ks_statistic": 0.4285,
+      "gini_coefficient": 0.5593,
+      "accuracy": 0.8162,
+      "precision": 0.6568,
+      "recall": 0.3554,
+      "f1_score": 0.4612,
+      "is_calibrated": false
+    },
+    {
+      "model_name": "KNN (Calibrated)",
+      "roc_auc": 0.7649,
+      "pr_auc": 0.5235,
+      "brier_score": 0.1387,
+      "log_loss": 0.4472,
+      "ks_statistic": 0.4174,
+      "gini_coefficient": 0.5297,
+      "accuracy": 0.8111,
+      "precision": 0.6547,
+      "recall": 0.3102,
+      "f1_score": 0.421,
+      "is_calibrated": true
+    },
+    {
+      "model_name": "KNN (Raw)",
+      "roc_auc": 0.7649,
+      "pr_auc": 0.5235,
+      "brier_score": 0.1385,
+      "log_loss": 0.4686,
+      "ks_statistic": 0.4174,
+      "gini_coefficient": 0.5297,
+      "accuracy": 0.8111,
+      "precision": 0.6372,
+      "recall": 0.3404,
+      "f1_score": 0.4437,
+      "is_calibrated": false
+    },
+    {
+      "model_name": "Logistic Regression",
+      "roc_auc": 0.7533,
+      "pr_auc": 0.4973,
+      "brier_score": 0.1431,
+      "log_loss": 0.4512,
+      "ks_statistic": 0.4022,
+      "gini_coefficient": 0.5066,
+      "accuracy": 0.8009,
+      "precision": 0.6025,
+      "recall": 0.2952,
+      "f1_score": 0.3962,
+      "is_calibrated": false
+    },
+    {
+      "model_name": "Prevalence Baseline",
+      "roc_auc": 0.5,
+      "pr_auc": 0.2213,
+      "brier_score": 0.1723,
+      "log_loss": 0.5286,
+      "ks_statistic": 0.0211,
+      "gini_coefficient": 0.0,
+      "accuracy": 0.7787,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "is_calibrated": false
+    }
+  ],
+  "limitations": [
+    "Taiwan credit card portfolio behavior from 2005",
+    "Not validated for Indian borrowers",
+    "Non-parametric distance-based model; sensitive to metric and feature scaling",
+    "Historical offline benchmark only",
+    "No Indian regulatory or underwriting clearance"
+  ]
+}

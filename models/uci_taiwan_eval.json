@@ -1089,6 +1089,34 @@
       "is_calibrated": false
     },
     {
+      "model_name": "KNN (Calibrated)",
+      "roc_auc": 0.7649,
+      "pr_auc": 0.5235,
+      "brier_score": 0.1387,
+      "log_loss": 0.4472,
+      "ks_statistic": 0.4174,
+      "gini_coefficient": 0.5297,
+      "accuracy": 0.8111,
+      "precision": 0.6547,
+      "recall": 0.3102,
+      "f1_score": 0.421,
+      "is_calibrated": true
+    },
+    {
+      "model_name": "KNN (Raw)",
+      "roc_auc": 0.7649,
+      "pr_auc": 0.5235,
+      "brier_score": 0.1385,
+      "log_loss": 0.4686,
+      "ks_statistic": 0.4174,
+      "gini_coefficient": 0.5297,
+      "accuracy": 0.8111,
+      "precision": 0.6372,
+      "recall": 0.3404,
+      "f1_score": 0.4437,
+      "is_calibrated": false
+    },
+    {
       "model_name": "Logistic Regression",
       "roc_auc": 0.7533,
       "pr_auc": 0.4973,
