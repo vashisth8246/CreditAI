@@ -3,7 +3,7 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-from src.api.app import app
+from src.api.app import app, _load_dashboard_snapshot, dashboard_snapshot
 
 
 client = TestClient(app)
@@ -34,6 +34,41 @@ def test_health_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data == {"status": "ok", "scoring": "not_validated"}
+
+
+def test_dashboard_snapshot_loader_reads_only_expected_historical_artifacts(tmp_path):
+    data_dir = tmp_path / "frontend" / "public" / "data"
+    data_dir.mkdir(parents=True)
+    expected = {
+        "phase_9_lendingclub_summary.json": {"generated_at": "2026-10-13", "dataset": {"records": 10}},
+        "phase_9_dataset_inventory.json": [{"dataset_id": "DS001"}],
+        "phase_9_feature_inventory.json": [{"feature": "loan_amount"}],
+    }
+    for name, payload in expected.items():
+        (data_dir / name).write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = _load_dashboard_snapshot(tmp_path)
+    assert loaded["summary"]["generated_at"] == "2026-10-13"
+    assert loaded["summary"]["dataset"]["records"] == 10
+    assert loaded["inventory"][0]["dataset_id"] == "DS001"
+    assert loaded["features"][0]["feature"] == "loan_amount"
+
+
+def test_dashboard_snapshot_handler_marks_payload_historical_and_uncached(monkeypatch):
+    monkeypatch.setattr(
+        "src.api.app._load_dashboard_snapshot",
+        lambda _root: {"summary": {"generated_at": "2026-10-13"}, "inventory": [], "features": []},
+    )
+    iterator = dashboard_snapshot().__await__()
+    with pytest.raises(StopIteration) as completion:
+        next(iterator)
+    response = completion.value.value
+    payload = json.loads(response.body)
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert payload["source"] == "historical_research_snapshot"
+    assert payload["source_snapshot_date"] == "2026-10-13"
+    assert payload["retrieved_at"]
 
 
 def test_valid_score_endpoint_returns_not_validated():

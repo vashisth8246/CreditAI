@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FeatureField, FeatureContribution, ModelDetails, ModelSchema, ModelSummary, Prediction, SystemStatus } from './api'
 import { researchApi } from './api'
+import { displayFeatureName } from './analytics'
 
-const fieldLabel = (key: string) => key.replaceAll('_', ' ')
+const fieldLabel = displayFeatureName
 
 type PresetProfile = {
   name: string

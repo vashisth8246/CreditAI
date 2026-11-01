@@ -1,0 +1,92 @@
+[
+  {
+    "model": "logistic_regression",
+    "probability_method": "raw",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.7549868423465551,
+    "pr_auc_average_precision": 0.49031511211687223,
+    "brier_score": 0.19339514205384184,
+    "log_loss": 0.5804295084187376,
+    "ece_10_equal_width": 0.2174733899878293
+  },
+  {
+    "model": "logistic_regression",
+    "probability_method": "platt",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.7549868423465551,
+    "pr_auc_average_precision": 0.49031511211687223,
+    "brier_score": 0.14363319315664927,
+    "log_loss": 0.45175669044818084,
+    "ece_10_equal_width": 0.012422656660815023
+  },
+  {
+    "model": "logistic_regression",
+    "probability_method": "isotonic",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.7513838172323999,
+    "pr_auc_average_precision": 0.4732943511495475,
+    "brier_score": 0.1439605131905557,
+    "log_loss": 0.4553267139636987,
+    "ece_10_equal_width": 0.013349705029596197
+  },
+  {
+    "model": "random_forest",
+    "probability_method": "raw",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.7815942709192936,
+    "pr_auc_average_precision": 0.5568305368753427,
+    "brier_score": 0.17557202774202016,
+    "log_loss": 0.533902049858353,
+    "ece_10_equal_width": 0.1916674319123078
+  },
+  {
+    "model": "random_forest",
+    "probability_method": "platt",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.7815942709192936,
+    "pr_auc_average_precision": 0.5568305368753427,
+    "brier_score": 0.13486759729026335,
+    "log_loss": 0.42881175874262334,
+    "ece_10_equal_width": 0.008277670439252415
+  },
+  {
+    "model": "random_forest",
+    "probability_method": "isotonic",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.780256012635015,
+    "pr_auc_average_precision": 0.5370865468633018,
+    "brier_score": 0.13509211851485636,
+    "log_loss": 0.4503616917733659,
+    "ece_10_equal_width": 0.01231581222938962
+  },
+  {
+    "model": "xgboost",
+    "probability_method": "raw",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.78065343566045,
+    "pr_auc_average_precision": 0.5587941969234171,
+    "brier_score": 0.17094272201942515,
+    "log_loss": 0.5205290828863429,
+    "ece_10_equal_width": 0.1696407125931647
+  },
+  {
+    "model": "xgboost",
+    "probability_method": "platt",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.78065343566045,
+    "pr_auc_average_precision": 0.5587941969234171,
+    "brier_score": 0.13546446688011296,
+    "log_loss": 0.43047315327133734,
+    "ece_10_equal_width": 0.014519860270302993
+  },
+  {
+    "model": "xgboost",
+    "probability_method": "isotonic",
+    "evaluation_split": "locked_test",
+    "roc_auc": 0.7799908251728374,
+    "pr_auc_average_precision": 0.5393609536474306,
+    "brier_score": 0.1358688056151403,
+    "log_loss": 0.44512551965933217,
+    "ece_10_equal_width": 0.011143395211685427
+  }
+]

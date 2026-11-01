@@ -1,4 +1,6 @@
-﻿export type BatchPrediction = {
+import { displayFeatureName, displayUserText } from './analytics.ts'
+
+export type BatchPrediction = {
   model_id: string
   probability: number
   predicted_class: string
@@ -225,7 +227,7 @@ export function buildHistogram(probabilities: number[]): HistogramBin[] {
 /** Build an export CSV that neutralises spreadsheet formula injection. */
 const RESULT_HEADER = [
   'result_index', 'sheet_name', 'source_row', 'sheet_row', 'borrower_reference', 'status',
-  'probability', 'probability_percent', 'risk_category', 'predicted_class', 'calibrated',
+  'probability', 'probability_percent', 'non_default_complement', 'non_default_complement_percent', 'risk_category', 'predicted_class', 'calibrated',
   'model_id', 'error_message',
 ]
 
@@ -247,11 +249,13 @@ export function buildResultCsv(result: BatchPredictionResult): string {
       row.status,
       prediction ? prediction.probability : '',
       prediction ? formatProbability(prediction.probability, 2) : '',
+      prediction ? repaymentComplement(prediction.probability) ?? '' : '',
+      prediction ? formatProbability(repaymentComplement(prediction.probability), 2) : '',
       prediction ? prediction.risk_category : '',
       prediction ? prediction.predicted_class : '',
       prediction ? String(prediction.calibrated) : '',
       prediction ? prediction.model_id : '',
-      row.error_message ?? '',
+      displayUserText(row.error_message ?? ''),
     ].map(csvCell).join(','))
   }
   return lines.join('\r\n')
@@ -260,6 +264,11 @@ export function buildResultCsv(result: BatchPredictionResult): string {
 export function formatProbability(probability: number | null | undefined, digits = 1): string {
   if (probability === null || probability === undefined || !Number.isFinite(probability)) return '\u2014'
   return `${(probability * 100).toFixed(digits)}%`
+}
+
+export function repaymentComplement(probability: number | null | undefined): number | null {
+  if (probability === null || probability === undefined || !Number.isFinite(probability) || probability < 0 || probability > 1) return null
+  return 1 - probability
 }
 
 export function formatBytes(bytes: number): string {
@@ -290,7 +299,7 @@ export function filterResults(results: BatchRowResult[], filter: ResultFilter, q
     const haystack = [
       row.borrower_reference ?? '',
       row.sheet_name ?? '',
-      row.error_message ?? '',
+      displayUserText(row.error_message ?? ''),
       row.prediction?.risk_category ?? '',
       row.prediction?.predicted_class ?? '',
       String(row.source_row ?? ''),
@@ -464,9 +473,9 @@ export function buildValidationCsv(sheets: ValidationExportSheet[]): string {
       lines.push([
         sheet.name,
         issue.source_row,
-        issue.column,
-        issue.source_column,
-        issue.message,
+        displayFeatureName(issue.column),
+        displayFeatureName(issue.source_column),
+        displayUserText(issue.message),
       ].map(csvCell).join(','))
     }
   }
@@ -531,6 +540,7 @@ export function buildAnalysisReport(
     '> **Research only.** This report uses the UCI Taiwan credit-card benchmark (2005).',
     '> The model is not validated for Indian borrowers or production lending decisions.',
     '> Predicted probabilities are model estimates, not observed defaults.',
+    '> The non-default complement (1 − PD) is mathematical only; it is not an observed repayment or guarantee.',
     '',
     '## Model',
     '',
@@ -573,7 +583,7 @@ export function buildAnalysisReport(
   } else {
     lines.push('| Sheet | Source row | Reference | Message |', '|---|---:|---|---|')
     for (const row of errorRows.slice(0, 100)) {
-      lines.push(`| ${row.sheet_name ?? ''} | ${row.source_row ?? ''} | ${sanitizeCell(String(row.borrower_reference ?? ''))} | ${sanitizeCell(row.error_message ?? '')} |`)
+      lines.push(`| ${row.sheet_name ?? ''} | ${row.source_row ?? ''} | ${sanitizeCell(String(row.borrower_reference ?? ''))} | ${sanitizeCell(displayUserText(row.error_message ?? ''))} |`)
     }
     if (errorRows.length > 100) lines.push('', `_Only the first 100 of ${errorRows.length} failures are listed._`)
   }
@@ -591,14 +601,14 @@ export function buildAnalysisReport(
     if (validationErrors.length) {
       lines.push('### Errors', '', '| Worksheet | Source row | Feature | Message |', '|---|---:|---|---|')
       for (const issue of validationErrors.slice(0, 100)) {
-        lines.push(`| ${issue.sheet} | ${issue.source_row} | ${issue.column} | ${sanitizeCell(issue.message)} |`)
+        lines.push(`| ${issue.sheet} | ${issue.source_row} | ${displayFeatureName(issue.column)} | ${sanitizeCell(displayUserText(issue.message))} |`)
       }
       if (validationErrors.length > 100) lines.push('', `_Only the first 100 of ${validationErrors.length} validation errors are listed._`)
     }
     if (validationWarnings.length) {
       lines.push('', '### Warnings', '', '| Worksheet | Source row | Feature | Warning |', '|---|---:|---|---|')
       for (const issue of validationWarnings.slice(0, 100)) {
-        lines.push(`| ${issue.sheet} | ${issue.source_row} | ${issue.column} | ${sanitizeCell(issue.message)} |`)
+        lines.push(`| ${issue.sheet} | ${issue.source_row} | ${displayFeatureName(issue.column)} | ${sanitizeCell(displayUserText(issue.message))} |`)
       }
       if (validationWarnings.length > 100) lines.push('', `_Only the first 100 of ${validationWarnings.length} warnings are listed._`)
     }

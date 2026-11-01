@@ -3,8 +3,11 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import json
 import os
+from pathlib import Path
+from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -98,6 +101,43 @@ async def system_status():
         "research_inference_ready": any(m.get("inference_ready", False) for m in models),
         "indian_production_scoring": "not_validated",
     }
+
+
+def _load_dashboard_snapshot(root: Path) -> dict:
+    """Load the fixed, sanitized historical dashboard artifacts from disk."""
+    data_dirs = (root / "frontend" / "public" / "data", root / "frontend" / "dist" / "data")
+    names = {
+        "summary": "phase_9_lendingclub_summary.json",
+        "inventory": "phase_9_dataset_inventory.json",
+        "features": "phase_9_feature_inventory.json",
+    }
+    data_dir = next((directory for directory in data_dirs if all((directory / name).is_file() for name in names.values())), None)
+    if data_dir is None:
+        raise ValueError("Historical dashboard artifacts are unavailable on this server.")
+    try:
+        payload = {key: json.loads((data_dir / name).read_text(encoding="utf-8")) for key, name in names.items()}
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("Historical dashboard artifacts could not be read.") from exc
+    return payload
+
+
+@app.get("/v1/dashboard/snapshot")
+async def dashboard_snapshot():
+    """Return the explicitly historical dashboard artifacts with retrieval time."""
+    root = Path(__file__).resolve().parents[2]
+    try:
+        payload = _load_dashboard_snapshot(root)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return JSONResponse(
+        content={
+            **payload,
+            "source": "historical_research_snapshot",
+            "retrieved_at": datetime.now(timezone.utc).isoformat(),
+            "source_snapshot_date": payload["summary"].get("generated_at"),
+        },
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.post("/v1/score")
@@ -307,3 +347,11 @@ async def batch_export_csv_endpoint(payload: BatchExportRequest):
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="creditai_batch_predictions.csv"'},
     )
+
+
+# Serve the compiled Vite application from the same origin in production.
+# Mount last so that the API routes above retain precedence. Local backend-only
+# development remains usable before the frontend has been built.
+frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if frontend_dist.is_dir():
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")

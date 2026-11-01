@@ -1,0 +1,29 @@
+{
+  "selection_split": "validation",
+  "evaluation_split": "locked_test",
+  "model": "xgboost",
+  "probability_method": "platt fitted on validation split",
+  "minimum_validation_coverage": 0.8,
+  "selected_margin": 0.2,
+  "validation_selected_candidate": {
+    "review_margin": 0.2,
+    "n_total": 4500,
+    "n_accepted": 3655,
+    "n_referred": 845,
+    "coverage": 0.8122222222222222,
+    "referred_fraction": 0.18777777777777782,
+    "selective_risk_error_rate": 0.1381668946648427,
+    "accepted_errors": 505
+  },
+  "test": {
+    "review_margin": 0.2,
+    "n_total": 4500,
+    "n_accepted": 3611,
+    "n_referred": 889,
+    "coverage": 0.8024444444444444,
+    "referred_fraction": 0.1975555555555556,
+    "selective_risk_error_rate": 0.1309886458044863,
+    "accepted_errors": 473
+  },
+  "interpretation": "Confidence-based referral screen at a 0.5 threshold; not a guarantee of epistemic uncertainty or safe credit decisions."
+}

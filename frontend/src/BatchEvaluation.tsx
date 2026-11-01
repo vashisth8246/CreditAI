@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type DragEvent, type ChangeEvent, type KeyboardEvent } from 'react'
 import { researchApi } from './api'
+import { displayFeatureName, displayUserText } from './analytics'
 import type {
   BatchInspectResponse,
   BatchPredictionResult,
@@ -18,6 +19,7 @@ import {
   filterResults,
   formatBytes,
   formatProbability,
+  repaymentComplement,
   mappingIssues,
   reverseMapping,
   riskClass,
@@ -149,7 +151,7 @@ export function BatchEvaluation() {
       }
       if (mappingProblem.duplicated.length) {
         ready = false
-        issues.push(`${name}: feature(s) mapped more than once (${mappingProblem.duplicated.join(', ')}).`)
+        issues.push(`${name}: feature(s) mapped more than once (${mappingProblem.duplicated.map(displayFeatureName).join(', ')}).`)
       }
       if (!analysis.usable) {
         ready = false
@@ -710,7 +712,7 @@ export function BatchEvaluation() {
                   <div className="batch-stat"><span>Invalid rows</span><strong>{activeAnalysis.validation.status === 'needs_mapping' ? '—' : activeAnalysis.validation.invalid_rows}</strong><small>{activeAnalysis.validation.status === 'needs_mapping' ? 'Not calculated yet' : 'Will be returned as row errors'}</small></div>
                   <div className="batch-stat"><span>Rows with warnings</span><strong>{activeAnalysis.validation.status === 'needs_mapping' ? '—' : activeAnalysis.validation.warning_rows}</strong><small>e.g. numbers stored as text</small></div>
                   <div className="batch-stat"><span>Required features found</span><strong>{activeRequired.length - activeAnalysis.missing_fields.length}/{activeRequired.length}</strong><small>Taiwan research contract</small></div>
-                  <div className={`batch-stat ${activeAnalysis.missing_fields.length ? 'is-bad' : ''}`}><span>Missing required</span><strong>{activeAnalysis.missing_fields.length}</strong><small>{activeAnalysis.missing_fields.length ? activeAnalysis.missing_fields.slice(0, 3).join(', ') + (activeAnalysis.missing_fields.length > 3 ? '…' : '') : 'None'}</small></div>
+                  <div className={`batch-stat ${activeAnalysis.missing_fields.length ? 'is-bad' : ''}`}><span>Missing required</span><strong>{activeAnalysis.missing_fields.length}</strong><small>{activeAnalysis.missing_fields.length ? activeAnalysis.missing_fields.slice(0, 3).map(displayFeatureName).join(', ') + (activeAnalysis.missing_fields.length > 3 ? '…' : '') : 'None'}</small></div>
                   <div className="batch-stat"><span>Extra columns</span><strong>{activeAnalysis.extra_columns.length}</strong><small>Ignored as metadata unless mapped</small></div>
                   <div className={`batch-stat ${activeAnalysis.duplicate_headers.length ? 'is-warn' : ''}`}><span>Duplicate headers</span><strong>{activeAnalysis.duplicate_headers.length}</strong><small>{activeAnalysis.ambiguous_columns.length ? `${activeAnalysis.ambiguous_columns.length} ambiguous column(s)` : 'No ambiguous headers'}</small></div>
                 </div>
@@ -718,7 +720,7 @@ export function BatchEvaluation() {
                 {activeAnalysis.missing_fields.length > 0 && (
                   <div className="api-error" role="alert">
                     <strong>Required model features are not mapped.</strong>
-                    <p>Missing: {activeAnalysis.missing_fields.join(', ')}. Map each field to a source column below. Missing financial values are never imputed.</p>
+                    <p>Missing: {activeAnalysis.missing_fields.map(displayFeatureName).join(', ')}. Map each field to a source column below. Missing financial values are never imputed.</p>
                   </div>
                 )}
 
@@ -751,7 +753,7 @@ export function BatchEvaluation() {
                     </div>
 
                     {activeMappingProblem.duplicated.length > 0 && (
-                      <p className="batch-inline-error">A model feature is mapped to more than one column: {activeMappingProblem.duplicated.join(', ')}.</p>
+                      <p className="batch-inline-error">A model feature is mapped to more than one column: {activeMappingProblem.duplicated.map(displayFeatureName).join(', ')}.</p>
                     )}
 
                     <div className="batch-mapping-scroll">
@@ -770,17 +772,17 @@ export function BatchEvaluation() {
                             return (
                               <tr key={`${header}-${index}`}>
                                 <td>{index + 1}</td>
-                                <td title={sanitizeCell(header)}>{header || '—'}</td>
+                                <td title={sanitizeCell(header)}>{header ? displayFeatureName(header) : '—'}</td>
                                 <td>
                                   <select
-                                    aria-label={`Mapping for column ${index + 1}: ${header}`}
+                                    aria-label={`Mapping for column ${index + 1}: ${displayFeatureName(header)}`}
                                     value={activeMapping[String(index)] ?? ''}
                                     onChange={(event) => void changeMapping(index, event.target.value)}
                                   >
                                     <option value="">Ignore / metadata</option>
                                     <option value="borrower_reference">borrower_reference (identifier only)</option>
                                     {TAIWAN_REQUIRED_FIELDS.map((field) => (
-                                      <option key={field} value={field}>{field}</option>
+                                      <option key={field} value={field}>{displayFeatureName(field)}</option>
                                     ))}
                                   </select>
                                 </td>
@@ -830,7 +832,7 @@ export function BatchEvaluation() {
                       {activeAnalysis.headers.map((header, index) => (
                         <label key={`${header}-${index}`}>
                           <input type="checkbox" checked={!hiddenColumns.has(index)} onChange={() => toggleColumn(index)} />
-                          <span title={header}>{header || `Column ${index + 1}`}</span>
+                          <span title={header}>{header ? displayFeatureName(header) : `Column ${index + 1}`}</span>
                         </label>
                       ))}
                     </div>
@@ -844,7 +846,7 @@ export function BatchEvaluation() {
                       <tr>
                         <th className="batch-row-number">Source row</th>
                         {previewColumns.map(({ header, index }) => (
-                          <th key={`${header}-${index}`} title={header}>{header || `Column ${index + 1}`}</th>
+                          <th key={`${header}-${index}`} title={header}>{header ? displayFeatureName(header) : `Column ${index + 1}`}</th>
                         ))}
                       </tr>
                     </thead>
@@ -886,9 +888,9 @@ export function BatchEvaluation() {
                           {activeAnalysis.validation.errors.slice(0, 100).map((issue, index) => (
                             <tr key={`${issue.source_row}-${issue.column}-${index}`}>
                               <td>{issue.source_row}</td>
-                              <td>{issue.column}</td>
-                              <td>{issue.source_column}</td>
-                              <td>{issue.message}</td>
+                              <td>{displayFeatureName(issue.column)}</td>
+                              <td>{displayFeatureName(issue.source_column)}</td>
+                              <td>{displayUserText(issue.message)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -908,9 +910,9 @@ export function BatchEvaluation() {
                           {activeAnalysis.validation.warnings.slice(0, 50).map((issue, index) => (
                             <tr key={`${issue.source_row}-${issue.column}-${index}`}>
                               <td>{issue.source_row}</td>
-                              <td>{issue.column}</td>
-                              <td>{issue.source_column}</td>
-                              <td>{issue.message}</td>
+                              <td>{displayFeatureName(issue.column)}</td>
+                              <td>{displayFeatureName(issue.source_column)}</td>
+                              <td>{displayUserText(issue.message)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1042,7 +1044,7 @@ export function BatchEvaluation() {
                 <div className="panel-heading">
                   <div>
                     <h2>Individual borrower results</h2>
-                    <p>Every value below comes from the backend response. Estimated PD is not an observed default.</p>
+                    <p>Model PD and the reported non-default complement (1 − PD) are estimates, not observed outcomes or a repayment guarantee.</p>
                   </div>
                   <span className="source-tag">{filteredResults.length} matching row(s)</span>
                 </div>
@@ -1099,13 +1101,14 @@ export function BatchEvaluation() {
                         <th aria-sort={sortKey === 'probability' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                           <button type="button" className="batch-sort" onClick={() => changeSort('probability')}>Estimated PD {sortKey === 'probability' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button>
                         </th>
+                        <th>Estimated non-default complement</th>
                         <th>Risk</th>
                         <th>Detail</th>
                       </tr>
                     </thead>
                     <tbody>
                       {visibleResults.length === 0 && (
-                        <tr><td colSpan={8} className="batch-table-empty">No results match this filter or search.</td></tr>
+                        <tr><td colSpan={9} className="batch-table-empty">No results match this filter or search.</td></tr>
                       )}
                       {visibleResults.map((row) => (
                         <tr key={`${row.result_index ?? row.row_index}-${row.sheet_name ?? ''}-${row.source_row ?? ''}`} className={riskClass(row.prediction?.risk_category)}>
@@ -1119,13 +1122,14 @@ export function BatchEvaluation() {
                             </span>
                           </td>
                           <td className="batch-probability">{formatProbability(row.prediction?.probability, 2)}</td>
+                          <td className="batch-probability">{formatProbability(repaymentComplement(row.prediction?.probability), 2)}</td>
                           <td>
                             {row.prediction?.risk_category
                               ? <span className={`batch-risk-pill ${riskClass(row.prediction.risk_category)}`}>{row.prediction.risk_category}</span>
                               : '—'}
                           </td>
-                          <td className="batch-error-cell" title={row.error_message ?? ''}>
-                            {row.error_message ?? (row.prediction ? `Predicted class: ${row.prediction.predicted_class} · classification threshold ${row.prediction.threshold}` : '—')}
+                          <td className="batch-error-cell" title={displayUserText(row.error_message ?? '')}>
+                            {row.error_message ? displayUserText(row.error_message) : row.prediction ? `Predicted class: ${row.prediction.predicted_class} · classification threshold ${row.prediction.threshold}` : '—'}
                           </td>
                         </tr>
                       ))}

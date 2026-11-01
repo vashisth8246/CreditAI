@@ -16,6 +16,7 @@ import {
   missingRequiredFields,
   parseCsv,
   reverseMapping,
+  repaymentComplement,
   sanitizeCell,
   sortResults,
   summarizeBatch,
@@ -130,6 +131,15 @@ test('formatProbability and formatBytes keep unavailable values readable', () =>
     assert.equal(formatBytes(-1), String.fromCharCode(0x2014))
 })
 
+test('repayment complement is only computed for a valid binary PD', () => {
+  assert.equal(repaymentComplement(0.23), 0.77)
+  assert.equal(repaymentComplement(0), 1)
+  assert.equal(repaymentComplement(1), 0)
+  assert.equal(repaymentComplement(null), null)
+  assert.equal(repaymentComplement(Number.NaN), null)
+  assert.equal(repaymentComplement(1.01), null)
+})
+
 function row(overrides: Partial<BatchRowResult> & { row_index: number }): BatchRowResult {
   return {
     borrower_reference: `ref-${overrides.row_index}`,
@@ -218,6 +228,8 @@ test('buildResultCsv keeps order, sheet, source row, reference and failures', ()
   assert.equal(lines.length, 5)
   assert.ok(lines[0].startsWith('result_index,sheet_name,source_row'))
   assert.ok(lines[1].includes('"Alpha","2","1","alpha-1"'))
+  assert.ok(lines[0].includes('non_default_complement_percent'))
+  assert.ok(lines[1].includes('"0.96","96.00%"'))
   assert.ok(lines[3].includes('"Beta","2","1","beta-1"'))
   assert.ok(lines[4].includes('"beta-bad","error"'))
   assert.ok(csv.indexOf('alpha-1') < csv.indexOf('beta-1'))

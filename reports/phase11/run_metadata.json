@@ -1,0 +1,61 @@
+{
+  "study": "CreditAI Phase 11 Taiwan UCI research; not production validation",
+  "dataset": {
+    "name": "UCI Default of Credit Card Clients",
+    "path_at_run": "data\\credit_default\\default of credit card clients.xls",
+    "sha256": "21b3cf4e30878150ae8db9386780e23febb613921747dec9e59dccb32f6104d3",
+    "rows": 30000,
+    "columns": 25,
+    "missing_values": 0,
+    "target_column": "default payment next month",
+    "target_counts": {
+      "0": 23364,
+      "1": 6636
+    }
+  },
+  "reproducibility": {
+    "seed": 42,
+    "commit_sha": "932c63f98ab5de87c32ba08d4ded55068324ef55",
+    "worktree_was_dirty": true,
+    "split": {
+      "train": {
+        "rows": 21000,
+        "index_sha256": "fa825ff1b8d3f3e11efad788945d7b1ff323d9f79cb2fb6910b73fb15e0e5740"
+      },
+      "validation": {
+        "rows": 4500,
+        "index_sha256": "a3c66f21ce0d6595e1e4c1560c77808587ec8f46e49a2e507e4fd8c6fdf8c45b"
+      },
+      "test": {
+        "rows": 4500,
+        "index_sha256": "3dd8b0958bb37064f0901624c2b17a0e6c3af09f52fa1d744f71d7c641c70103"
+      },
+      "stratified": true,
+      "proportions": {
+        "train": 0.7,
+        "validation": 0.15,
+        "test": 0.15
+      }
+    },
+    "python": "3.11.9",
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "scikit_learn": "1.9.1",
+    "xgboost": "3.2.0",
+    "shap": "0.51.0"
+  },
+  "models": {
+    "logistic_regression": "StandardScaler + class_weight=balanced LogisticRegression(max_iter=1000)",
+    "random_forest": "200 trees, max_depth=10, min_samples_leaf=20, class_weight=balanced",
+    "xgboost": "300 estimators, depth 5, learning_rate .05, subsample/colsample .8, train-derived scale_pos_weight"
+  },
+  "calibration": "Platt logistic regression on clipped probability logits and isotonic regression, fit only on validation labels/probabilities; test split used only for final metrics.",
+  "shap_stability": "TreeExplainer absolute-value rank comparisons for 100 fixed test rows, 12 observed marginal feature replacements per row; not causal and not a joint-distribution perturbation.",
+  "limitations": [
+    "Taiwan 2005 research data are not representative evidence for India or another deployment population.",
+    "No production validation or authorization is implied; /v1/score remains not_validated.",
+    "The checkout was dirty at run time; recorded commit identifies HEAD only, not all uncommitted source changes.",
+    "SHAP perturbations preserve each replaced feature's empirical marginal support but may create implausible cross-feature combinations.",
+    "No shipped model, calibrator, evaluation JSON, or model metadata was overwritten."
+  ]
+}

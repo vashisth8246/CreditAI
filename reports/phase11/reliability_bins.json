@@ -1,0 +1,700 @@
+{
+  "logistic_regression_raw": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 45,
+      "mean_predicted": 0.06074652819335152,
+      "observed_rate": 0.044444444444444446
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 234,
+      "mean_predicted": 0.16752200917597238,
+      "observed_rate": 0.0641025641025641
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 986,
+      "mean_predicted": 0.25777692274389075,
+      "observed_rate": 0.07707910750507099
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 1393,
+      "mean_predicted": 0.34671046626887597,
+      "observed_rate": 0.1457286432160804
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 498,
+      "mean_predicted": 0.4391906597323258,
+      "observed_rate": 0.19678714859437751
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 269,
+      "mean_predicted": 0.5492397041766794,
+      "observed_rate": 0.2379182156133829
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 291,
+      "mean_predicted": 0.6510915032742103,
+      "observed_rate": 0.38144329896907214
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 379,
+      "mean_predicted": 0.7536851258830632,
+      "observed_rate": 0.45910290237467016
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 283,
+      "mean_predicted": 0.8539726283435338,
+      "observed_rate": 0.5971731448763251
+    },
+    {
+      "bin": 10,
+      "lower": 0.9,
+      "upper": 1.0,
+      "count": 122,
+      "mean_predicted": 0.9205722355525553,
+      "observed_rate": 0.6885245901639344
+    }
+  ],
+  "logistic_regression_platt": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 854,
+      "mean_predicted": 0.07678691830882547,
+      "observed_rate": 0.0702576112412178
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 2189,
+      "mean_predicted": 0.13892955309836488,
+      "observed_rate": 0.14207400639561443
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 392,
+      "mean_predicted": 0.24633544024886972,
+      "observed_rate": 0.23214285714285715
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 303,
+      "mean_predicted": 0.34852982843448305,
+      "observed_rate": 0.3927392739273927
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 312,
+      "mean_predicted": 0.45174606367018866,
+      "observed_rate": 0.46794871794871795
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 173,
+      "mean_predicted": 0.5424807844009538,
+      "observed_rate": 0.5491329479768786
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 159,
+      "mean_predicted": 0.6537705399966349,
+      "observed_rate": 0.5849056603773585
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 102,
+      "mean_predicted": 0.7359107242629824,
+      "observed_rate": 0.6666666666666666
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 16,
+      "mean_predicted": 0.8290813587823456,
+      "observed_rate": 0.8125
+    }
+  ],
+  "logistic_regression_isotonic": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 1048,
+      "mean_predicted": 0.06551396967824434,
+      "observed_rate": 0.07633587786259542
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 1914,
+      "mean_predicted": 0.14651967241052288,
+      "observed_rate": 0.14367816091954022
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 535,
+      "mean_predicted": 0.24187810728310996,
+      "observed_rate": 0.22990654205607478
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 111,
+      "mean_predicted": 0.3501560622518888,
+      "observed_rate": 0.40540540540540543
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 410,
+      "mean_predicted": 0.42959420589214603,
+      "observed_rate": 0.4585365853658537
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 235,
+      "mean_predicted": 0.5502352646193881,
+      "observed_rate": 0.5361702127659574
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 190,
+      "mean_predicted": 0.6873008525508256,
+      "observed_rate": 0.6210526315789474
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 54,
+      "mean_predicted": 0.7577459163589679,
+      "observed_rate": 0.7037037037037037
+    },
+    {
+      "bin": 10,
+      "lower": 0.9,
+      "upper": 1.0,
+      "count": 3,
+      "mean_predicted": 0.9736362873598309,
+      "observed_rate": 1.0
+    }
+  ],
+  "random_forest_raw": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 64,
+      "mean_predicted": 0.08992005127432408,
+      "observed_rate": 0.015625
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 727,
+      "mean_predicted": 0.15122310009916964,
+      "observed_rate": 0.059147180192572216
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 862,
+      "mean_predicted": 0.2508755010112134,
+      "observed_rate": 0.09048723897911833
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 985,
+      "mean_predicted": 0.34771204871426714,
+      "observed_rate": 0.15532994923857868
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 571,
+      "mean_predicted": 0.44526205924106665,
+      "observed_rate": 0.18038528896672504
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 318,
+      "mean_predicted": 0.5467817414403776,
+      "observed_rate": 0.27044025157232704
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 337,
+      "mean_predicted": 0.651565712094393,
+      "observed_rate": 0.3887240356083086
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 164,
+      "mean_predicted": 0.7474658080327673,
+      "observed_rate": 0.47560975609756095
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 346,
+      "mean_predicted": 0.8596090904328147,
+      "observed_rate": 0.653179190751445
+    },
+    {
+      "bin": 10,
+      "lower": 0.9,
+      "upper": 1.0,
+      "count": 126,
+      "mean_predicted": 0.9234151135625843,
+      "observed_rate": 0.7698412698412699
+    }
+  ],
+  "random_forest_platt": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 1292,
+      "mean_predicted": 0.06617714795644984,
+      "observed_rate": 0.06656346749226007
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 1632,
+      "mean_predicted": 0.14454627415236732,
+      "observed_rate": 0.14644607843137256
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 541,
+      "mean_predicted": 0.2415244419869092,
+      "observed_rate": 0.22181146025878004
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 350,
+      "mean_predicted": 0.3529170559114004,
+      "observed_rate": 0.3657142857142857
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 158,
+      "mean_predicted": 0.4422174723252026,
+      "observed_rate": 0.4620253164556962
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 112,
+      "mean_predicted": 0.550449245440717,
+      "observed_rate": 0.5178571428571429
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 221,
+      "mean_predicted": 0.6553364728050665,
+      "observed_rate": 0.6561085972850679
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 151,
+      "mean_predicted": 0.7427344231094425,
+      "observed_rate": 0.7019867549668874
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 43,
+      "mean_predicted": 0.8278449826623178,
+      "observed_rate": 0.9534883720930233
+    }
+  ],
+  "random_forest_isotonic": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 1436,
+      "mean_predicted": 0.06357796337747694,
+      "observed_rate": 0.07103064066852367
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 1802,
+      "mean_predicted": 0.1644821282970744,
+      "observed_rate": 0.15538290788013318
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 215,
+      "mean_predicted": 0.2546490703195065,
+      "observed_rate": 0.2651162790697674
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 135,
+      "mean_predicted": 0.33391428918041993,
+      "observed_rate": 0.362962962962963
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 450,
+      "mean_predicted": 0.4364109399481605,
+      "observed_rate": 0.42
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 78,
+      "mean_predicted": 0.53092067615249,
+      "observed_rate": 0.5641025641025641
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 240,
+      "mean_predicted": 0.6634596432443087,
+      "observed_rate": 0.6791666666666667
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 77,
+      "mean_predicted": 0.7838742626366224,
+      "observed_rate": 0.7142857142857143
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 46,
+      "mean_predicted": 0.8032786885245905,
+      "observed_rate": 0.8260869565217391
+    },
+    {
+      "bin": 10,
+      "lower": 0.9,
+      "upper": 1.0,
+      "count": 21,
+      "mean_predicted": 1.0,
+      "observed_rate": 0.9047619047619048
+    }
+  ],
+  "xgboost_raw": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 357,
+      "mean_predicted": 0.07140862439819076,
+      "observed_rate": 0.05042016806722689
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 845,
+      "mean_predicted": 0.1505923823580234,
+      "observed_rate": 0.06627218934911243
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 805,
+      "mean_predicted": 0.24935113347094992,
+      "observed_rate": 0.11180124223602485
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 696,
+      "mean_predicted": 0.34745687409036463,
+      "observed_rate": 0.1724137931034483
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 484,
+      "mean_predicted": 0.44670117664928277,
+      "observed_rate": 0.19834710743801653
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 330,
+      "mean_predicted": 0.5462940384041179,
+      "observed_rate": 0.23939393939393938
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 321,
+      "mean_predicted": 0.6486691912386647,
+      "observed_rate": 0.3894080996884735
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 188,
+      "mean_predicted": 0.7457665848605176,
+      "observed_rate": 0.5106382978723404
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 267,
+      "mean_predicted": 0.8534769306468607,
+      "observed_rate": 0.5767790262172284
+    },
+    {
+      "bin": 10,
+      "lower": 0.9,
+      "upper": 1.0,
+      "count": 207,
+      "mean_predicted": 0.924137424443655,
+      "observed_rate": 0.782608695652174
+    }
+  ],
+  "xgboost_platt": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 1332,
+      "mean_predicted": 0.06394736744176963,
+      "observed_rate": 0.06606606606606606
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 1447,
+      "mean_predicted": 0.14484831949162816,
+      "observed_rate": 0.1492743607463718
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 654,
+      "mean_predicted": 0.2423097589578311,
+      "observed_rate": 0.20642201834862386
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 367,
+      "mean_predicted": 0.34707317292565915,
+      "observed_rate": 0.3405994550408719
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 202,
+      "mean_predicted": 0.4431849938693843,
+      "observed_rate": 0.5
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 145,
+      "mean_predicted": 0.5547374508901513,
+      "observed_rate": 0.5586206896551724
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 175,
+      "mean_predicted": 0.6512803655251951,
+      "observed_rate": 0.6057142857142858
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 161,
+      "mean_predicted": 0.7445408452410702,
+      "observed_rate": 0.7950310559006211
+    },
+    {
+      "bin": 9,
+      "lower": 0.8,
+      "upper": 0.9,
+      "count": 17,
+      "mean_predicted": 0.8162554477271253,
+      "observed_rate": 0.9411764705882353
+    }
+  ],
+  "xgboost_isotonic": [
+    {
+      "bin": 1,
+      "lower": 0.0,
+      "upper": 0.1,
+      "count": 1226,
+      "mean_predicted": 0.06430741224669999,
+      "observed_rate": 0.06199021207177814
+    },
+    {
+      "bin": 2,
+      "lower": 0.1,
+      "upper": 0.2,
+      "count": 1483,
+      "mean_predicted": 0.1322334713231072,
+      "observed_rate": 0.14160485502360082
+    },
+    {
+      "bin": 3,
+      "lower": 0.2,
+      "upper": 0.30000000000000004,
+      "count": 700,
+      "mean_predicted": 0.233248597574065,
+      "observed_rate": 0.21571428571428572
+    },
+    {
+      "bin": 4,
+      "lower": 0.30000000000000004,
+      "upper": 0.4,
+      "count": 368,
+      "mean_predicted": 0.3287537528322412,
+      "observed_rate": 0.32608695652173914
+    },
+    {
+      "bin": 5,
+      "lower": 0.4,
+      "upper": 0.5,
+      "count": 291,
+      "mean_predicted": 0.45903285601420457,
+      "observed_rate": 0.4948453608247423
+    },
+    {
+      "bin": 6,
+      "lower": 0.5,
+      "upper": 0.6000000000000001,
+      "count": 40,
+      "mean_predicted": 0.5200814641278177,
+      "observed_rate": 0.45
+    },
+    {
+      "bin": 7,
+      "lower": 0.6000000000000001,
+      "upper": 0.7000000000000001,
+      "count": 159,
+      "mean_predicted": 0.6620297406126315,
+      "observed_rate": 0.6289308176100629
+    },
+    {
+      "bin": 8,
+      "lower": 0.7000000000000001,
+      "upper": 0.8,
+      "count": 228,
+      "mean_predicted": 0.755860511211402,
+      "observed_rate": 0.7587719298245614
+    },
+    {
+      "bin": 10,
+      "lower": 0.9,
+      "upper": 1.0,
+      "count": 5,
+      "mean_predicted": 1.0,
+      "observed_rate": 0.8
+    }
+  ]
+}

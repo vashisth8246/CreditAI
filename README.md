@@ -71,7 +71,7 @@ credit card default dataset. It demonstrates:
 | Group | Columns |
 |---|---|
 | Credit Limit | LIMIT_BAL |
-| Demographics | SEX, EDUCATION, MARRIAGE, AGE |
+| Demographics | Gender (`SEX` model input), EDUCATION, MARRIAGE, AGE |
 | Repayment Status (6 months) | PAY_0, PAY_2, PAY_3, PAY_4, PAY_5, PAY_6 |
 | Bill Amounts (6 months) | BILL_AMT1 to BILL_AMT6 |
 | Payment Amounts (6 months) | PAY_AMT1 to PAY_AMT6 |

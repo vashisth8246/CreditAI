@@ -15,7 +15,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.app import app
-from src.api.batch_service import MAX_ROWS, MAX_UPLOAD_BYTES
+from src.api.batch_service import (
+    MAX_ROWS,
+    MAX_UPLOAD_BYTES,
+    build_export_rows,
+    build_csv,
+    build_xlsx,
+    inspect_workbook,
+    predict_workbook,
+)
 
 client = TestClient(app)
 
@@ -478,6 +486,75 @@ def test_xlsx_export_has_summary_formatting_and_injection_protection():
     labels = [row[0].value for row in summary.iter_rows(min_row=1, max_row=summary.max_row)]
     assert "Total rows submitted" in labels
     assert "High risk (>=50%)" in labels
+
+
+def test_exports_compute_non_default_complement_only_for_valid_probabilities():
+    results = [
+        {"result_index": 1, "row_index": 1, "status": "success", "prediction": {"probability": 0.123456}},
+        {"result_index": 2, "row_index": 2, "status": "success", "prediction": {"probability": 1.2}},
+        {"result_index": 3, "row_index": 3, "status": "error"},
+    ]
+    rows = build_export_rows(results)
+    assert rows[0][7] == pytest.approx(0.876544)
+    assert rows[1][7] is None
+    assert rows[2][7] is None
+
+    csv_text = build_csv({"results": results})
+    assert '"Estimated non-default complement (1 - PD)"' in csv_text
+    assert '"0.876544"' in csv_text
+
+    workbook = openpyxl.load_workbook(io.BytesIO(build_xlsx({"results": results})))
+    worksheet = workbook["Predictions"]
+    assert worksheet["H1"].value == "Estimated non-default complement (1 - PD)"
+    assert worksheet["H2"].value == pytest.approx(0.876544)
+    assert worksheet["H2"].number_format == "0.00%"
+    assert worksheet["H3"].value is None
+
+
+def test_synthetic_seven_sheet_workbook_inspects_and_scores_eligible_sheets():
+    """Exercise independent sheet validation and row provenance with synthetic rows."""
+    reordered = list(reversed(COLS))
+    missing_value = list(LOW)
+    missing_value[4] = None  # AGE is required; do not impute it.
+    fixture = workbook_bytes({
+        "Portfolio_A": [[*COLS, "borrower_reference"], [*LOW, "synthetic-a"], [*MEDIUM, "synthetic-a"]],
+        "Portfolio_B": [[*reordered, "borrower_reference"], [*reversed(LOW), "synthetic-b"]],
+        "Portfolio_C": [[*COLS, "borrower_reference"], [*missing_value, "synthetic-c"]],
+        "Portfolio_D": [[*COLS, "borrower_reference", "notes"], [*LOW, "synthetic-d", "synthetic metadata"]],
+        "Invalid_Sheet": [["LIMIT_BAL", "AGE", "borrower_reference"], [200000, 34, "synthetic-invalid"]],
+        "Summary": [["Metric", "Value"], ["Borrowers", 4]],
+        "Empty_Sheet": [],
+    })
+
+    inspected = inspect_workbook(fixture, "synthetic-seven-sheet.xlsx")
+    by_name = {sheet["name"]: sheet for sheet in inspected["sheets"]}
+    assert inspected["sheet_count"] == 7
+    assert by_name["Portfolio_A"]["status"] == "ready"
+    assert by_name["Portfolio_B"]["status"] == "ready"
+    assert by_name["Portfolio_C"]["status"] == "ready"
+    assert by_name["Portfolio_D"]["status"] == "ready"
+    assert by_name["Invalid_Sheet"]["status"] == "needs_mapping"
+    assert by_name["Summary"]["status"] == "needs_mapping"
+    assert by_name["Empty_Sheet"]["status"] == "blank"
+
+    c_analysis = inspect_workbook(fixture, "synthetic-seven-sheet.xlsx", selected_sheet="Portfolio_C")["analysis"]
+    assert c_analysis["validation"]["invalid_rows"] == 1
+    assert c_analysis["validation"]["valid_rows"] == 0
+    a_analysis = inspect_workbook(fixture, "synthetic-seven-sheet.xlsx", selected_sheet="Portfolio_A")["analysis"]
+    assert a_analysis["validation"]["warning_rows"] == 2
+    assert all("retained separately" in item["message"] for item in a_analysis["validation"]["warnings"])
+
+    selections = [{"name": name, "mapping": None} for name in ("Portfolio_A", "Portfolio_B", "Portfolio_C", "Portfolio_D")]
+    predicted = predict_workbook(fixture, "synthetic-seven-sheet.xlsx", selections)
+    assert len(predicted["results"]) == 5
+    assert [row["status"] for row in predicted["results"]] == ["success", "success", "success", "error", "success"]
+    assert [row["borrower_reference"] for row in predicted["results"]] == [
+        "synthetic-a", "synthetic-a", "synthetic-b", "synthetic-c", "synthetic-d",
+    ]
+    assert [row["sheet_name"] for row in predicted["results"]] == [
+        "Portfolio_A", "Portfolio_A", "Portfolio_B", "Portfolio_C", "Portfolio_D",
+    ]
+    assert [row["source_row"] for row in predicted["results"]] == [2, 3, 2, 2, 2]
 
 
 def test_export_rejects_unbounded_payloads():

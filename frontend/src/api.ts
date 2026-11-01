@@ -228,6 +228,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       return (await response.json()) as T
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err))
+      if (lastError.name === 'AbortError') throw lastError
       // If it was a non-network error (e.g. 422 validation or 404), throw immediately
       if (err instanceof Error && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
         throw err
@@ -248,17 +249,9 @@ export const researchApi = {
   details: (id: string) => request<ModelDetails>(`/v1/models/${encodeURIComponent(id)}`),
   schema: (id: string) => request<ModelSchema>(`/v1/models/${encodeURIComponent(id)}/schema`),
   evaluation: async (id: string): Promise<EvaluationArtifact> => {
-    try {
-      return await request<EvaluationArtifact>(`/v1/models/${encodeURIComponent(id)}/evaluation`)
-    } catch (apiErr) {
-      // Graceful fallback to verified static JSON artifact in public/data
-      const staticRes = await fetch('/data/uci_taiwan_eval.json')
-      if (staticRes.ok) {
-        return (await staticRes.json()) as EvaluationArtifact
-      }
-      throw apiErr
-    }
+    return request<EvaluationArtifact>(`/v1/models/${encodeURIComponent(id)}/evaluation`)
   },
+  dashboardSnapshot: <T,>(signal?: AbortSignal) => request<T>('/v1/dashboard/snapshot', { cache: 'no-store', signal }),
   predict: (model_id: string, features: Record<string, number>) =>
     request<Prediction>('/v1/predict', {
       method: 'POST',

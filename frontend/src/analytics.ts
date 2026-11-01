@@ -2,6 +2,14 @@ export type Availability = 'loading' | 'error' | 'empty' | 'ready'
 
 export type DataSource = 'historical' | 'synthetic' | 'live-unvalidated' | 'unavailable'
 
+export function displayFeatureName(name: string): string {
+  return name.toUpperCase() === 'SEX' ? 'Gender' : name.replaceAll('_', ' ')
+}
+
+export function displayUserText(text: string): string {
+  return text.replace(/\bsex\b/gi, 'gender')
+}
+
 export interface InventoryItem {
   dataset_id: string
   dataset_name: string

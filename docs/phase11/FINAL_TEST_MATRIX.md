@@ -1,0 +1,33 @@
+# Phase 11 Final Test Matrix
+
+| ID | Area | Test | Environment | Expected | Actual | Status | Evidence |
+|---|---|---|---|---|---|---|---|
+| B-01 | Backend | `python -m pytest tests/ -v --tb=short` | Windows, Python 3.11.9 | Full suite completes | 148 collected; first 8 pass; stalls at `/health` TestClient; interrupted, no summary | PARTIAL | Final engineering report |
+| B-01a | Backend | Non-HTTP suite excluding 4 TestClient files | Windows, Python 3.11.9 | Remaining backend/research tests pass | 92 passed, 0 failed, 36 warnings in 38.69s | PASS | Exact command in engineering report |
+| B-02 | Batch | Seven-sheet synthetic acceptance test | Windows, Python 3.11.9 | All 7 sheet outcomes and 5 row results preserved | 1 passed, 21 deselected; duplicate warnings, invalid row and provenance asserted | PASS | `tests/test_batch_workflow.py` focused run |
+| B-03 | Batch HTTP | Full `tests/test_batch_workflow.py` | Windows | CSV/Excel upload through export over HTTP | Not completed because TestClient loopback stalls | PARTIAL | Prior WSL report has 22 passed; not fresh this pass |
+| B-04 | Research | `python -m pytest tests/test_phase11_research.py -v --tb=short` | Windows, Python 3.11.9 | Helper, calibration and review-metric tests pass | 6 passed in 6.76s | PASS | Command output |
+| A-01 | API | `/health`, `/v1/status`, `/v1/score` | Source inspection; Windows HTTP test blocked | Health works and production score remains not validated | Source returns `not_validated`; fresh HTTP response not obtained | PARTIAL | `src/api/app.py`, `src/api/contract.py` |
+| A-02 | Dashboard | Historical snapshot API and asset handling | Source inspection | Historical date distinct from retrieval; missing data errors | Current code reads fixed named files and marks source historical; missing assets return 503 | PASS | `src/api/app.py`, `frontend/src/App.tsx` |
+| A-03 | Model evaluation | Selected model evaluation route | Source inspection | No cross-model fallback | Only XGB/KNN IDs accepted; route resolves model-specific JSON | PASS | `src/api/app.py`, `frontend/src/ModelPerformanceLab.tsx` |
+| F-01 | Frontend | `npm ci` clean install | Windows existing tree | Lockfile install succeeds | EPERM unlink of Rolldown native binary | FAIL | npm output |
+| F-02 | Frontend | `npm ci` isolated copy | Windows temp copy | Lockfile install succeeds | npm `Exit handler never called`; offline attempt `ENOTCACHED` for Vite | FAIL | npm output |
+| F-03 | Frontend | `npm test` | Isolated copy after failed install | All tests pass | 22 passed; analytics test file failed because React package absent | FAIL | Test output |
+| F-04 | Frontend | `npm run lint` with narrowed scope | Isolated copy | Project lint exits 0 with source-only scope | Failed: Oxlint executable absent after failed install | FAIL | `frontend/package.json` change unverified |
+| F-05 | Frontend | `npx tsc -b` | Isolated copy | Type check succeeds | Failed registry DNS `ENOTFOUND` while resolving `tsc`; local TypeScript executable absent, no source diagnostic | FAIL | npm output; earlier WSL pass recorded separately |
+| F-06 | Frontend | `npm run build` | Isolated copy | Vite production build succeeds | Failed: Vite/TypeScript binaries absent after failed install | FAIL | npm output |
+| D-01 | Dataset | Local SHA verification | Windows, Python 3.11.9 | Expected SHA matches | `21b3cf4e30878150ae8db9386780e23febb613921747dec9e59dccb32f6104d3` matches | PASS | `python scripts/fetch_phase11_dataset.py --verify-only` |
+| D-02 | Dataset | Isolated archive download and safe write | Windows, isolated empty path | Archive/member checks then hash before write | Fails at DNS lookup; no file written; later extraction/hash steps not reached | NOT RUN | `getaddrinfo failed` |
+| R-01 | Research | Saved metric artifact consistency | Local CSV/JSON | Rows and values agree | 9 rows each; all keys and metric values match within `1e-12` | PASS | Independent Python comparison |
+| R-02 | Research | Full training reproduction | Windows dirty worktree, Python 3.11.9 | Isolated outputs reproduce metrics | Runner completed to `.phase11-reproduction-verification/`; hashes, selective metrics, SHAP CSV and test metrics match saved evidence within stated tolerances | PASS | Command and comparison recorded in report |
+| R-03 | Calibration | Artifact identity/provenance | Windows, sklearn 1.9.1 | Hash/class/parameters recorded; warning retained | Hash/class/slope/intercept read; sklearn 1.9.0 serialization warning visible; original provenance unknown | PARTIAL | Final report and calibration note |
+| R-04 | Research safety | Taiwan-only status and `/v1/score` | Source inspection | Not claim India/production validation | Research-only language retained; score state is `not_validated` | PASS | App/UI source and white paper |
+| C-01 | Clean checkout | Committed revision contains required application/research/runtime assets | Base `HEAD` archive plus staged manifest | Required files present; raw workbook absent | Base `HEAD` archive lacked the Phase 11 set; staged revision includes app/tests, research source/evidence, Docker files, and required dashboard assets. Check committed tree after local commit; dependency install/CI remain unverified | PARTIAL | `git diff --cached --name-only`; precommit archive of `932c63f` |
+| C-02 | Dependencies | Python lock and frontend lock installation | Windows | Clean deterministic install | Python full lock clean install not performed; frontend npm clean install failed | PARTIAL | Dependency notes in reproduction guide |
+| C-03 | Docker | Build and runtime endpoints | Windows system Docker stub | Image builds and health/dashboard/models work | CLI could not start (`Access is denied`); no image built | NOT RUN | `docker version` |
+| C-04 | GitHub Actions | Actual workflow run | GitHub | Real run confirms CI | Not run: GitHub CLI unauthenticated; remote DNS failed. Main push could trigger production deployment if configured, and deployment is not authorized | NOT RUN | Workflow source inspected; no Actions validator/run |
+| G-01 | Lint configuration | Source-only Oxlint target | Repository change | Lint scans project-owned files | Package script updated; execution blocked by unavailable Oxlint | PARTIAL | `frontend/package.json` |
+
+## Interpretation
+
+PASS is reserved for checks that completed successfully in this pass. The previously reported Linux/WSL results are identified as historical evidence and are not substituted for failed or blocked current checks. Phase 11 remains PARTIAL until clean-checkout dependencies/assets, backend HTTP tests, frontend checks, Docker, and a real GitHub Actions run are verified.

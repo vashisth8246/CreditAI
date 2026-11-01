@@ -508,6 +508,15 @@ def _analyse_rows(
     invalid_rows = 0
     warning_rows = 0
     sheet_name = sheet["name"]
+    reference_index = next((index for index, target in mapping.items() if target == REFERENCE_FIELD), None)
+    duplicate_references: set[str] = set()
+    if reference_index is not None:
+        reference_values = [
+            _text(row[reference_index], 200).strip()
+            for row in sheet["rows"]
+            if reference_index < len(row) and _text(row[reference_index], 200).strip()
+        ]
+        duplicate_references = {value for value, count in Counter(reference_values).items() if count > 1}
 
     for position, row in enumerate(sheet["rows"]):
         source_row = sheet["row_numbers"][position]
@@ -515,6 +524,14 @@ def _analyse_rows(
         row_warnings: List[dict] = []
         for index, target in mapping.items():
             if target == REFERENCE_FIELD:
+                reference = _text(row[index], 200).strip() if index < len(row) else ""
+                if reference and reference in duplicate_references:
+                    row_warnings.append({
+                        "source_row": source_row,
+                        "column": REFERENCE_FIELD,
+                        "source_column": sheet["headers"][index],
+                        "message": "Borrower reference appears on multiple rows in this worksheet; rows are retained separately.",
+                    })
                 continue
             field_schema = raw_features[target]
             header = sheet["headers"][index]
@@ -852,6 +869,15 @@ def build_export_rows(results: Sequence[Dict[str, Any]]) -> List[List[Any]]:
     rows: List[List[Any]] = []
     for item in results:
         prediction = item.get("prediction") or {}
+        probability = prediction.get("probability")
+        non_default_complement = (
+            1.0 - float(probability)
+            if isinstance(probability, (int, float))
+            and not isinstance(probability, bool)
+            and math.isfinite(float(probability))
+            and 0.0 <= float(probability) <= 1.0
+            else None
+        )
         rows.append([
             item.get("result_index"),
             item.get("sheet_name"),
@@ -859,7 +885,8 @@ def build_export_rows(results: Sequence[Dict[str, Any]]) -> List[List[Any]]:
             item.get("row_index"),
             item.get("borrower_reference"),
             "Scored" if item.get("status") == "success" else "Failed",
-            prediction.get("probability"),
+            probability,
+            non_default_complement,
             prediction.get("risk_category"),
             prediction.get("predicted_class"),
             prediction.get("calibrated"),
@@ -871,7 +898,7 @@ def build_export_rows(results: Sequence[Dict[str, Any]]) -> List[List[Any]]:
 
 EXPORT_HEADERS = [
     "Result #", "Sheet", "Source row", "Sheet row", "Borrower reference",
-    "Status", "Estimated default probability", "Risk category",
+    "Status", "Estimated default probability", "Estimated non-default complement (1 - PD)", "Risk category",
     "Predicted class", "Calibrated", "Model ID", "Validation / error message",
 ]
 
@@ -889,7 +916,7 @@ def build_csv(payload: Dict[str, Any]) -> str:
     for row in build_export_rows(results):
         cells: List[str] = []
         for index, value in enumerate(row):
-            if index == 6 and isinstance(value, (int, float)):
+            if index in {6, 7} and isinstance(value, (int, float)):
                 cells.append(_csv_cell(f"{float(value):.6f}"))
             else:
                 cells.append(_csv_cell(value))
@@ -917,13 +944,13 @@ def build_xlsx(payload: Dict[str, Any]) -> bytes:
         for column, value in enumerate(row, start=1):
             safe = _excel_safe(value)
             cell = worksheet.cell(row=row_index, column=column, value=safe)
-            if column == 7 and isinstance(value, (int, float)):
+            if column in {7, 8} and isinstance(value, (int, float)):
                 cell.number_format = "0.00%"
             if column == 2:
                 cell.alignment = Alignment(horizontal="left")
     worksheet.freeze_panes = "A2"
     worksheet.auto_filter.ref = worksheet.dimensions
-    widths = [9, 18, 12, 10, 22, 11, 16, 14, 24, 11, 20, 60]
+    widths = [9, 18, 12, 10, 22, 11, 16, 25, 14, 24, 11, 20, 60]
     for index, width in enumerate(widths, start=1):
         worksheet.column_dimensions[get_column_letter(index)].width = width
 
@@ -953,6 +980,7 @@ def build_xlsx(payload: Dict[str, Any]) -> bytes:
     summary_rows.extend([
         ("", ""),
         ("Limitation", "Predicted probabilities are model estimates, not observed defaults. Without outcome labels, actual default rates, losses, accuracy and portfolio performance cannot be computed from this batch."),
+        ("Limitation", "The non-default complement (1 - PD) is a mathematical complement, not evidence or a guarantee of repayment."),
         ("Limitation", "Taiwan credit-card data (April–September 2005). Not validated for Indian borrowers or production lending decisions."),
     ])
     for row_index, (label, value) in enumerate(summary_rows, start=1):

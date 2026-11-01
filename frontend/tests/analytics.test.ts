@@ -2,10 +2,17 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { availabilityState, dataSourceLabel, filterInventory, formatMetric, formatPercent, safeProbability } from '../src/analytics.ts'
+import { availabilityState, dataSourceLabel, displayFeatureName, displayUserText, filterInventory, formatMetric, formatPercent, safeProbability } from '../src/analytics.ts'
 import { DatasetInventoryTable } from '../src/DatasetInventoryTable.ts'
 
 describe('Phase 6.1 dashboard helpers', () => {
+  it('uses Gender as a display label while keeping the raw feature contract intact', () => {
+    assert.equal(displayFeatureName('SEX'), 'Gender')
+    assert.equal(displayFeatureName('sex'), 'Gender')
+    assert.equal(displayFeatureName('PAY_0'), 'PAY 0')
+    assert.equal(displayUserText('Age, sex, and ID'), 'Age, gender, and ID')
+  })
+
   it('formats metrics and preserves missing values as unavailable', () => {
     assert.equal(formatMetric(0.7056), '0.7056')
     assert.equal(formatMetric(null), '—')

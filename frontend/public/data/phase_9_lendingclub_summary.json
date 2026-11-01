@@ -1,0 +1,716 @@
+{
+  "generated_at": "2026-10-13",
+  "source_label": "HISTORICAL RESEARCH DATA",
+  "dataset": {
+    "id": "DS001",
+    "name": "LendingClub accepted loans",
+    "source_file": "Data/archive/accepted_2007_to_2018Q4.csv",
+    "records": 2260701,
+    "source_columns": 151,
+    "origination_period": "2007\u20132018Q4",
+    "raw_default_share": 0.119149,
+    "closed_records": 1348099,
+    "closed_defaults": 269360,
+    "closed_default_rate": 0.199807,
+    "unresolved_or_censored": 912602,
+    "status_distribution": [
+      {
+        "status": "Fully Paid",
+        "count": 1076751
+      },
+      {
+        "status": "Current",
+        "count": 878317
+      },
+      {
+        "status": "Charged Off",
+        "count": 268559
+      },
+      {
+        "status": "Late (31-120 days)",
+        "count": 21467
+      },
+      {
+        "status": "In Grace Period",
+        "count": 8436
+      },
+      {
+        "status": "Late (16-30 days)",
+        "count": 4349
+      },
+      {
+        "status": "Does not meet the credit policy. Status:Fully Paid",
+        "count": 1988
+      },
+      {
+        "status": "Does not meet the credit policy. Status:Charged Off",
+        "count": 761
+      },
+      {
+        "status": "Default",
+        "count": 40
+      },
+      {
+        "status": "Missing status",
+        "count": 33
+      }
+    ]
+  },
+  "evaluation": {
+    "id": "phase_2_3_closed_loan_time_split",
+    "evaluation_date": "2026-10-11",
+    "target": "terminal closed-loan outcome at dataset cutoff; not fixed-horizon PD",
+    "split_design": "issue_d chronological: train 2007\u20132013, validation 2014\u20132015, untouched test 2016\u20132018",
+    "calibration": "not fitted",
+    "curve_coordinates_available": false,
+    "saved_prediction_rows_available": false,
+    "metrics": [
+      {
+        "model_name": "Prevalence Baseline",
+        "split_name": "Test",
+        "roc_auc": null,
+        "pr_auc": "0.2242",
+        "prevalence_baseline": "0.2242",
+        "brier_score": "0.1785",
+        "log_loss": "0.5479",
+        "ks_statistic": null,
+        "gini_coefficient": null,
+        "selected_threshold": "0.5",
+        "precision": "0.0",
+        "recall": "0.0",
+        "f1_score": "0.0",
+        "tn": "402449",
+        "fp": "0",
+        "fn": "116295",
+        "tp": "0"
+      },
+      {
+        "model_name": "Logistic Regression",
+        "split_name": "Test",
+        "roc_auc": "0.7005",
+        "pr_auc": "0.3886",
+        "prevalence_baseline": "0.2242",
+        "brier_score": "0.1662",
+        "log_loss": "0.5153",
+        "ks_statistic": "0.2929",
+        "gini_coefficient": "0.401",
+        "selected_threshold": "0.16",
+        "precision": "0.3739",
+        "recall": "0.5383",
+        "f1_score": "0.4413",
+        "tn": "297629",
+        "fp": "104820",
+        "fn": "53688",
+        "tp": "62607"
+      },
+      {
+        "model_name": "HistGradientBoosting",
+        "split_name": "Test",
+        "roc_auc": "0.7056",
+        "pr_auc": "0.3947",
+        "prevalence_baseline": "0.2242",
+        "brier_score": "0.1636",
+        "log_loss": "0.5035",
+        "ks_statistic": "0.2976",
+        "gini_coefficient": "0.4112",
+        "selected_threshold": "0.17",
+        "precision": "0.365",
+        "recall": "0.5799",
+        "f1_score": "0.448",
+        "tn": "285104",
+        "fp": "117345",
+        "fn": "48853",
+        "tp": "67442"
+      }
+    ],
+    "all_split_metrics": [
+      {
+        "model_name": "Prevalence Baseline",
+        "split_name": "Train",
+        "roc_auc": null,
+        "pr_auc": "0.1565",
+        "prevalence_baseline": "0.1565",
+        "brier_score": "0.132",
+        "log_loss": "0.4338",
+        "ks_statistic": null,
+        "gini_coefficient": null,
+        "selected_threshold": "0.5",
+        "precision": "0.0",
+        "recall": "0.0",
+        "f1_score": "0.0",
+        "tn": "194607",
+        "fp": "0",
+        "fn": "36099",
+        "tp": "0"
+      },
+      {
+        "model_name": "Prevalence Baseline",
+        "split_name": "Validation",
+        "roc_auc": null,
+        "pr_auc": "0.1954",
+        "prevalence_baseline": "0.1954",
+        "brier_score": "0.1587",
+        "log_loss": "0.4993",
+        "ks_statistic": null,
+        "gini_coefficient": null,
+        "selected_threshold": "0.5",
+        "precision": "0.0",
+        "recall": "0.0",
+        "f1_score": "0.0",
+        "tn": "481683",
+        "fp": "0",
+        "fn": "116966",
+        "tp": "0"
+      },
+      {
+        "model_name": "Prevalence Baseline",
+        "split_name": "Test",
+        "roc_auc": null,
+        "pr_auc": "0.2242",
+        "prevalence_baseline": "0.2242",
+        "brier_score": "0.1785",
+        "log_loss": "0.5479",
+        "ks_statistic": null,
+        "gini_coefficient": null,
+        "selected_threshold": "0.5",
+        "precision": "0.0",
+        "recall": "0.0",
+        "f1_score": "0.0",
+        "tn": "402449",
+        "fp": "0",
+        "fn": "116295",
+        "tp": "0"
+      },
+      {
+        "model_name": "Logistic Regression",
+        "split_name": "Train",
+        "roc_auc": "0.6937",
+        "pr_auc": "0.2885",
+        "prevalence_baseline": "0.1565",
+        "brier_score": "0.1235",
+        "log_loss": "0.4023",
+        "ks_statistic": "0.2803",
+        "gini_coefficient": "0.3874",
+        "selected_threshold": "0.16",
+        "precision": "0.2509",
+        "recall": "0.6253",
+        "f1_score": "0.3581",
+        "tn": "127216",
+        "fp": "67391",
+        "fn": "13527",
+        "tp": "22572"
+      },
+      {
+        "model_name": "Logistic Regression",
+        "split_name": "Validation",
+        "roc_auc": "0.7195",
+        "pr_auc": "0.3818",
+        "prevalence_baseline": "0.1954",
+        "brier_score": "0.1451",
+        "log_loss": "0.4564",
+        "ks_statistic": "0.3204",
+        "gini_coefficient": "0.439",
+        "selected_threshold": "0.16",
+        "precision": "0.3419",
+        "recall": "0.5912",
+        "f1_score": "0.4332",
+        "tn": "348579",
+        "fp": "133104",
+        "fn": "47821",
+        "tp": "69145"
+      },
+      {
+        "model_name": "Logistic Regression",
+        "split_name": "Test",
+        "roc_auc": "0.7005",
+        "pr_auc": "0.3886",
+        "prevalence_baseline": "0.2242",
+        "brier_score": "0.1662",
+        "log_loss": "0.5153",
+        "ks_statistic": "0.2929",
+        "gini_coefficient": "0.401",
+        "selected_threshold": "0.16",
+        "precision": "0.3739",
+        "recall": "0.5383",
+        "f1_score": "0.4413",
+        "tn": "297629",
+        "fp": "104820",
+        "fn": "53688",
+        "tp": "62607"
+      },
+      {
+        "model_name": "HistGradientBoosting",
+        "split_name": "Train",
+        "roc_auc": "0.7332",
+        "pr_auc": "0.3457",
+        "prevalence_baseline": "0.1565",
+        "brier_score": "0.1191",
+        "log_loss": "0.3873",
+        "ks_statistic": "0.3423",
+        "gini_coefficient": "0.4664",
+        "selected_threshold": "0.17",
+        "precision": "0.2777",
+        "recall": "0.6562",
+        "f1_score": "0.3902",
+        "tn": "132986",
+        "fp": "61621",
+        "fn": "12410",
+        "tp": "23689"
+      },
+      {
+        "model_name": "HistGradientBoosting",
+        "split_name": "Validation",
+        "roc_auc": "0.7244",
+        "pr_auc": "0.3837",
+        "prevalence_baseline": "0.1954",
+        "brier_score": "0.143",
+        "log_loss": "0.4485",
+        "ks_statistic": "0.3287",
+        "gini_coefficient": "0.4488",
+        "selected_threshold": "0.17",
+        "precision": "0.3317",
+        "recall": "0.6383",
+        "f1_score": "0.4365",
+        "tn": "331248",
+        "fp": "150435",
+        "fn": "42311",
+        "tp": "74655"
+      },
+      {
+        "model_name": "HistGradientBoosting",
+        "split_name": "Test",
+        "roc_auc": "0.7056",
+        "pr_auc": "0.3947",
+        "prevalence_baseline": "0.2242",
+        "brier_score": "0.1636",
+        "log_loss": "0.5035",
+        "ks_statistic": "0.2976",
+        "gini_coefficient": "0.4112",
+        "selected_threshold": "0.17",
+        "precision": "0.365",
+        "recall": "0.5799",
+        "f1_score": "0.448",
+        "tn": "285104",
+        "fp": "117345",
+        "fn": "48853",
+        "tp": "67442"
+      }
+    ],
+    "splits": [
+      {
+        "split_name": "Train",
+        "start_date": "2007-01-01",
+        "end_date": "2013-12-31",
+        "total_samples": "230706",
+        "good_count": "194607",
+        "bad_count": "36099",
+        "default_prevalence": "0.1565",
+        "term_36m_count": "175426",
+        "term_60m_count": "55280"
+      },
+      {
+        "split_name": "Validation",
+        "start_date": "2014-01-01",
+        "end_date": "2015-12-31",
+        "total_samples": "598649",
+        "good_count": "481683",
+        "bad_count": "116966",
+        "default_prevalence": "0.1954",
+        "term_36m_count": "445596",
+        "term_60m_count": "153053"
+      },
+      {
+        "split_name": "Test",
+        "start_date": "2016-01-01",
+        "end_date": "2018-12-31",
+        "total_samples": "518744",
+        "good_count": "402449",
+        "bad_count": "116295",
+        "default_prevalence": "0.2242",
+        "term_36m_count": "402184",
+        "term_60m_count": "116560"
+      }
+    ]
+  },
+  "portfolio": {
+    "vintage": [
+      {
+        "segment": "2007",
+        "records": 603,
+        "closed": 603,
+        "defaults": 158,
+        "observed_closed_default_rate": 0.262023
+      },
+      {
+        "segment": "2008",
+        "records": 2393,
+        "closed": 2393,
+        "defaults": 496,
+        "observed_closed_default_rate": 0.207271
+      },
+      {
+        "segment": "2009",
+        "records": 5281,
+        "closed": 5281,
+        "defaults": 723,
+        "observed_closed_default_rate": 0.136906
+      },
+      {
+        "segment": "2010",
+        "records": 12537,
+        "closed": 12537,
+        "defaults": 1757,
+        "observed_closed_default_rate": 0.140145
+      },
+      {
+        "segment": "2011",
+        "records": 21721,
+        "closed": 21721,
+        "defaults": 3297,
+        "observed_closed_default_rate": 0.151789
+      },
+      {
+        "segment": "2012",
+        "records": 53367,
+        "closed": 53367,
+        "defaults": 8644,
+        "observed_closed_default_rate": 0.161973
+      },
+      {
+        "segment": "2013",
+        "records": 134814,
+        "closed": 134804,
+        "defaults": 21024,
+        "observed_closed_default_rate": 0.15596
+      },
+      {
+        "segment": "2014",
+        "records": 235629,
+        "closed": 223103,
+        "defaults": 41162,
+        "observed_closed_default_rate": 0.184498
+      },
+      {
+        "segment": "2015",
+        "records": 421095,
+        "closed": 375546,
+        "defaults": 75804,
+        "observed_closed_default_rate": 0.20185
+      },
+      {
+        "segment": "2016",
+        "records": 434407,
+        "closed": 293105,
+        "defaults": 68252,
+        "observed_closed_default_rate": 0.232859
+      },
+      {
+        "segment": "2017",
+        "records": 443579,
+        "closed": 169321,
+        "defaults": 39169,
+        "observed_closed_default_rate": 0.23133
+      },
+      {
+        "segment": "2018",
+        "records": 495242,
+        "closed": 56318,
+        "defaults": 8874,
+        "observed_closed_default_rate": 0.15757
+      }
+    ],
+    "grade": [
+      {
+        "segment": "A",
+        "records": 433027,
+        "closed": 235193,
+        "defaults": 14214,
+        "observed_closed_default_rate": 0.060435
+      },
+      {
+        "segment": "B",
+        "records": 663557,
+        "closed": 393102,
+        "defaults": 52661,
+        "observed_closed_default_rate": 0.133963
+      },
+      {
+        "segment": "C",
+        "records": 650053,
+        "closed": 382323,
+        "defaults": 85805,
+        "observed_closed_default_rate": 0.224431
+      },
+      {
+        "segment": "D",
+        "records": 324424,
+        "closed": 201657,
+        "defaults": 61264,
+        "observed_closed_default_rate": 0.303803
+      },
+      {
+        "segment": "E",
+        "records": 135639,
+        "closed": 94192,
+        "defaults": 36199,
+        "observed_closed_default_rate": 0.384311
+      },
+      {
+        "segment": "F",
+        "records": 41800,
+        "closed": 32306,
+        "defaults": 14585,
+        "observed_closed_default_rate": 0.451464
+      },
+      {
+        "segment": "G",
+        "records": 12168,
+        "closed": 9326,
+        "defaults": 4632,
+        "observed_closed_default_rate": 0.496676
+      }
+    ],
+    "purpose": [
+      {
+        "segment": "car",
+        "records": 24013,
+        "closed": 14652,
+        "defaults": 2157,
+        "observed_closed_default_rate": 0.147215
+      },
+      {
+        "segment": "credit_card",
+        "records": 516971,
+        "closed": 295625,
+        "defaults": 50057,
+        "observed_closed_default_rate": 0.169326
+      },
+      {
+        "segment": "debt_consolidation",
+        "records": 1277877,
+        "closed": 781442,
+        "defaults": 165327,
+        "observed_closed_default_rate": 0.211567
+      },
+      {
+        "segment": "educational",
+        "records": 424,
+        "closed": 423,
+        "defaults": 88,
+        "observed_closed_default_rate": 0.208038
+      },
+      {
+        "segment": "home_improvement",
+        "records": 150457,
+        "closed": 87721,
+        "defaults": 15576,
+        "observed_closed_default_rate": 0.177563
+      },
+      {
+        "segment": "house",
+        "records": 14136,
+        "closed": 7298,
+        "defaults": 1599,
+        "observed_closed_default_rate": 0.219101
+      },
+      {
+        "segment": "major_purchase",
+        "records": 50445,
+        "closed": 29550,
+        "defaults": 5498,
+        "observed_closed_default_rate": 0.186058
+      },
+      {
+        "segment": "medical",
+        "records": 27488,
+        "closed": 15614,
+        "defaults": 3411,
+        "observed_closed_default_rate": 0.218458
+      },
+      {
+        "segment": "moving",
+        "records": 15403,
+        "closed": 9526,
+        "defaults": 2229,
+        "observed_closed_default_rate": 0.233991
+      },
+      {
+        "segment": "other",
+        "records": 139440,
+        "closed": 78301,
+        "defaults": 16508,
+        "observed_closed_default_rate": 0.210827
+      },
+      {
+        "segment": "renewable_energy",
+        "records": 1445,
+        "closed": 936,
+        "defaults": 222,
+        "observed_closed_default_rate": 0.237179
+      },
+      {
+        "segment": "small_business",
+        "records": 24689,
+        "closed": 15577,
+        "defaults": 4652,
+        "observed_closed_default_rate": 0.298645
+      },
+      {
+        "segment": "vacation",
+        "records": 15525,
+        "closed": 9084,
+        "defaults": 1744,
+        "observed_closed_default_rate": 0.191986
+      },
+      {
+        "segment": "wedding",
+        "records": 2355,
+        "closed": 2350,
+        "defaults": 292,
+        "observed_closed_default_rate": 0.124255
+      }
+    ],
+    "term": [
+      {
+        "segment": " 36 months",
+        "records": 1609754,
+        "closed": 1023206,
+        "defaults": 163926,
+        "observed_closed_default_rate": 0.160208
+      },
+      {
+        "segment": " 60 months",
+        "records": 650914,
+        "closed": 324893,
+        "defaults": 105434,
+        "observed_closed_default_rate": 0.324519
+      }
+    ],
+    "loan_amount_histogram": [
+      {
+        "bin": "$0\u20132.5k",
+        "count": 67276
+      },
+      {
+        "bin": "$2.5\u20135k",
+        "count": 232095
+      },
+      {
+        "bin": "$5\u20137.5k",
+        "count": 221451
+      },
+      {
+        "bin": "$7.5\u201310k",
+        "count": 376475
+      },
+      {
+        "bin": "$10\u201315k",
+        "count": 462996
+      },
+      {
+        "bin": "$15\u201320k",
+        "count": 363279
+      },
+      {
+        "bin": "$20\u201325k",
+        "count": 226395
+      },
+      {
+        "bin": "$25\u201335k",
+        "count": 265929
+      },
+      {
+        "bin": "$35\u201350k",
+        "count": 44772
+      },
+      {
+        "bin": "$50\u2013100k",
+        "count": 0
+      }
+    ],
+    "numeric_correlation_fields": [
+      "loan_amnt",
+      "int_rate",
+      "annual_inc",
+      "dti",
+      "fico_range_low",
+      "revol_util"
+    ],
+    "numeric_correlation_complete_rows": 2257159,
+    "numeric_correlation": [
+      {
+        "feature": "loan_amnt",
+        "values": {
+          "loan_amnt": 1.0,
+          "int_rate": 0.0983,
+          "annual_inc": 0.1975,
+          "dti": 0.0435,
+          "fico_range_low": 0.1105,
+          "revol_util": 0.0991
+        }
+      },
+      {
+        "feature": "int_rate",
+        "values": {
+          "loan_amnt": 0.0983,
+          "int_rate": 1.0,
+          "annual_inc": -0.0504,
+          "dti": 0.1249,
+          "fico_range_low": -0.4163,
+          "revol_util": 0.2626
+        }
+      },
+      {
+        "feature": "annual_inc",
+        "values": {
+          "loan_amnt": 0.1975,
+          "int_rate": -0.0504,
+          "annual_inc": 1.0,
+          "dti": -0.0827,
+          "fico_range_low": 0.0371,
+          "revol_util": 0.0282
+        }
+      },
+      {
+        "feature": "dti",
+        "values": {
+          "loan_amnt": 0.0435,
+          "int_rate": 0.1249,
+          "annual_inc": -0.0827,
+          "dti": 1.0,
+          "fico_range_low": -0.0279,
+          "revol_util": 0.1152
+        }
+      },
+      {
+        "feature": "fico_range_low",
+        "values": {
+          "loan_amnt": 0.1105,
+          "int_rate": -0.4163,
+          "annual_inc": 0.0371,
+          "dti": -0.0279,
+          "fico_range_low": 1.0,
+          "revol_util": -0.477
+        }
+      },
+      {
+        "feature": "revol_util",
+        "values": {
+          "loan_amnt": 0.0991,
+          "int_rate": 0.2626,
+          "annual_inc": 0.0282,
+          "dti": 0.1152,
+          "fico_range_low": -0.477,
+          "revol_util": 1.0
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "U.S. LendingClub cohort only; no Indian transfer claim.",
+    "Historical terminal closed-loan status, variable outcome horizon.",
+    "Active and unresolved records are censored/excluded from binary closed-cohort rates.",
+    "No saved row-level prediction scores, ROC/PR curve coordinates, or local explanation values.",
+    "No raw borrower records are exported by this summary."
+  ]
+}
