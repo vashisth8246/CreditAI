@@ -2,7 +2,7 @@
 
 ## Runtime review follow-up — 1 Nov 2026
 
-The earlier entries below are retained as the historical record of the Windows dependency and runtime failures at that time. A later clean GitHub Actions run (`41297858536`, user-observed) passed backend tests, frontend tests, lint, TypeScript, production build, and immutable release packaging; its deployment jobs were skipped. This follow-up records a separate local runtime review and checks run against the current working tree. The current working-tree display fixes have not yet been included in that GitHub run, so they still require CI verification after an authorized push.
+The earlier entries below are retained as the historical record of the Windows dependency and runtime failures at that time. The later clean GitHub Actions run `41297858536` passed backend tests, frontend tests, lint, TypeScript, production build, and immutable release packaging; deployment jobs were skipped. This follow-up records a separate local runtime review and checks run against the current working tree. After these display fixes were committed as `c300799d94282085efebba0279237f4b336f3537` and pushed to `phase11-final-verification`, GitHub Actions run `41299487494` completed successfully for that commit. Backend Tests, Frontend Tests/Lint/TypeScript/Build, and Package Immutable Release passed; both deployment jobs were skipped. No deployment occurred.
 
 ### Runtime and display findings
 
@@ -25,13 +25,14 @@ The earlier entries below are retained as the historical record of the Windows d
 | Full backend suite | `pytest tests/ -v --tb=short` | **UNVERIFIED locally** — Windows TestClient stalled at `tests/test_api_integration.py::test_health_endpoint`; interrupted. An additional run excluding that integration file stalled at `tests/test_batch_workflow.py::test_inspect_valid_csv_with_bom_and_reference`. Do not treat either interrupted run as a pass. |
 | Backend/UI runtime | Live requests and synthetic CSV/XLSX workflow described above | **PASS for the exercised local flows**; this does not replace a complete backend test-suite pass. |
 | Desktop and mobile visual review | 11 pages at 100% zoom; 1440×900 and 390×844 | **PASS with noted 1px Batch Evaluation mobile measurement and Vite HMR warning.** |
+| Clean GitHub Actions for current commit | Workflow run `41299487494`, PR event, commit `c300799d94282085efebba0279237f4b336f3537` | **PASS** — Backend Tests; Frontend Tests, Lint, TypeScript, and Build; Package Immutable Release. Both deployment jobs were skipped. |
 | Whitespace validation | `git diff --check` | **PASS** — exit code 0; Git reported only line-ending conversion notices. |
 
 ### Safety and remaining verification
 
 The calibration artifact `models/calibration_model.joblib` was not edited; its previously recorded SHA-256 remains `6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc`. No models were retrained, replaced, or promoted. Taiwan data/models remain research/demo only. `/v1/score` remains `not_validated` with a null probability. No deployment occurred.
 
-The local frontend checks and reviewed UI paths pass, but the full Windows backend suite remains blocked by TestClient stalls, and the current display-only edits have not yet been covered by a new clean GitHub Actions run. The prior successful run is evidence for its own tested commit only. The current local source changes need to be reviewed, pushed to `phase11-final-verification`, and verified by a new Actions run before claiming clean-CI verification of these changes. Deployment remains out of scope.
+The full Windows backend suite remains blocked locally by TestClient stalls; however, the clean GitHub Actions run above passed backend CI for the current committed source. The local display review and current commit are verified. Deployment remains out of scope and was skipped by CI.
 
 **Historical review status at the time of the original entry: PARTIAL.** The UX and evidence changes below were implemented in the working tree, but complete frontend/backend checks and page-by-page runtime acceptance had not yet been completed because the Windows dependency installation and local test environment did not complete. No deployment or model promotion was performed.
 
