@@ -1,6 +1,39 @@
 # Phase 11 Pre-Deployment UX Review
 
-**Review status: PARTIAL.** The UX and evidence changes below are implemented in the current working tree, and dependency-free helper tests pass. The complete frontend/backend checks and page-by-page runtime acceptance remain unverified because the Windows dependency installation and local test environment did not complete. No deployment or model promotion was performed.
+## Runtime review follow-up — 1 Nov 2026
+
+The earlier entries below are retained as the historical record of the Windows dependency and runtime failures at that time. A later clean GitHub Actions run (`41297858536`, user-observed) passed backend tests, frontend tests, lint, TypeScript, production build, and immutable release packaging; its deployment jobs were skipped. This follow-up records a separate local runtime review and checks run against the current working tree. The current working-tree display fixes have not yet been included in that GitHub run, so they still require CI verification after an authorized push.
+
+### Runtime and display findings
+
+- Started the FastAPI backend at `127.0.0.1:8000` and Vite at `127.0.0.1:5173`. The frontend loaded backend-backed dashboard data. `/health`, `/v1/status`, dashboard snapshot, model list, Taiwan model detail/schema/evaluation endpoints returned HTTP 200. `/health` continued to report scoring as `not_validated`; `/v1/status` continued to mark production Indian lending as not validated.
+- Manually reviewed all 11 navigation pages at 100% browser zoom on a 1440×900 desktop viewport, then checked narrow mobile layout at 390×844. Page content stayed within the viewport after the chart containers gained internal horizontal scrolling. The persistent horizontal navigation scroll is intentional. Batch Evaluation measured a 1px subpixel width excess on mobile; no material page-wide overflow was observed.
+- End-to-end batch UI exercise used temporary synthetic-only inputs: CSV inspection identified two valid borrower rows and one invalid age row, retained duplicate-reference warnings, provenance and the rejected-row reason, and scored/exported the valid rows. CSV, XLSX, and validation-error CSV downloads were checked. A synthetic seven-sheet workbook was classified by sheet; selected valid sheets scored all four rows with worksheet/row provenance intact. No raw or restricted dataset was used.
+- The real `/v1/score` contract check returned `not_validated` with `default_probability: null`. The demo workflow remained explicitly simulated. Taiwan model views retained research/demo warnings; LendingClub views remained historical. No validation claim was added.
+- Small presentation fixes made during review: removed duplicated manual numbering in Risk Explorer's ordered list; separated the real-score result labels from values; added a separator between dataset status and source badge; constrained Data Discovery and Portfolio Intelligence chart wrappers to scroll internally on narrow screens. These are presentation-only changes.
+- The browser console showed a Vite HMR WebSocket connection failure (`[vite] failed to connect to websocket`) during the local session. HTTP app rendering and backend-proxy requests worked; live-reload connectivity was not established in that session.
+
+### Verification against current working tree
+
+| Check | Command / method | Actual result |
+|---|---|---|
+| Frontend tests | `npm test` (from `frontend`) | **PASS** — 36 passed, 0 failed, 0 skipped. |
+| Frontend lint | `npm run lint` (from `frontend`) | **PASS** — exit code 0. |
+| TypeScript project build | `node node_modules/typescript/bin/tsc -b` (from `frontend`) | **PASS** — exit code 0. |
+| Production frontend build | `npm run build` (from `frontend`) | **PASS** — TypeScript and Vite production build completed. |
+| Backend API contract tests | `pytest tests/test_api_contract.py -v --tb=short` | **PASS** — 9 passed. |
+| Full backend suite | `pytest tests/ -v --tb=short` | **UNVERIFIED locally** — Windows TestClient stalled at `tests/test_api_integration.py::test_health_endpoint`; interrupted. An additional run excluding that integration file stalled at `tests/test_batch_workflow.py::test_inspect_valid_csv_with_bom_and_reference`. Do not treat either interrupted run as a pass. |
+| Backend/UI runtime | Live requests and synthetic CSV/XLSX workflow described above | **PASS for the exercised local flows**; this does not replace a complete backend test-suite pass. |
+| Desktop and mobile visual review | 11 pages at 100% zoom; 1440×900 and 390×844 | **PASS with noted 1px Batch Evaluation mobile measurement and Vite HMR warning.** |
+| Whitespace validation | `git diff --check` | **PASS** — exit code 0; Git reported only line-ending conversion notices. |
+
+### Safety and remaining verification
+
+The calibration artifact `models/calibration_model.joblib` was not edited; its previously recorded SHA-256 remains `6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc`. No models were retrained, replaced, or promoted. Taiwan data/models remain research/demo only. `/v1/score` remains `not_validated` with a null probability. No deployment occurred.
+
+The local frontend checks and reviewed UI paths pass, but the full Windows backend suite remains blocked by TestClient stalls, and the current display-only edits have not yet been covered by a new clean GitHub Actions run. The prior successful run is evidence for its own tested commit only. The current local source changes need to be reviewed, pushed to `phase11-final-verification`, and verified by a new Actions run before claiming clean-CI verification of these changes. Deployment remains out of scope.
+
+**Historical review status at the time of the original entry: PARTIAL.** The UX and evidence changes below were implemented in the working tree, but complete frontend/backend checks and page-by-page runtime acceptance had not yet been completed because the Windows dependency installation and local test environment did not complete. No deployment or model promotion was performed.
 
 ## Changes made
 

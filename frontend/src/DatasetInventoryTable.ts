@@ -27,7 +27,7 @@ export function DatasetInventoryTable({ items, selectedId = null, onSelect = () 
       createElement('td', null, createElement('div', { className: 'dataset-cell' },
         createElement('span', { className: 'dataset-code' }, item.dataset_id),
         createElement('div', null, createElement('strong', null, item.dataset_name),
-          createElement('small', null, item.local_status, ' ', sourceTag(sourceForDataset(item.dataset_id)))),
+          createElement('small', null, item.local_status, ' · ', sourceTag(sourceForDataset(item.dataset_id)))),
       )),
       createElement('td', null, typeof item.row_count === 'number' ? item.row_count.toLocaleString('en-US') : String(item.row_count ?? '—')),
       createElement('td', { className: 'target-cell' }, String(item.target_column ?? '—')),

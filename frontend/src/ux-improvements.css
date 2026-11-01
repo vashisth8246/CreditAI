@@ -58,6 +58,20 @@
   border-spacing: 0;
 }
 
+.subchart {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.histogram {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
 .metric-table {
   min-width: 1120px;
 }
@@ -336,6 +350,17 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px 18px;
   padding-left: 1.4rem;
+}
+
+.api-result {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px 12px;
+}
+
+.api-result small {
+  grid-column: 1 / -1;
 }
 
 .roadmap-title {
