@@ -3,6 +3,7 @@
 **Date:** 2026-11-01
 **Branch:** `main`
 **Commit at inspection:** `932c63f` (`Add KNN model and provider-neutral CI/CD pipeline`)
+**Final local commit:** `f7739f9af25d2983fd2d1da5737a9102d5aac1da` (`Complete Phase 11 research, batch evaluation and reproducibility`)
 **Scope:** Final source-control audit, Phase 11 staging/commit, and CI readiness follow-through. No production deployment was performed.
 
 ## Stage status
@@ -50,7 +51,7 @@ At inspection, pre-existing tracked modifications included `README.md`; `fronten
 | Staged source-control audit | PASS | 41 intended files only; staged diff check passed; no calibration/model files, raw dataset, secrets, logs, caches, or temporary outputs staged. |
 | Docker | NOT RUN | `docker version` could not start the Windows system stub (`Access is denied`). No build or container runtime is claimed. |
 | GitHub Actions | NOT RUN | `gh auth status` reports no logged-in account and `git ls-remote origin HEAD` failed on DNS. No real Actions run; workflow syntax and job logic were not externally validated. |
-| Clean checkout source completeness | PARTIAL | A temporary archive of base `HEAD` `932c63f` lacked current Phase 11 changes. The staged 41-file set adds the missing app/tests, research files, Docker files, and dashboard assets; verify the committed archive after the local commit. Runtime dependency installation/CI remains unverified. |
+| Clean checkout source completeness | PASS | A temporary archive of commit `f7739f9af25d2983fd2d1da5737a9102d5aac1da` contains the app/tests, research code and evidence, Docker files, and all three dashboard assets; it excludes the Taiwan workbook. `frontend/dist` is absent as expected because CI builds it. |
 
 Warnings were not suppressed. Model scoring emitted scikit-learn 1.9.0 artifact versus 1.9.1 runtime warnings, along with visible Starlette, Pydantic, and SHAP deprecations.
 
@@ -66,7 +67,7 @@ Results are mixed: Random Forest has the highest ROC-AUC (0.7816); XGBoost has t
 
 ## Git, clean-checkout, and release limitations
 
-At initial inspection, working tree had 13 modified tracked files and numerous untracked files. The frontend lockfile is tracked at `frontend/package-lock.json`; the 87-byte root `package-lock.json` is unrelated and remains unstaged. The three required dashboard JSON inputs and Phase 11 research sources/evidence are in the staged set. Raw Taiwan and LendingClub data remain excluded by `/Data/` in `.gitignore`. No raw workbook was staged or created by the failed isolated download attempt.
+At initial inspection, working tree had 13 modified tracked files and numerous untracked files. The frontend lockfile is tracked at `frontend/package-lock.json`; the 87-byte root `package-lock.json` is unrelated and remains unstaged. The three required dashboard JSON inputs and Phase 11 research sources/evidence are tracked in local commit `f7739f9`. A postcommit Git archive verified these files and confirmed the raw Taiwan workbook is absent. Raw Taiwan and LendingClub data remain excluded by `/Data/` in `.gitignore`.
 
 The CI workflow uses Python 3.11 and Node 24 and makes packaging depend on backend and frontend checks. Docker remains unverified. GitHub Actions remains not run because `gh` is unauthenticated and the remote DNS lookup failed. A normal push to `main` could enter the workflow's production deployment job if `vars.DEPLOYMENT_PROVIDER` is configured; that setting could not be inspected, and this task does not authorize deployment, so no push was made.
 
@@ -88,11 +89,11 @@ The CI workflow uses Python 3.11 and Node 24 and makes packaging depend on backe
 | Indian lending validation | NOT APPLICABLE |
 | Production lending readiness | NOT APPLICABLE |
 
-**Phase 11 completion decision: PARTIAL.** The Phase 11 source set is staged and locally committed, but no authenticated push or real Actions run is available. The failed Windows frontend install/TestClient checks remain historical blockers pending clean Linux CI. Docker and fresh network dataset acquisition also remain unverified.
+**Phase 11 completion decision: PARTIAL.** Clean-checkout source completeness is resolved in the local commit, but no authenticated push or real Actions run is available. The failed Windows frontend install/TestClient checks remain unresolved pending clean Linux CI. Docker and fresh network dataset acquisition also remain unverified.
 
 ## Required next steps
 
-1. When GitHub access and DNS are available, use a nondeploying PR path or confirm the production provider variable is unset before triggering CI; do not push to `main` while deployment behavior is unknown.
+1. When GitHub access and DNS are available, use a nondeploying PR path or confirm the production provider variable is unset before triggering CI; do not push to `main` while deployment behavior is unknown. The local commit is `f7739f9af25d2983fd2d1da5737a9102d5aac1da`.
 2. Inspect a real GitHub Actions run. If it fails, fix only the demonstrated issue and rerun without disabling checks.
 3. Run Docker build/runtime verification in a working Docker environment if available.
 4. Keep calibration provenance unresolved until original evidence is recovered; continue to preserve `/v1/score` as `not_validated`.
