@@ -7,7 +7,7 @@
     "dev": "node node_modules/vite/bin/vite.js",
     "build": "node node_modules/typescript/bin/tsc -b && node node_modules/vite/bin/vite.js build",
     "lint": "node node_modules/oxlint/bin/oxlint src tests vite.config.ts",
-    "test": "node --experimental-strip-types --test tests/analytics.test.ts tests/batch.test.ts",
+    "test": "node --experimental-strip-types --test tests/analytics.test.ts tests/assessment.test.ts tests/batch.test.ts",
     "preview": "node node_modules/vite/bin/vite.js preview"
   },
   "dependencies": {

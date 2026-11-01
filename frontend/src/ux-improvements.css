@@ -1,0 +1,365 @@
+/* UX states and evidence layouts; base CreditAI typography remains component-sized. */
+.source-unavailable {
+  background: #fff4da;
+  color: #80621c;
+}
+
+.readiness-research-ready,
+.readiness-qualified {
+  background: #e4f5ed;
+  color: #27694f;
+}
+
+.readiness-synthetic-demo {
+  background: #edf1f3;
+  color: #4d626c;
+}
+
+.readiness-needs-review,
+.readiness-available-restricted-use,
+.readiness-evidence-gap,
+.readiness-source-unavailable {
+  background: #fff4da;
+  color: #80621c;
+}
+
+.readiness-evidence-gap {
+  border-color: #ead9a9;
+}
+
+.status-badge.readiness-research-ready i,
+.status-badge.readiness-qualified i {
+  background: #27845f;
+}
+
+.status-badge.readiness-needs-review i,
+.status-badge.readiness-available-restricted-use i,
+.status-badge.readiness-evidence-gap i,
+.status-badge.readiness-source-unavailable i {
+  background: #c39730;
+}
+
+.segment-table-wrap,
+.metric-table-wrap,
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid #e2eceb;
+  border-radius: 9px;
+}
+
+.segment-table,
+.metric-table,
+.table-scroll .data-table {
+  min-width: 760px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.metric-table {
+  min-width: 1120px;
+}
+
+.segment-table th,
+.segment-table td,
+.metric-table th,
+.metric-table td,
+.table-scroll .data-table th,
+.table-scroll .data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e4eceb;
+  border-right: 1px solid #edf2f1;
+  vertical-align: middle;
+}
+
+.segment-table thead th,
+.metric-table thead th,
+.table-scroll .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f1f7f6;
+  color: #405d65;
+  white-space: nowrap;
+  border-bottom: 2px solid #d7e4e2;
+}
+
+.segment-table tbody tr:nth-child(even),
+.metric-table tbody tr:nth-child(even),
+.table-scroll .data-table tbody tr:nth-child(even) {
+  background: #f8fbfa;
+}
+
+.segment-table tbody tr:hover,
+.metric-table tbody tr:hover,
+.table-scroll .data-table tbody tr:hover {
+  background: #edf7f4;
+}
+
+.segment-table th:not(:first-child),
+.segment-table td:not(:first-child),
+.metric-table th:not(:first-child),
+.metric-table td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-table th:first-child,
+.metric-table td:first-child {
+  text-align: left;
+}
+
+.status-badge.readiness-research-ready,
+.status-badge.readiness-synthetic-demo,
+.status-badge.readiness-needs-review,
+.status-badge.readiness-available-restricted-use,
+.status-badge.readiness-evidence-gap,
+.status-badge.readiness-source-unavailable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid currentColor;
+}
+
+.source-unavailable {
+  border: 1px solid #ead9a9;
+}
+
+.monitor-status.blocked,
+.monitor-status.unavailable {
+  background: #fff4da;
+  color: #80621c;
+}
+
+.monitor-status.evidence-required,
+.monitor-status.rights-review-required,
+.monitor-status.awaiting-validated-deployment,
+.monitor-status.safety-lock-active,
+.monitor-status.future-validation-gate {
+  background: #fff4da;
+  color: #80621c;
+}
+
+.arch-blocked,
+.arch-partial,
+.arch-evidence-gap,
+.arch-evidence-required {
+  background: #fffbef;
+  border-color: #ead9a9;
+}
+
+.arch-blocked i,
+.arch-partial i,
+.arch-evidence-gap i,
+.arch-evidence-required i {
+  color: #80621c;
+}
+
+.assessment-summary,
+.assessment-math,
+.assessment-5w {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f6faf9;
+}
+
+.assessment-summary.risk-low {
+  border-left: 4px solid #248565;
+}
+
+.assessment-summary.risk-high {
+  border-left: 4px solid #c38a26;
+  background: #fffaf0;
+}
+
+.assessment-summary .eyebrow {
+  margin-top: 0;
+}
+
+.assessment-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.assessment-metrics > div {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #dce8e7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.assessment-metrics strong {
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.assessment-caveat {
+  padding: 9px;
+  border-left: 3px solid #d7ae4f;
+  background: #fff8e8;
+}
+
+.assessment-math h3,
+.assessment-5w h3,
+.evidence-detail h3,
+.simulated-workflow-card h2 {
+  margin-top: 0;
+}
+
+.assessment-5w dl {
+  display: grid;
+  grid-template-columns: minmax(90px, .22fr) minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.assessment-5w dt {
+  color: #286f64;
+  font-weight: 750;
+}
+
+.assessment-5w dd {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.submitted-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+  margin-top: 10px;
+}
+
+.submitted-values > div {
+  display: grid;
+  gap: 3px;
+  padding: 7px;
+  border-bottom: 1px solid #e6eeec;
+}
+
+.evidence-driver-list,
+.batch-explanation-body {
+  display: grid;
+  gap: 8px;
+}
+
+.evidence-driver {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 9px;
+  border-bottom: 1px solid #e3eceb;
+}
+
+.evidence-driver > div {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.evidence-driver > span {
+  grid-column: 1;
+  color: #637b80;
+}
+
+.evidence-driver > b {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.evidence-driver code,
+.submitted-values code {
+  color: #60777c;
+}
+
+.batch-row-explanation summary {
+  color: #176f63;
+  cursor: pointer;
+  font-weight: 700;
+  white-space: normal;
+}
+
+.batch-explanation-body {
+  min-width: 300px;
+  max-width: 480px;
+  padding: 10px 2px;
+  white-space: normal;
+}
+
+.batch-explanation-body p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.batch-explanation-footnote {
+  color: #647b80;
+}
+
+.evidence-detail {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #f5f9f8;
+}
+
+.evidence-detail h3:not(:first-child) {
+  margin-top: 12px;
+}
+
+.simulated-payload {
+  padding: 12px;
+  border: 1px solid #dfe9e7;
+  border-radius: 9px;
+  background: #f7faf9;
+}
+
+.simulated-payload pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 10px;
+  border-radius: 7px;
+  background: #edf3f2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.simulated-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 18px;
+  padding-left: 1.4rem;
+}
+
+.roadmap-title {
+  margin: 0 0 12px;
+}
+
+@media (max-width: 760px) {
+  .assessment-metrics,
+  .submitted-values {
+    grid-template-columns: 1fr;
+  }
+
+  .evidence-driver {
+    grid-template-columns: 1fr;
+  }
+
+  .evidence-driver > span,
+  .evidence-driver > b {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .assessment-5w dl {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}

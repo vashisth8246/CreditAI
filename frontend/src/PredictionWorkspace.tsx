@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FeatureField, FeatureContribution, ModelDetails, ModelSchema, ModelSummary, Prediction, SystemStatus } from './api'
 import { researchApi } from './api'
 import { displayFeatureName } from './analytics'
+import { calculateAssessment, contributionDirection, predictionFiveW } from './assessment'
 
 const fieldLabel = displayFeatureName
 
@@ -123,6 +124,7 @@ export function PredictionWorkspace() {
   const [details, setDetails] = useState<ModelDetails | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
   const [result, setResult] = useState<Prediction | null>(null)
+  const [syntheticProfile, setSyntheticProfile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -258,6 +260,7 @@ export function PredictionWorkspace() {
       Object.entries(preset.values).map(([k, v]) => [k, String(v)])
     )
     setValues(stringified)
+    setSyntheticProfile(true)
     setError(null)
   }
 
@@ -278,6 +281,7 @@ export function PredictionWorkspace() {
 
   function updateField(name: string, value: string) {
     setValues((current) => ({ ...current, [name]: value }))
+    setSyntheticProfile(false)
     setError(null)
   }
 
@@ -520,7 +524,7 @@ export function PredictionWorkspace() {
 
               {/* Group 3: Bill Statements */}
               <div className="feature-section">
-                <h4 className="feature-section-title">3. Monthly Bill Statements (NT$)</h4>
+                <h4 className="feature-section-title">3. Monthly Bill Statements ({details?.geography === 'Taiwan' ? 'NT$' : 'model dataset units'})</h4>
                 <div className="feature-grid">
                   {billKeys.map((name) => (
                     <FeatureInput
@@ -536,7 +540,7 @@ export function PredictionWorkspace() {
 
               {/* Group 4: Payments Paid */}
               <div className="feature-section">
-                <h4 className="feature-section-title">4. Monthly Amounts Paid (NT$)</h4>
+                <h4 className="feature-section-title">4. Monthly Amounts Paid ({details?.geography === 'Taiwan' ? 'NT$' : 'model dataset units'})</h4>
                 <div className="feature-grid">
                   {paymentKeys.map((name) => (
                     <FeatureInput
@@ -591,7 +595,7 @@ export function PredictionWorkspace() {
           </div>
 
           {result ? (
-            <PredictionResult result={result} details={details} />
+            <PredictionResult result={result} details={details} values={values} syntheticProfile={syntheticProfile} />
           ) : (
             <div className="result-empty">
               <span className="result-icon">◎</span>
@@ -615,7 +619,7 @@ export function PredictionWorkspace() {
                 {history.map((item) => (
                   <div key={item.id} className="history-item">
                     <div>
-                      <strong>NT$ {item.limit_bal.toLocaleString()}</strong>
+                      <strong>NT$ {item.limit_bal.toLocaleString('en-US')}</strong>
                       <small>{item.timestamp} · {item.model_id}</small>
                     </div>
                     <div className="history-score">
@@ -716,26 +720,69 @@ function FeatureInput({
 function PredictionResult({
   result,
   details,
+  values,
+  syntheticProfile,
 }: {
   result: Prediction
   details: ModelDetails | null
+  values: Record<string, string>
+  syntheticProfile: boolean
 }) {
   const pct = Math.max(0, Math.min(100, result.probability * 100))
-  const isHighRisk = result.risk_category.toLowerCase() === 'high'
-  const isMediumRisk = result.risk_category.toLowerCase() === 'medium'
-  const riskClass = isHighRisk ? 'risk-high' : isMediumRisk ? 'risk-medium' : 'risk-low'
+  const probability = result.probability
+  const assessment = calculateAssessment(probability, result.threshold)
+  const { complement, threshold } = assessment
+  const decision = { comparison: assessment.comparison, label: assessment.classification }
+  const fiveW = predictionFiveW({
+    target: result.target_meaning,
+    dataset: result.dataset_name,
+    geography: result.geography,
+    timeCoverage: details?.time_coverage ?? '',
+    synthetic: syntheticProfile,
+    hasAttribution: (result.feature_contributions?.length ?? 0) > 0,
+  })
+  const riskClass = probability >= threshold ? 'risk-high' : 'risk-low'
+  const contributions = result.feature_contributions ?? []
+  const increasing = contributions.filter((item) => contributionDirection(item.direction) === 'increases_risk')
+  const decreasing = contributions.filter((item) => contributionDirection(item.direction) === 'decreases_risk')
+  const unknown = contributions.filter((item) => contributionDirection(item.direction) === 'unknown')
+  const currencyContext = result.geography.toLowerCase() === 'taiwan' ? 'Taiwan dataset values (NT$; original dataset units)' : `${result.geography} dataset units`
+  const featureLabel = (name: string) => ({
+    PAY_0: 'Most recent repayment status (September 2005)',
+    PAY_2: 'Repayment status two months before the target month',
+    PAY_3: 'Repayment status three months before the target month',
+    PAY_4: 'Repayment status four months before the target month',
+    PAY_5: 'Repayment status five months before the target month',
+    PAY_6: 'Repayment status six months before the target month',
+    BILL_AMT1: 'Most recent bill statement amount',
+    PAY_AMT1: 'Most recent payment amount',
+  } as Record<string, string>)[name] ?? displayFeatureName(name)
+  const contributionRows = (items: FeatureContribution[]) => items.map((item) => {
+    const submitted = values[item.feature]
+    return <div className="evidence-driver" key={item.feature}>
+      <div><strong>{featureLabel(item.feature)}</strong><code>{item.feature}</code></div>
+      <span>{submitted !== undefined ? `Submitted value: ${submitted}${/^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/.test(item.feature) ? ` · ${currencyContext}` : ''}` : 'Engineered signal derived from submitted fields'}</span>
+      <b>{item.contribution.toFixed(4)} model-output units</b>
+    </div>
+  })
 
   return (
     <div className="prediction-output">
-      <div className={`prediction-class ${riskClass}`}>
-        <span>Predicted Default Class</span>
-        <strong>{result.predicted_class}</strong>
-        <small>Target: {result.target_meaning}</small>
+      <section className={`assessment-summary ${riskClass}`}>
+        <p className="eyebrow">MODEL RISK ASSESSMENT · RESEARCH ONLY</p>
+        <div className="assessment-metrics">
+          <div><span>Estimated default probability (PD)</span><strong>{(probability * 100).toFixed(1)}%</strong></div>
+          <div><span>Estimated non-default complement</span><strong>{(complement * 100).toFixed(1)}%</strong></div>
+        </div>
+        <p><b>Research classification:</b> {decision.label}</p>
+        <p><b>Research threshold:</b> {(threshold * 100).toFixed(1)}%</p>
+        <p>{(probability * 100).toFixed(1)}% {decision.comparison} {(threshold * 100).toFixed(1)}% research threshold; the model assigns the {decision.label.toLowerCase()}.</p>
+        <p className="assessment-caveat">{(complement * 100).toFixed(1)}% = 1 − {(probability * 100).toFixed(1)}%. It is a mathematical complement, not a guarantee of repayment.</p>
       </div>
 
       <div className="probability-gauge-block">
         <div className="gauge-header">
-          <span>{result.calibrated ? 'Calibrated Default Probability (PD)' : 'Raw Model Score'}</span>
+          <span>{result.calibrated ? 'Estimated default probability (calibrated)' : 'Estimated default probability (uncalibrated model output)'}</span>
           <strong className="gauge-number">{pct.toFixed(1)}%</strong>
         </div>
         <div
@@ -752,76 +799,64 @@ function PredictionResult({
           />
         </div>
         <div className="gauge-legend">
-          <span>0% Low Risk</span>
-          <span>Threshold: {(result.threshold * 100).toFixed(0)}%</span>
-          <span>100% High Risk</span>
+          <span>0%</span>
+          <span>Research threshold: {(threshold * 100).toFixed(1)}%</span>
+          <span>100%</span>
         </div>
-        <small className="gauge-note">
-          Risk tier: <strong>{result.risk_category}</strong> · Evaluated at classification threshold {result.threshold.toFixed(2)}
-        </small>
+        <small className="gauge-note">This threshold is for research classification only. It is not a lending policy.</small>
       </div>
 
       <div className="result-facts">
-        <div>
-          <span>Model ID</span>
-          <strong>{result.model_id}</strong>
-        </div>
-        <div>
-          <span>Dataset / Geography</span>
-          <strong>{result.dataset_name} ({result.geography})</strong>
-        </div>
-        <div>
-          <span>Calibration</span>
-          <strong>{result.calibrated ? result.calibration_method ?? 'Platt scaling' : 'Uncalibrated'}</strong>
-        </div>
-        <div>
-          <span>Timestamp</span>
-          <strong>{new Date(result.prediction_timestamp).toLocaleTimeString()}</strong>
-        </div>
+        <div><span>Model ID</span><strong>{result.model_id}</strong></div>
+        <div><span>Dataset / Geography</span><strong>{result.dataset_name} ({result.geography})</strong></div>
+        <div><span>Calibration</span><strong>{result.calibrated ? result.calibration_method ?? 'Calibrated' : 'Not calibrated'}</strong></div>
+        <div><span>Timestamp</span><strong>{new Date(result.prediction_timestamp).toLocaleString()}</strong></div>
       </div>
 
-      {/* SHAP Feature Attribution */}
-      {result.feature_contributions && result.feature_contributions.length > 0 ? (
+      <section className="assessment-math">
+        <h3>How this result was calculated</h3>
+        <p>Estimated PD = {probability.toFixed(4)}</p>
+        <p>PD percentage = {probability.toFixed(4)} × 100 = {(probability * 100).toFixed(2)}%</p>
+        <p>Estimated non-default complement = 1 − {probability.toFixed(4)} = {complement.toFixed(4)} ({(complement * 100).toFixed(2)}%)</p>
+        <p>Research threshold = {threshold.toFixed(4)} ({(threshold * 100).toFixed(1)}%)</p>
+        <p>{probability.toFixed(4)} {decision.comparison} {threshold.toFixed(4)} → {decision.label}</p>
+        <p className="research-footnote">{result.calibrated ? `Calibration: ${result.calibration_method ?? 'method recorded as calibrated'}. Calibration was fitted for its documented research dataset; it does not establish accuracy for other populations.` : 'This output is not calibrated; interpret it only as the model’s research estimate.'}</p>
+      </section>
+
+      <section className="assessment-5w">
+        <h3>Understanding this assessment — 5W</h3>
+        <dl>
+          <dt>WHAT</dt><dd>{fiveW.what}</dd>
+          <dt>WHY</dt><dd>{fiveW.why}</dd>
+          <dt>WHO</dt><dd>{fiveW.who}</dd>
+          <dt>WHEN</dt><dd>{fiveW.when}</dd>
+          <dt>WHERE / DATA CONTEXT</dt><dd>{fiveW.where}</dd>
+        </dl>
+        <details><summary>View submitted feature values · {currencyContext}</summary><div className="submitted-values">{Object.entries(values).map(([name, value]) => <div key={name}><span>{featureLabel(name)} <code>{name}</code></span><strong>{value || 'Not submitted'}{value && /^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/.test(name) ? ` · ${currencyContext}` : ''}</strong></div>)}</div></details>
+      </section>
+
+      {contributions.length > 0 ? (
         <div className="explanation-section">
           <div className="explanation-header">
-            <h4>Key Decision Drivers (SHAP Local Explanation)</h4>
-            <span className="attribution-tag">TreeExplainer Attribution</span>
+            <h4>Model contribution explanation</h4>
+            <span className="attribution-tag">{result.model_id.includes('knn') ? 'Local neighbor attribution' : 'TreeExplainer SHAP'}</span>
           </div>
-          <p className="attribution-caption">
-            Features pushing probability toward default (red) versus reducing default risk (teal). Association in the fitted tree model; does not prove individual causation.
-          </p>
-          <div className="explanation-list">
-            {result.feature_contributions.map((item: FeatureContribution) => {
-              const isIncrease = item.direction === 'increases_risk'
-              return (
-                <div key={item.feature} className={`shap-row ${isIncrease ? 'shap-risk-up' : 'shap-risk-down'}`}>
-                  <div className="shap-meta">
-                    <span className="shap-name">{fieldLabel(item.feature)}</span>
-                    <span className="shap-dir">{isIncrease ? '+ Increases Risk' : '− Lowers Risk'}</span>
-                  </div>
-                  <div className="shap-bar-track">
-                    <div
-                      className="shap-bar-fill"
-                      style={{ width: `${Math.min(100, item.contribution * 120)}%` }}
-                    />
-                  </div>
-                  <strong className="shap-val">+{item.contribution.toFixed(3)}</strong>
-                </div>
-              )
-            })}
-          </div>
+          <p className="attribution-caption">Positive-class SHAP sign indicates movement in the model output toward or away from default. Magnitudes are model-output units, not probability percentage points. SHAP describes model attribution, not causation.</p>
+          {increasing.length > 0 && <section><h5>Factors moving estimated risk higher</h5><div className="evidence-driver-list">{contributionRows(increasing)}</div></section>}
+          {decreasing.length > 0 && <section><h5>Factors moving estimated risk lower</h5><div className="evidence-driver-list">{contributionRows(decreasing)}</div></section>}
+          {unknown.length > 0 && <div className="unavailable-note"><strong>Direction not supplied</strong><span>{unknown.map((item) => fieldLabel(item.feature)).join(', ')} are shown without an inferred direction.</span></div>}
         </div>
       ) : (
         <div className="unavailable-note">
-          <strong>SHAP Explanation Offline</strong>
-          <span>Local feature contributions could not be generated for this prediction.</span>
+          <strong>Feature attribution unavailable</strong>
+          <span>No local contributions were returned for this prediction; the interface will not infer or fabricate drivers.</span>
         </div>
       )}
 
       <div className="result-limit">
-        <strong>Limitation Disclaimer:</strong>{' '}
+        <strong>Research limitation:</strong>{' '}
         {details?.limitations?.[0] ??
-          'Experimental research inference only. Model output is a statistical estimate on Taiwan card data, not a credit guarantee.'}
+          'Research inference only. The model output is not validated for Indian borrower decisions.'}
       </div>
     </div>
   )

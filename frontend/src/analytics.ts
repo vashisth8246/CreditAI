@@ -54,7 +54,7 @@ export function dataSourceLabel(source: DataSource): string {
     historical: 'HISTORICAL RESEARCH DATA',
     synthetic: 'SYNTHETIC DEMO',
     'live-unvalidated': 'LIVE API — NOT VALIDATED',
-    unavailable: 'DATA UNAVAILABLE',
+    unavailable: 'SOURCE UNAVAILABLE',
   }[source]
 }
 

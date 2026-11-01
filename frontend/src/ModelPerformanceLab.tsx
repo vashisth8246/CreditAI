@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import type { EvaluationArtifact } from './api';
 import { researchApi } from './api';
+import { hasCurveEvidence } from './assessment'
 
 export function ModelPerformanceLab() {
   // ---------- State ----------
@@ -75,11 +76,11 @@ export function ModelPerformanceLab() {
   const {
     metadata,
     summary_metrics,
-    // curves,
-    // risk_deciles,
-    // model_comparison,
-    // global_feature_importance,
+    curves,
   } = evalData;
+  const calibrationPoints = curves.calibration.bins.flatMap((bin) => bin.pred_cal === null || bin.true_cal === null ? [] : [{ x: bin.pred_cal, y: bin.true_cal }])
+  const rocEvidenceAvailable = hasCurveEvidence(curves.roc.points)
+  const calibrationEvidenceAvailable = hasCurveEvidence(calibrationPoints)
 
   // ---------- UI: model selector ----------
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -177,8 +178,32 @@ export function ModelPerformanceLab() {
         </div>
       </div>
 
-      {/* --- Existing charts (ROC, PR, Calibration, Confusion Matrix, Deciles, Model Comparison) --- */}
-      {/* (unchanged code omitted for brevity – same as original sections 160‑382) */}
+      <div className="grid-two performance-evidence-charts">
+        <section className="panel">
+          <div className="panel-heading"><div><p className="eyebrow">LOCKED TEST EVIDENCE</p><h2 title="ROC-AUC summarizes ranking discrimination on the documented held-out test set.">Receiver operating characteristic (ROC)</h2><p>{metadata.primary_model} · {metadata.geography} · test AUC {curves.roc.auc.toFixed(4)} · n={metadata.test_sample_count.toLocaleString()}</p></div></div>
+          {rocEvidenceAvailable ? <><EvidenceCurve title="ROC curve on held-out test data" points={curves.roc.points} xLabel="False-positive rate" yLabel="True-positive rate" baseline /><p className="chart-footnote">The diagonal is the random-ranking reference. This curve uses the saved genuine test scores; it does not establish Indian borrower performance.</p></> : <div className="callout-soft"><strong>Evidence required</strong><span>Saved held-out false-positive and true-positive coordinates are missing; aggregate AUC is not used to invent a curve.</span></div>}
+        </section>
+        <section className="panel">
+          <div className="panel-heading"><div><p className="eyebrow">LOCKED TEST EVIDENCE</p><h2 title="Calibration compares average predicted probability with observed event frequency.">Calibration curve</h2><p>{curves.calibration.bins.filter((bin) => bin.pred_cal !== null && bin.true_cal !== null).length} saved bins · {metadata.calibration_method}</p></div></div>
+          {calibrationEvidenceAvailable ? <><EvidenceCurve title="Calibration curve on held-out test data" points={calibrationPoints} xLabel="Mean predicted probability" yLabel="Observed default rate" baseline /><p className="chart-footnote">Points use the saved calibrated predictions and observed test labels. The reference line indicates perfect agreement.</p></> : <div className="callout-soft"><strong>Evidence required</strong><span>At least two saved held-out pairs of mean predicted probability and observed event rate are required to render this plot.</span></div>}
+        </section>
+      </div>
+
+      <section className="panel threshold-evidence">
+        <div className="panel-heading"><div><p className="eyebrow">THRESHOLD METHOD</p><h2 title="Precision, recall and F1 depend on the chosen probability cutoff.">Research threshold analysis</h2><p>Thresholds must be selected using validation evidence, then frozen before test evaluation.</p></div><span className="status-badge readiness-evidence-gap">Evidence required</span></div>
+        <div className="callout-soft"><strong>Not plotted from the current artifact</strong><span>The saved threshold sweep in the Taiwan evaluation artifact was computed from the locked test labels (`y_test`) by `scripts/generate_evaluation_artifacts.py`. Reusing those results to compare cutoffs would tune on the test set. A validation-split label/probability export is not present, so this view does not display a threshold curve.</span></div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-heading"><div><p className="eyebrow">INTERPRETING THE METRICS</p><h2>Plain-English guide</h2></div></div>
+        <dl className="metric-glossary">
+          <div><dt>ROC-AUC</dt><dd>How often a default case ranks above a non-default case across cutoffs.</dd></div>
+          <div><dt>PR-AUC</dt><dd>Precision and recall summarized together; compare it with the dataset’s default prevalence.</dd></div>
+          <div><dt>Brier score</dt><dd>Average squared gap between predicted probabilities and observed outcomes; lower is better.</dd></div>
+          <div><dt>Calibration</dt><dd>Whether groups assigned similar probabilities experience similar observed outcome rates.</dd></div>
+          <div><dt>Research threshold</dt><dd>A cutoff used to label classes in this experiment; it is not a production lending policy.</dd></div>
+        </dl>
+      </section>
 
       {/* ----- Feature Contribution Panel (KNN only) ----- */}
       {/* Disabled: feature_contributions not yet populated in evaluation artifacts.
@@ -186,4 +211,20 @@ export function ModelPerformanceLab() {
           which is not included in the aggregate evaluation JSON. */}
     </>
   );
+}
+
+function EvidenceCurve({ title, points, xLabel, yLabel, baseline }: { title: string; points: { x: number; y: number }[]; xLabel: string; yLabel: string; baseline: boolean }) {
+  const width = 520
+  const height = 300
+  const pad = { left: 52, right: 20, top: 18, bottom: 44 }
+  const x = (value: number) => pad.left + Math.max(0, Math.min(1, value)) * (width - pad.left - pad.right)
+  const y = (value: number) => height - pad.bottom - Math.max(0, Math.min(1, value)) * (height - pad.top - pad.bottom)
+  const path = points.map((point, index) => `${index ? 'L' : 'M'} ${x(point.x)} ${y(point.y)}`).join(' ')
+  return <div className="chart-wrap"><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
+    {[0, .25, .5, .75, 1].map((tick) => <g key={tick}><line x1={pad.left} x2={width - pad.right} y1={y(tick)} y2={y(tick)} className="grid-line"/><line x1={x(tick)} x2={x(tick)} y1={pad.top} y2={height - pad.bottom} className="grid-line"/><text x={pad.left - 9} y={y(tick) + 4} className="axis-label" textAnchor="end">{tick.toFixed(2)}</text><text x={x(tick)} y={height - pad.bottom + 20} className="axis-label" textAnchor="middle">{tick.toFixed(2)}</text></g>)}
+    {baseline && <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(1)} stroke="#98a9aa" strokeDasharray="5 5" strokeWidth="2"/>}
+    {points.length > 1 && <path d={path} fill="none" stroke="#128b78" strokeWidth="3"/>}
+    <text x={width / 2} y={height - 4} className="axis-label" textAnchor="middle">{xLabel}</text>
+    <text x="14" y={height / 2} className="axis-label" textAnchor="middle" transform={`rotate(-90 14 ${height / 2})`}>{yLabel}</text>
+  </svg></div>
 }

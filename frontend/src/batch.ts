@@ -8,6 +8,12 @@ export type BatchPrediction = {
   calibrated: boolean
   threshold: number
   calibration_method?: string | null
+  dataset_id?: string
+  dataset_name?: string
+  geography?: string
+  target_meaning?: string
+  feature_contributions?: { feature: string; contribution: number; direction: string }[]
+  explanation_available?: boolean
 }
 
 export type BatchRowResult = {
@@ -18,6 +24,7 @@ export type BatchRowResult = {
   borrower_reference: string | number | null
   status: 'success' | 'error'
   prediction?: BatchPrediction
+  submitted_features?: Record<string, number>
   error_message?: string
 }
 
@@ -205,6 +212,12 @@ export function summarizeBatch(result: BatchPredictionResult): BatchSummary {
   }
 }
 
+export function selectPdExamples(result: BatchPredictionResult): { lowest: BatchRowResult | null; highest: BatchRowResult | null } {
+  const rows = result.results.filter((row) => row.status === 'success' && row.prediction && Number.isFinite(row.prediction.probability))
+  const ordered = [...rows].sort((a, b) => a.prediction!.probability - b.prediction!.probability)
+  return { lowest: ordered[0] ?? null, highest: ordered.at(-1) ?? null }
+}
+
 export function median(values: number[]): number | null {
   const clean = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b)
   if (!clean.length) return null
@@ -228,7 +241,8 @@ export function buildHistogram(probabilities: number[]): HistogramBin[] {
 const RESULT_HEADER = [
   'result_index', 'sheet_name', 'source_row', 'sheet_row', 'borrower_reference', 'status',
   'probability', 'probability_percent', 'non_default_complement', 'non_default_complement_percent', 'risk_category', 'predicted_class', 'calibrated',
-  'model_id', 'error_message',
+  'model_id', 'research_classification', 'threshold_comparison', 'risk_increasing_drivers',
+  'risk_decreasing_drivers', 'model_context', 'limitation_status', 'plain_language_explanation', 'error_message',
 ]
 
 function csvCell(value: unknown): string {
@@ -240,6 +254,17 @@ export function buildResultCsv(result: BatchPredictionResult): string {
   const lines = [RESULT_HEADER.join(',')]
   for (const row of result.results) {
     const prediction = row.prediction
+    const p = prediction?.probability
+    const threshold = prediction?.threshold
+    const comparison = p !== undefined && threshold !== undefined ? (p < threshold ? '<' : '>=') : null
+    const classification = comparison === null ? '' : comparison === '<' ? 'Lower predicted-default-risk class' : 'Higher predicted-default-risk class'
+    const drivers = (direction: string) => (prediction?.feature_contributions ?? [])
+      .filter((item) => item.direction === direction)
+      .map((item) => `${displayFeatureName(item.feature)} (${item.contribution.toFixed(4)} model-output units)`)
+      .join('; ')
+    const plainExplanation = p === undefined || threshold === undefined
+      ? ''
+      : `Estimated PD ${(p * 100).toFixed(2)}% ${comparison} research threshold ${(threshold * 100).toFixed(2)}%; research classification: ${classification}. Complement ${(100 * (1 - p)).toFixed(2)}% is arithmetic only and is not a repayment guarantee. Research only; not a lending decision.`
     lines.push([
       row.result_index ?? '',
       row.sheet_name ?? '',
@@ -255,6 +280,13 @@ export function buildResultCsv(result: BatchPredictionResult): string {
       prediction ? prediction.predicted_class : '',
       prediction ? String(prediction.calibrated) : '',
       prediction ? prediction.model_id : '',
+      classification,
+      comparison && p !== undefined && threshold !== undefined ? `${p.toFixed(4)} ${comparison} ${threshold.toFixed(4)}` : '',
+      drivers('increases_risk') || (prediction ? 'Attribution unavailable' : ''),
+      drivers('decreases_risk') || (prediction ? 'Attribution unavailable' : ''),
+      prediction ? `${prediction.dataset_name ?? 'Default of Credit Card Clients'} (${prediction.geography ?? 'Taiwan'}); ${prediction.calibration_method ?? 'not calibrated'}` : '',
+      prediction ? 'Research only · not validated for Indian borrowers or lending' : '',
+      plainExplanation,
       displayUserText(row.error_message ?? ''),
     ].map(csvCell).join(','))
   }
