@@ -93,7 +93,7 @@ Any future India-focused study requires an authorized, representative dataset wi
 
 ## Conclusion
 
-The saved Phase 11 results show that calibration improved probability metrics in this particular Taiwan test split, with Random Forest leading on several calibration measures and XGBoost having the highest average precision. The batch and research code provide useful research and demonstration workflows. Clean-checkout reproduction, current full backend HTTP verification, clean frontend dependency verification, Docker runtime verification, and a real GitHub Actions run remain unresolved. Phase 11 is therefore **PARTIAL**, with explicit research and engineering limitations.
+The saved Phase 11 results show that calibration improved probability metrics in this particular Taiwan test split, with Random Forest leading on several calibration measures and XGBoost having the highest average precision. The batch and research code provide useful research and demonstration workflows. Clean committed-source CI passed on GitHub Actions PR #1, run `41286784346`: backend, frontend tests/lint/TypeScript/build, and immutable release packaging passed; deployment jobs were skipped and no deployment occurred. Earlier Windows TestClient and npm failures remain documented as local-environment limitations, superseded for CI verification by the later clean runner. Docker runtime and fresh UCI network acquisition remain unverified, and original calibration training provenance remains unknown. Indian borrower validation and production lending readiness are not validated; `/v1/score` remains `not_validated`, and Taiwan models/data remain research/demo only. Phase 11 is **COMPLETE WITH DOCUMENTED LIMITATIONS**.
 
 ## References
 
