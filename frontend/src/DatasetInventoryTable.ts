@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import type { KeyboardEvent } from 'react'
 import { dataSourceLabel, type DataSource, type InventoryItem } from './analytics.ts'
-import { datasetReadiness } from './assessment'
+import { datasetReadiness } from './assessment.ts'
 
 function sourceForDataset(id: string): DataSource {
   if (id.startsWith('EXT')) return 'unavailable'
