@@ -778,7 +778,7 @@ function PredictionResult({
         <p><b>Research threshold:</b> {(threshold * 100).toFixed(1)}%</p>
         <p>{(probability * 100).toFixed(1)}% {decision.comparison} {(threshold * 100).toFixed(1)}% research threshold; the model assigns the {decision.label.toLowerCase()}.</p>
         <p className="assessment-caveat">{(complement * 100).toFixed(1)}% = 1 − {(probability * 100).toFixed(1)}%. It is a mathematical complement, not a guarantee of repayment.</p>
-      </div>
+      </section>
 
       <div className="probability-gauge-block">
         <div className="gauge-header">
