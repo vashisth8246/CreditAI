@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import json
 import os
+import re
 from pathlib import Path
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
@@ -89,6 +90,21 @@ async def http_exception_handler(_: Request, exc: StarletteHTTPException):
 @app.get("/health")
 async def health():
     return {"status": "ok", "scoring": "not_validated"}
+
+
+@app.get("/v1/build")
+def build_info():
+    """Expose only the validated release SHA for deployment traceability."""
+    raw_sha = os.getenv("CREDITAI_BUILD_SHA", "").strip().lower()
+    commit_sha = raw_sha if re.fullmatch(r"[0-9a-f]{40}", raw_sha) else None
+    return JSONResponse(
+        content={
+            "commit_sha": commit_sha,
+            "short_commit": commit_sha[:7] if commit_sha else None,
+            "scoring_status": "not_validated",
+        },
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/v1/status")

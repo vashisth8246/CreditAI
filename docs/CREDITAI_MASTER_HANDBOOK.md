@@ -210,6 +210,7 @@ FastAPI entrypoint is `src.api.app:app`. Routes inspected in `src/api/app.py`:
 | Route | Method | Function and status | Safety note |
 |---|---|---|---|
 | `/health` | GET | `status: ok`, `scoring: not_validated` | Liveness only, not model approval. |
+| `/v1/build` | GET | Full release commit SHA and short form when configured; otherwise null | Release identity only; scoring remains `not_validated`. |
 | `/v1/status` | GET | Connectivity, registered count, research inference readiness, Indian production status | Registry availability is not validation. |
 | `/v1/dashboard/snapshot` | GET | Sanitized tracked Phase 9 LendingClub summary, inventory and feature JSON with retrieval time | Historical source, not live activity. |
 | `/v1/models` | GET | Registered model list | Taiwan research models. |
@@ -246,7 +247,7 @@ React 19 + TypeScript 6 + Vite 8. Frontend tests use Node 24's direct TypeScript
 
 ### Prediction and 5W usage
 
-Choose a research model (default `uci_taiwan_xgb`), enter its 23-field profile, validate, submit, and read PD as the Taiwan target estimate. The 0.50 comparison is a research classification, not lending policy. Then read `1-PD`, the five-W context and feature drivers; use Taiwan NT$ units. Friendly labels map to model keys such as `LIMIT_BAL`, `PAY_0`, `BILL_AMT1`, `PAY_AMT1`.
+The dashboard header shows the short deployed commit when the hosting pipeline supplies it; the full SHA is available from `/v1/build`. This identifies the software release only and says nothing about model validation. To use the prediction page, choose a research model (default `uci_taiwan_xgb`), enter its 23-field profile, validate, submit, and read PD as the Taiwan target estimate. The 0.50 comparison is a research classification, not lending policy. Then read `1-PD`, the five-W context and feature drivers; use Taiwan NT$ units. Friendly labels map to model keys such as `LIMIT_BAL`, `PAY_0`, `BILL_AMT1`, `PAY_AMT1`.
 
 5W: **What** model target; **Why** contributing features; **Who** the submitted profile is (synthetic/research, not a validated Indian borrower); **When** only target timing supplied by source (next month); **Where/Data** Taiwan/UCI/model version. Do not invent missing horizons.
 
@@ -284,7 +285,7 @@ Data Discovery uses Research Ready, Available — Restricted Use, Evidence Gap, 
 
 Run 41299626128: Backend Tests PASS; Frontend Tests/Lint/TypeScript/Build PASS; Package Immutable Release PASS; Deploy and Verify SKIPPED; Deployment Pending Provider Selection SKIPPED. No deployment. Artifacts present and unexpired when checked: `frontend-dist-e65d497ab2a7721672f00718d68f92d74b1bb194` and `creditai-release-e65d497ab2a7721672f00718d68f92d74b1bb194`. The artifact names use the PR merge SHA `e65d...`; the branch HEAD is `e03e...`. This audit did not download/unzip these artifacts independently and did not create a local ZIP from this workspace.
 
-Deployment `if` conditions only permit a push to `refs/heads/main`; PRs cannot deploy. Deployment needs all three prior jobs to succeed and uses GitHub `production` environment. With `vars.DEPLOYMENT_PROVIDER` empty on a main push, pending-provider job records pending and does not deploy. A set unknown ID reaches adapter validation and fails safely. `PROVIDER_ADAPTERS` in `src/cicd/deployment.py` is empty, so no real deployment is currently possible. Do not create a fake adapter. Production environment's external reviewer/branch protection settings were not independently verified. A future real adapter must implement interface, fail on deploy failure, return valid deployment info, and pass live `/health` and `/v1/status` checks.
+Deployment `if` conditions only permit a push to `refs/heads/main`; PRs cannot deploy. Deployment needs all three prior jobs to succeed and uses GitHub `production` environment. With `vars.DEPLOYMENT_PROVIDER` empty on a main push, pending-provider job records pending and does not deploy. Unknown IDs fail adapter validation. As of the Azure CD update, `PROVIDER_ADAPTERS` registers the Azure Container Apps implementation. It uses GitHub OIDC, builds a container image from the immutable release ZIP's already-tested frontend and backend/model files, pushes a full-SHA tag to ACR, and updates an existing Container App. It sets `CREDITAI_BUILD_SHA`; `/v1/build` reports the deployed source SHA, the dashboard header shows its short form, and the deploy job verifies it equals the intended release. The job also checks `/health` and `/v1/status` and preserves the `not_validated` contract. No Azure resources, identity, GitHub production secrets/variables, or public Azure URL have been configured or verified in this workspace, so no deployment has occurred. The Azure workflow is not live-enabled until the documented settings are supplied. Production environment's external reviewer/branch protection settings were not independently verified.
 
 Previously documented non-blocking warnings in run 41286784346 included Node.js 20 action runtime deprecation notices and an informational `ubuntu-latest` migration. This audit did not establish whether the same warning text appeared in 41299626128. They did not invalidate the recorded successful CI run.
 
@@ -323,8 +324,8 @@ Frontend URL: `http://127.0.0.1:5173`; Vite proxies `/health` and `/v1` to backe
 | `PORT` | Local 8000; Docker default 10000 | Host supplies port; bind `0.0.0.0`. |
 | `CORS_ORIGINS` | Empty for same-origin Vite proxy | Exact HTTPS origins only for split hosting. |
 | `VITE_API_BASE_URL` | Empty, relative API paths | Optional public build-time URL for split hosting; never a secret. |
-| `DEPLOYMENT_PROVIDER` | Unset | GitHub variable; no adapter currently registered. |
-| `CREDITAI_DEPLOYMENT_TOKEN` | Unset/not needed by app | Future environment secret only if approved provider requires it. |
+| `DEPLOYMENT_PROVIDER` | Unset | Set to `azure-container-apps` only after configuring the documented Azure target and GitHub environment. |
+| Azure deployment settings | Not configured | Existing resource group, Container App, ACR; GitHub OIDC secrets and provider selection are required for deployment. |
 | Model/snapshot paths | Relative models from repo root; Phase 9 JSON under frontend public data | Preserve working directory or make reviewed portable path change. |
 
 No database, durable uploads, background worker, or backend application secret is currently required. Request processing needs temporary working space for bounded upload parsing; no persistent upload store is implemented. Keep scikit-learn `InconsistentVersionWarning` and existing Pydantic `schema_extra` deprecation visible until addressed separately.
@@ -351,7 +352,7 @@ Release-critical tracked static assets include `frontend/public/data/phase_9_len
 
 ### Blockers before actual deployment
 
-- Select and review Azure architecture, service, environment, region, network, secrets, cost and shutdown controls; none are currently selected/approved. This blocks deployment, not starting planning.
+- Configure and review the Azure Container Apps target, OIDC identity, registry permissions, service region, cost and shutdown controls. The repository's Azure adapter is implemented, but cloud resources/identity/settings are not configured. This blocks deployment, not planning.
 - If container hosting is selected, build and run Docker from clean Linux checkout and verify health, static UI, model loading, batch request limits and runtime resources. Docker is present but **not verified**.
 - Verify GitHub `production` environment reviewer/branch rules before any deployment job can run; external settings were not inspected.
 - Production lending is absolutely blocked by missing Indian outcome validation, governance, fairness/stability and production authorization.
@@ -386,7 +387,7 @@ Release-critical tracked static assets include `frontend/public/data/phase_9_len
 | Linux/path | PASS CI scope, PARTIAL container | Linux Actions CI passed; relative paths documented | Docker unverified |
 | Static assets | PASS | Required Phase 9/evaluation assets tracked | Untracked extra JSON not runtime-required |
 | Monitoring | Not ready for production monitoring | No traffic, versions, matured labels or drift | Production blocker; acceptable research limitation |
-| Provider / Azure architecture | NOT STARTED | Adapter registry empty; Azure not configured | Next phase; not blocker to planning |
+| Provider / Azure CD | PARTIAL | Azure Container Apps adapter, OIDC workflow and commit identity check implemented; cloud resources/settings absent | Configure target before any deployment |
 | Cost/budget | NOT STARTED | No service estimate or student credit review | Required before deployment |
 
 ### Pre-Deployment Freeze Candidate
@@ -401,7 +402,7 @@ Release-critical tracked static assets include `frontend/public/data/phase_9_len
 | Calibration | SHA-256 `6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc` |
 | Runtime | Backend/frontend connected; 11 pages and synthetic batch paths reviewed; no deployment |
 
-This is a research/demo freeze candidate, not a production tag. PR remains open and unmerged. Do not merge, tag or deploy without explicit authorization.
+This is a research/demo freeze candidate, not a production tag. PR remains open and unmerged. Do not merge or deploy without explicit authorization. The Azure adapter was added after the cited CI run, so it has not yet been verified by GitHub Actions or a live Azure deployment.
 
 ## Evidence Index
 
@@ -419,4 +420,4 @@ Some detailed Phase 11 filenames may vary by branch; verify presence before link
 
 ## How to Continue — Phase 12: Azure Research/Demo Deployment Planning
 
-Begin with requirements and architecture review, not resource creation. Assess Azure Student account/service constraints; expected traffic and backend/frontend hosting choices; model/static artifact storage; secrets/network/security; observability and retention; monthly cost and impact on the $100 student-credit budget; shutdown/budget controls; rollback and health verification. Validate a clean Linux Docker build if a container is selected. Only after architecture and cost review, owner approval, and a separate explicit deployment authorization may resources be created. Keep all research/demo labels and `/v1/score` semantics unchanged.
+Continue with Azure setup review before resource creation or deployment. Confirm the Container Apps/ACR architecture, existing target names, OIDC identity and least-privilege assignments, service region, expected traffic, student account constraints, monthly cost, shutdown controls, and rollback. A clean Linux Docker build/runtime and Azure live verification remain unverified. Keep all research/demo labels and `/v1/score` semantics unchanged.

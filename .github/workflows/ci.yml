@@ -110,6 +110,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -124,9 +125,16 @@ jobs:
         env:
           DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
         run: python -c "from src.cicd.deployment import load_configured_adapter; load_configured_adapter()"
+      - name: Sign in to Azure with GitHub OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Install Azure Container Apps CLI extension
+        run: az extension add --name containerapp --upgrade
       - name: Deploy exact tested release and verify health
         env:
           DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
-          CREDITAI_DEPLOYMENT_TOKEN: ${{ secrets.CREDITAI_DEPLOYMENT_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
         run: python scripts/deploy_release.py "release/creditai-${GITHUB_SHA}.zip"

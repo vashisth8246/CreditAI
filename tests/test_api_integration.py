@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.app import app, _load_dashboard_snapshot, dashboard_snapshot
+from src.api.app import app, _load_dashboard_snapshot, build_info, dashboard_snapshot
 
 
 client = TestClient(app)
@@ -38,6 +38,25 @@ def test_health_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data == {"status": "ok", "scoring": "not_validated"}
+
+
+def test_build_info_exposes_only_a_valid_release_sha_and_keeps_scoring_locked(monkeypatch):
+    sha = "a" * 40
+    monkeypatch.setenv("CREDITAI_BUILD_SHA", sha)
+    response = build_info()
+    assert response.headers["cache-control"] == "no-store"
+    assert json.loads(response.body) == {
+        "commit_sha": sha,
+        "short_commit": sha[:7],
+        "scoring_status": "not_validated",
+    }
+
+    monkeypatch.setenv("CREDITAI_BUILD_SHA", "not-a-commit")
+    assert json.loads(build_info().body) == {
+        "commit_sha": None,
+        "short_commit": None,
+        "scoring_status": "not_validated",
+    }
 
 
 def test_dashboard_snapshot_loader_reads_only_expected_historical_artifacts(tmp_path):

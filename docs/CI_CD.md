@@ -4,7 +4,7 @@
 
 GitHub Actions runs mandatory backend and frontend checks on pushes to `main` and pull requests targeting `main`. Successful checks feed a package job that creates one commit-addressed ZIP containing the Python application, tracked model artifacts, the already-tested frontend build, and `build-manifest.json`. Dataset files, local logs, caches, and untracked artifacts are excluded. The same ZIP is the only input to the later deploy job.
 
-The deploy job is provider-neutral. It runs only for a successful push to `main`, uses the GitHub `production` environment, and reads the single repository variable `DEPLOYMENT_PROVIDER`. The configured provider ID must exist in the reviewed `PROVIDER_ADAPTERS` allowlist in `src/cicd/deployment.py`. Each registered module must declare the matching `PROVIDER_ID` and implement `deploy(release_dir, version)`, returning `provider`, `deployment_id`, and `base_url`. It must raise on provider failure. CreditAI then checks `/health` and `/v1/status`, including that production scoring remains `not_validated`. The adapter registry is currently empty, so no provider can deploy. With the variable unset, Actions reports that CI passed and deployment is pending provider configuration. An unknown ID, missing registered module, incomplete adapter, missing required credentials, or failed provider response must fail the deploy job.
+The deploy job runs only for a successful push to `main`, uses the GitHub `production` environment, and reads `DEPLOYMENT_PROVIDER`. The `azure-container-apps` adapter builds an image from the exact immutable release ZIP (including the frontend build already tested in CI), pushes it to Azure Container Registry, updates an existing Azure Container App, routes traffic to its latest revision in multiple-revision mode, and returns its public URL. In single-revision mode Azure routes the active revision automatically. GitHub authenticates through OIDC; no Azure client secret is stored. The adapter sets `CREDITAI_BUILD_SHA` to the full commit SHA. The app exposes it through `/v1/build` and shows the short form in the dashboard header; the deploy job verifies it against the expected release SHA alongside `/health` and `/v1/status`. Azure resources are not created by this workflow. With the provider variable unset, Actions reports that deployment is pending. Unknown providers and missing settings/resources fail the deploy job.
 
 ## Workflow jobs and triggers
 
@@ -16,7 +16,7 @@ Workflow: `.github/workflows/ci.yml` (`CreditAI CI and CD`). Triggers are pushes
 | Frontend Tests, Lint, TypeScript, and Build | Every trigger | Node 24, `npm ci`, `npm test`, `npm run lint`, `npx tsc -b`, `npm run build`; upload `frontend/dist` for 7 days |
 | Package Immutable Release | After both checks pass | Download the tested frontend output and package it with tracked Python/model inputs from a clean tracked worktree; retain for 30 days |
 | Deployment Pending Provider Selection | Successful `main` push when no provider is configured | Writes the explicit pending status to the run summary; does not call a deploy adapter |
-| Deploy and Verify | Successful `main` push when `vars.DEPLOYMENT_PROVIDER` is set | Requires the production environment, downloads the same release ZIP, calls the configured adapter, then verifies live API health and safety status |
+| Deploy and Verify | Successful `main` push when `vars.DEPLOYMENT_PROVIDER` is set | Requires the production environment, downloads the same release ZIP, authenticates to Azure with OIDC, deploys the registered adapter, then verifies live API health and safety status |
 
 Pull requests cannot deploy. Deployment cannot start unless backend tests, frontend tests/build, and release packaging all pass. A deployment or verification error makes the deploy job fail. No automatic rollback is configured.
 
@@ -60,7 +60,13 @@ On Windows PowerShell, use `$env:PORT` or `8000` as the port value. The `.env.ex
 | `CORS_ORIGINS` | No for same-origin requests | Empty | Comma-separated exact HTTPS frontend origin(s), only for cross-origin hosting |
 | `VITE_API_BASE_URL` | No for same-origin routing | Empty (Vite proxies API paths) | Optional GitHub repository variable consumed by the build; empty with same-origin routing or the API's HTTPS base URL when separately hosted |
 | `DEPLOYMENT_PROVIDER` | No; an empty value safely skips deployment | Not set | Repository variable containing a provider ID registered to a reviewed adapter |
-| `CREDITAI_DEPLOYMENT_TOKEN` | Only if the selected adapter requires it | Not set | GitHub production environment secret; never exposed to frontend |
+| `AZURE_RESOURCE_GROUP` | Yes for Azure deployment | Not set | Repository variable naming the existing Azure resource group |
+| `AZURE_CONTAINER_APP` | Yes for Azure deployment | Not set | Repository variable naming the existing public Container App |
+| `AZURE_CONTAINER_REGISTRY` | Yes for Azure deployment | Not set | Repository variable naming the existing Container Registry resource |
+| `AZURE_CLIENT_ID` | Yes for Azure OIDC | Not set | GitHub `production` environment secret for the federated Entra identity |
+| `AZURE_TENANT_ID` | Yes for Azure OIDC | Not set | GitHub `production` environment secret |
+| `AZURE_SUBSCRIPTION_ID` | Yes for Azure OIDC | Not set | GitHub `production` environment secret |
+| `CREDITAI_BUILD_SHA` | Set by Azure deployment | Not set locally | Full commit SHA for live release identity; never a model validation claim |
 
 There are no backend application secrets required by the current code.
 
@@ -74,22 +80,22 @@ The Vite production build is `frontend/dist`. Set optional `VITE_API_BASE_URL` a
 
 The frontend is a single-page app. The selected host must serve `index.html` for application routes and route `/health` and `/v1/*` to the backend when using same-origin configuration. A separate frontend/API host needs the correct `VITE_API_BASE_URL` and matching backend `CORS_ORIGINS`.
 
-## Connecting a provider later
+## Enabling Azure Container Apps deployment
 
-After selecting a provider:
+The repo includes an Azure Container Apps adapter, but automatic deployment stays disabled until the owner configures the Azure target and GitHub environment. The adapter updates an existing app; it does not provision Azure resources.
 
-1. Implement and review an adapter module with a matching `PROVIDER_ID` and `deploy(release_dir, version)`. It must validate its required credentials/configuration, deploy the supplied release, return the real provider deployment ID and API base URL, and raise on errors. Do not return success before the provider confirms the release.
-2. Add provider-specific runtime instructions (ASGI command, environment, frontend/static hosting, routing, health path, and artifact needs) to the adapter and this guide.
-3. In GitHub repository settings, create a `production` environment. Configure required reviewers and deployment branch restrictions there before enabling automatic deployment.
-4. Register the reviewed adapter in `PROVIDER_ADAPTERS` using the provider ID it declares. Add repository variable `DEPLOYMENT_PROVIDER` with exactly that ID. Store provider credentials as production environment secrets. The adapter may read `CREDITAI_DEPLOYMENT_TOKEN`; provider-specific secret names should be added to the workflow only when the provider is selected.
-5. Review least-privilege permissions, secret scope, environment approval rules, adapter source, and provider's rollback procedure. Then enable the workflow on successful pushes to `main` by setting `DEPLOYMENT_PROVIDER`.
-6. Confirm run logs identify the commit SHA and release artifact; confirm the live `/health` and `/v1/status` response before announcing deployment.
+1. Create or select an Azure Container Registry and an externally reachable Azure Container App in the same resource group. Configure the app ingress target port as `10000` and enable its system-assigned identity. Grant that identity `AcrPull` on the registry. The adapter checks ingress and stops before pushing if the app is not externally reachable on the expected port.
+2. Create a Microsoft Entra federated identity credential for GitHub Actions using issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, and subject `repo:vashisth8246/CreditAI:environment:production`. Grant this identity only the Azure permissions needed to read the named resources, push images to the selected registry, and update the selected Container App (including managed identity and traffic settings).
+3. In GitHub, create the `production` environment and configure branch restrictions and any required reviewers. Add the environment secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` for the federated identity.
+4. Add repository variables `DEPLOYMENT_PROVIDER=azure-container-apps`, `AZURE_RESOURCE_GROUP`, `AZURE_CONTAINER_APP`, and `AZURE_CONTAINER_REGISTRY` with the names of the existing resources.
+5. A push to `main` runs tests, builds the frontend, packages the immutable release, then logs in with OIDC and deploys only after those jobs pass. PRs never deploy. The adapter tags the image with the full commit SHA and deploys the artifact's prebuilt frontend and backend source.
+6. Confirm the run's deploy job and live `/health`, `/v1/status`, `/v1/build`, and app URL before announcing deployment. A failed health, safety, or expected-SHA check fails the job. Rollback is not automated; define and test a rollback procedure before relying on this pipeline.
 
-GitHub Secrets and environment secrets must never be printed. Do not put credentials in workflow YAML, `.env.example`, build metadata, or frontend variables. Environment approvals are configured in GitHub settings, not by this repository workflow.
+Azure login uses the GitHub OIDC token (`id-token: write`) and does not use a client secret. GitHub environment approvals are configured in GitHub settings, not by this repository workflow. Never print tokens or put credentials in workflow YAML, `.env.example`, build metadata, or frontend variables.
 
 ## Deployment verification and failure handling
 
-The adapter owns provider submission and must return a real result. `scripts/deploy_release.py` first validates the ZIP CRC, exact manifest file list, full source SHA, clean-worktree marker, required app files, safe extraction paths, and the `not_validated` manifest marker. It then calls the configured adapter and checks `/health` plus `/v1/status` with bounded retries. Verification requires HTTP success, `status: ok`, and `not_validated` scoring values. The manifest's version is the source commit SHA. A failed adapter or failed health/safety check fails the Actions job; inspect both the deploy step and provider logs.
+The adapter owns provider submission and must return a real result. `scripts/deploy_release.py` first validates the ZIP CRC, exact manifest file list, full source SHA, clean-worktree marker, required app files, safe extraction paths, and the `not_validated` manifest marker. It then calls the configured adapter and checks `/health`, `/v1/status`, and `/v1/build` with bounded retries. Verification requires HTTP success, `status: ok`, `not_validated` scoring values, and the expected commit SHA. A failed adapter or failed health/safety/release-identity check fails the Actions job; inspect both the deploy step and provider logs.
 
 No rollback behavior is implemented. Before production use, define a provider-specific rollback mechanism, retain prior immutable releases, document health-gate behavior, and test rollback in a non-production environment. Never claim rollback occurred unless provider evidence confirms it.
 
@@ -103,4 +109,4 @@ The CI checkout does not fetch or package datasets. UCI identifies the Default o
 
 ## Known limits
 
-The hosting provider is not selected. Accordingly, there is no provider adapter, infrastructure definition, real deployment, provider secret, live URL, or tested rollback. The generic workflow, release contract, environment gate, and API verification are ready for that provider-specific follow-up.
+Azure is selected as the intended host, and a reviewed Container Apps adapter is registered. The target Azure resources, federated identity, GitHub environment secrets/variables, first deployment, and rollback are still unconfigured/unverified. Until the required settings exist, `DEPLOYMENT_PROVIDER` must remain unset; CI reports deployment pending and no cloud deployment occurs.

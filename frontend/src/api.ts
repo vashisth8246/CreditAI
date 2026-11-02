@@ -244,6 +244,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const researchApi = {
   health: () => request<{ status: string; scoring: string }>('/health'),
+  buildInfo: () => request<{ commit_sha: string | null; short_commit: string | null; scoring_status: string }>('/v1/build', { cache: 'no-store' }),
   status: () => request<SystemStatus>('/v1/status'),
   models: () => request<{ models: ModelSummary[]; count: number }>('/v1/models'),
   details: (id: string) => request<ModelDetails>(`/v1/models/${encodeURIComponent(id)}`),

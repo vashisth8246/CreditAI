@@ -65,7 +65,7 @@ def main() -> int:
         release_dir.mkdir(parents=True)
         extract_verified_release(archive, release_dir, version)
         result = deploy_with_configured_adapter(release_dir, version)
-        verification = verify_live_deployment(result["base_url"])
+        verification = verify_live_deployment(result["base_url"], expected_version=version)
     except DeploymentError as exc:
         print(f"Deployment or verification failed: {exc}", file=sys.stderr)
         return 1

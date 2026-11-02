@@ -23,6 +23,7 @@ type Summary = {
 }
 type Feature = { dataset_id: string; feature: string; missing_percentage_all_source_rows: string; meaning: string; phase_2_3_decision: string }
 type DashboardSnapshot = { summary: Summary; inventory: InventoryItem[]; features: Feature[]; source: string; retrieved_at: string; source_snapshot_date: string }
+type BuildInfo = { commit_sha: string | null; short_commit: string | null; scoring_status: string }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 const nav: { id: Page; title: string; icon: string; section?: string }[] = [
@@ -120,6 +121,7 @@ function App() {
   const [scorePayload, setScorePayload] = useState<Record<string, unknown> | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [retrievedAt, setRetrievedAt] = useState<string | null>(null)
+  const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null)
   const [showDatasetDetail, setShowDatasetDetail] = useState(false)
 
   useEffect(() => {
@@ -132,6 +134,16 @@ function App() {
     }).catch((error: unknown) => { if (!active || (error instanceof Error && error.name === 'AbortError')) return; setLoadError(error instanceof Error ? error.message : 'Research artifacts could not be loaded.'); setLoading(false) })
     return () => { active = false; controller.abort() }
   }, [retryCount])
+
+  useEffect(() => {
+    let active = true
+    researchApi.buildInfo().then((info) => {
+      if (active) setBuildInfo(info)
+    }).catch(() => {
+      if (active) setBuildInfo({ commit_sha: null, short_commit: null, scoring_status: 'not_validated' })
+    })
+    return () => { active = false }
+  }, [])
 
   function retryLoad() {
     if (loading) return
@@ -200,7 +212,7 @@ function App() {
     </aside>
 
     <main className="main-shell">
-      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
+      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
 
       {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
