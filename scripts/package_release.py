@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FRONTEND_FIXTURE_FILES = {"batch_test_sample.csv", "batch_test_sample.xlsx"}
 
 
 def tracked_release_files() -> list[Path]:
@@ -23,6 +24,19 @@ def tracked_release_files() -> list[Path]:
         capture_output=True,
     )
     return [ROOT / name for name in result.stdout.decode().split("\0") if name]
+
+
+def frontend_release_files(dist: Path) -> list[Path]:
+    """Return production build assets without unreferenced public test fixtures."""
+    files = []
+    for path in dist.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(dist).as_posix()
+        if relative.startswith("testdata/") or relative in FRONTEND_FIXTURE_FILES:
+            continue
+        files.append(path)
+    return files
 
 
 def registered_model_paths() -> set[str]:
@@ -99,7 +113,10 @@ def main() -> int:
     missing_models = sorted(registered_model_paths() - included_paths)
     if missing_models:
         raise SystemExit(f"Registered model files are not included in the release: {', '.join(missing_models)}")
-    entries.extend((path, f"frontend/dist/{path.relative_to(dist).as_posix()}") for path in dist.rglob("*") if path.is_file())
+    entries.extend(
+        (path, f"frontend/dist/{path.relative_to(dist).as_posix()}")
+        for path in frontend_release_files(dist)
+    )
 
     manifest = {
         "application": "CreditAI",
