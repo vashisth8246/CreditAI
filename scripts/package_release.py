@@ -66,6 +66,22 @@ def registered_model_paths() -> set[str]:
     raise SystemExit("Unable to verify required model paths in src/inference/model_registry.py")
 
 
+def frontend_release_files(dist: Path) -> list[tuple[Path, str]]:
+    """Return production frontend files, excluding public batch-test fixtures."""
+    entries: list[tuple[Path, str]] = []
+    for path in dist.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(dist).as_posix()
+        if relative.startswith("testdata/") or relative in {
+            "batch_test_sample.csv",
+            "batch_test_sample.xlsx",
+        }:
+            continue
+        entries.append((path, f"frontend/dist/{relative}"))
+    return entries
+
+
 def main() -> int:
     dirty = subprocess.run(
         ["git", "status", "--porcelain", "--untracked-files=no"],
@@ -99,11 +115,7 @@ def main() -> int:
     missing_models = sorted(registered_model_paths() - included_paths)
     if missing_models:
         raise SystemExit(f"Registered model files are not included in the release: {', '.join(missing_models)}")
-    entries.extend(
-        (path, f"frontend/dist/{path.relative_to(dist).as_posix()}")
-        for path in dist.rglob("*")
-        if path.is_file()
-    )
+    entries.extend(frontend_release_files(dist))
 
     manifest = {
         "application": "CreditAI",
