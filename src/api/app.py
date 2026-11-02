@@ -13,6 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, Stric
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .contract import ContractError, not_validated_response, validate_request
+from .agentic_commerce import agentic_commerce_status, agentic_commerce_workflow
+from src.agentic_commerce.schemas import AgenticCommerceStatus, WorkflowStage
 from .batch_service import (
     BatchError,
     MAX_UPLOAD_BYTES,
@@ -57,6 +59,20 @@ class ScoreRequest(BaseModel):
 
 
 app = FastAPI(title="CreditAI Score API", version="1.0.0")
+app.add_api_route(
+    "/v1/agentic-commerce/status",
+    agentic_commerce_status,
+    methods=["GET"],
+    response_model=AgenticCommerceStatus,
+    tags=["Agentic Commerce — AC-1 Foundation"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/workflow",
+    agentic_commerce_workflow,
+    methods=["GET"],
+    response_model=list[WorkflowStage],
+    tags=["Agentic Commerce — AC-1 Foundation"],
+)
 
 # Vite development uses a same-origin proxy. Cross-origin deployments must
 # explicitly list their frontend origins instead of allowing all loopback ports.

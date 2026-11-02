@@ -32,7 +32,7 @@ def extract_verified_release(archive: Path, release_dir: Path, expected_sha: str
             listed = set(manifest.get("contents", []))
             if listed != set(names) - {"build-manifest.json"}:
                 raise DeploymentError("Release manifest contents do not match the ZIP contents.")
-            required = {"requirements.txt", "src/api/app.py", "frontend/index.html"}
+            required = {"requirements.txt", "src/api/app.py", "frontend/dist/index.html"}
             if not required.issubset(listed):
                 raise DeploymentError("Release ZIP is missing required application files.")
 

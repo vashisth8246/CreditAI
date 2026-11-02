@@ -17,10 +17,10 @@ def _release(tmp_path: Path, sha: str) -> Path:
     root = tmp_path / "release"
     (root / "src" / "api").mkdir(parents=True)
     (root / "models").mkdir()
-    (root / "frontend").mkdir()
+    (root / "frontend" / "dist").mkdir(parents=True)
     (root / "src" / "api" / "app.py").write_text("app = None", encoding="utf-8")
     (root / "requirements.txt").write_text("fastapi\n", encoding="utf-8")
-    (root / "frontend" / "index.html").write_text("<html></html>", encoding="utf-8")
+    (root / "frontend" / "dist" / "index.html").write_text("<html></html>", encoding="utf-8")
     (root / "build-manifest.json").write_text(json.dumps({
         "commit_sha": sha,
         "scoring_status": "not_validated",
@@ -64,7 +64,7 @@ def test_azure_adapter_builds_the_tested_release_and_routes_latest_revision(tmp_
             })
         if command[:3] == ["docker", "build", "--pull"]:
             dockerfile = Path(cwd, "Dockerfile").read_text(encoding="utf-8")
-            assert "COPY frontend/ ./frontend/dist/" in dockerfile
+            assert "COPY frontend/dist/ ./frontend/dist/" in dockerfile
             assert any(value.endswith(f"creditai:{sha}") for value in command)
         return ""
 

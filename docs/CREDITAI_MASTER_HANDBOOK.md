@@ -24,6 +24,8 @@
 
 **Current implementation:** a pre-deployment research workbench. It presents historical LendingClub cohort evidence, Taiwan UCI research inference and evaluation, batch analysis, synthetic demonstrations, and evidence/readiness gates.
 
+**Agentic Commerce AC-1:** a separate foundation module defines typed workflow contracts, a status/workflow API namespace, and inactive dashboard/audit-trail shells. It executes no agent tools, generates no financing offers, records no simulated transactions, and requires explicit human confirmation before any future simulation.
+
 **Not validated:** real Indian borrowers, Indian lending decisions, transfer from Taiwan/U.S. data, production decision thresholds, regulated use, or production monitoring. CreditAI is not a CIBIL replacement, RBI-approved scoring system, loan approval/rejection engine, repayment guarantee, or deployed production monitoring system.
 
 **Readiness conclusion:** ready to begin Azure architecture and cost planning for a clearly labeled research/demo deployment. It is not ready for production lending. Docker build/runtime, Azure architecture, cost and provider selection have not been verified or authorized. No Azure resource or production deployment was made.
@@ -212,6 +214,8 @@ FastAPI entrypoint is `src.api.app:app`. Routes inspected in `src/api/app.py`:
 | `/health` | GET | `status: ok`, `scoring: not_validated` | Liveness only, not model approval. |
 | `/v1/build` | GET | Full release commit SHA and short form when configured; otherwise null | Release identity only; scoring remains `not_validated`. |
 | `/v1/status` | GET | Connectivity, registered count, research inference readiness, Indian production status | Registry availability is not validation. |
+| `/v1/agentic-commerce/status` | GET | AC-1 mode and capability flags | Foundation only; no tools, lending, real transactions, or audit storage. |
+| `/v1/agentic-commerce/workflow` | GET | Eight planned workflow stages | Metadata only; every stage is inactive in AC-1. |
 | `/v1/dashboard/snapshot` | GET | Sanitized tracked Phase 9 LendingClub summary, inventory and feature JSON with retrieval time | Historical source, not live activity. |
 | `/v1/models` | GET | Registered model list | Taiwan research models. |
 | `/v1/models/{model_id}` | GET | Model metadata and artifact availability | Historical metrics/metadata remain scoped. |
@@ -244,6 +248,8 @@ React 19 + TypeScript 6 + Vite 8. Frontend tests use Node 24's direct TypeScript
 | Explainability | Shows available model explanation evidence and gaps | LendingClub aggregate stats do not yield individual explanations | Scope reviewed — PASS |
 | Monitoring | Future gates and historical data context | No production traffic, PSI/drift result or matured labels | Future-state wording reviewed — PASS |
 | Architecture & Audit | System flow and evidence roadmap | India outcomes, commercial rights and deployment monitoring remain gates | Safety lock/gates reviewed — PASS |
+| Agentic Commerce | AC-1 foundation and eight planned stages | Research/demo; no active tools or transactions | AC-1 shell; runtime verification pending |
+| Commerce Audit Trail | Typed future audit design and empty state | No audit event store; no fabricated events | AC-1 shell; runtime verification pending |
 
 ### Prediction and 5W usage
 

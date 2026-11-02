@@ -99,7 +99,11 @@ def main() -> int:
     missing_models = sorted(registered_model_paths() - included_paths)
     if missing_models:
         raise SystemExit(f"Registered model files are not included in the release: {', '.join(missing_models)}")
-    entries.extend((path, f"frontend/{path.relative_to(dist).as_posix()}") for path in dist.rglob("*") if path.is_file())
+    entries.extend(
+        (path, f"frontend/dist/{path.relative_to(dist).as_posix()}")
+        for path in dist.rglob("*")
+        if path.is_file()
+    )
 
     manifest = {
         "application": "CreditAI",

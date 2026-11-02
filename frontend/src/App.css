@@ -348,3 +348,23 @@
   .batch-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .batch-upload-panel,.batch-chart,.batch-run-panel{padding:15px}
 }
+
+.commerce-page{display:grid;gap:16px;align-content:start}
+.commerce-safety{display:grid;gap:10px;border-color:#eadcb2;background:#fff9e8;color:#725b25}
+.commerce-safety>strong{font-size:14px}
+.commerce-safety ul{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0;padding-left:20px}
+.commerce-safety li{font-size:13px;line-height:1.5}
+.commerce-foundation .panel-heading{align-items:center}
+.commerce-inactive{flex:none;padding:6px 9px;border-radius:999px;background:#edf2f2;color:#667d80;font-size:11px;font-weight:750;letter-spacing:.04em}
+.commerce-next-phase{margin:0;padding-top:12px;border-top:1px solid var(--line);color:#2b5d54;font-size:14px;font-weight:650}
+.commerce-stage-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.commerce-stage{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 10px;min-width:0;padding:13px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.commerce-stage-number{color:#159580;font-size:12px;font-weight:800}
+.commerce-stage-name{color:#25444b;font-size:14px;font-weight:650;line-height:1.35}
+.commerce-stage-status{grid-column:2;color:#71858a;font-size:12px}
+.commerce-research-note{margin:0;padding:13px 15px;border-left:3px solid #d3ac51;background:#fff9e9;color:#6f5d31;font-size:13px;line-height:1.6}
+.commerce-audit-empty{min-height:270px;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center}
+.commerce-audit-empty h2{margin:0;color:#28464e;font-size:18px;line-height:1.4}
+.commerce-audit-empty p{margin:0;color:#71858a;font-size:14px;line-height:1.6}
+@media(max-width:1050px){.commerce-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.commerce-stage-list{grid-template-columns:1fr}.commerce-foundation .panel-heading{align-items:flex-start;flex-direction:column}.commerce-safety ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px}}

@@ -8,9 +8,10 @@ import { PredictionWorkspace } from './PredictionWorkspace'
 import { ModelPerformanceLab } from './ModelPerformanceLab'
 import { BatchEvaluation } from './BatchEvaluation'
 import { researchApi } from './api'
+import { AGENTIC_COMMERCE_NAVIGATION, AgenticCommercePage, CommerceAuditTrailPage } from './agenticCommerce'
 import './App.css'
 
-type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'architecture'
+type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'commerce' | 'commerce-audit' | 'architecture'
 type Segment = 'vintage' | 'grade' | 'purpose'
 type MetricRow = Record<string, string | number | null>
 type SegmentRow = { segment: string; records: number; closed: number; defaults: number; observed_closed_default_rate: number | null }
@@ -27,16 +28,17 @@ type BuildInfo = { commit_sha: string | null; short_commit: string | null; scori
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 const nav: { id: Page; title: string; icon: string; section?: string }[] = [
-  { id: 'overview', title: 'Executive overview', icon: '◫', section: 'WORKSPACE' },
-  { id: 'prediction', title: 'Borrower prediction', icon: '◎' },
+  { id: 'overview', title: 'Executive overview', icon: '◫', section: 'OVERVIEW' },
+  { id: 'prediction', title: 'Borrower prediction', icon: '◎', section: 'CREDIT RISK RESEARCH' },
   { id: 'batch', title: 'Batch evaluation', icon: '▤' },
   { id: 'discovery', title: 'Data discovery', icon: '◈' },
   { id: 'portfolio', title: 'Portfolio intelligence', icon: '▤' },
-  { id: 'lab', title: 'Model lab', icon: '⌁', section: 'RESEARCH' },
+  { id: 'lab', title: 'Model lab', icon: '⌁' },
   { id: 'performance', title: 'Model performance lab', icon: '▥' },
   { id: 'explorer', title: 'Risk explorer', icon: '◎' },
   { id: 'explainability', title: 'Explainability', icon: '✳' },
   { id: 'monitoring', title: 'Monitoring', icon: '⌁' },
+  ...AGENTIC_COMMERCE_NAVIGATION,
   { id: 'architecture', title: 'Architecture & audit', icon: '⌘', section: 'SYSTEM' },
 ]
 
@@ -217,6 +219,8 @@ function App() {
       {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
         : page === 'performance' ? <div className="page-body"><ModelPerformanceLab /></div>
+        : page === 'commerce' ? <AgenticCommercePage />
+        : page === 'commerce-audit' ? <CommerceAuditTrailPage />
         : viewState === 'loading' ? <div className="page-body"><EmptyState title="Preparing research workspace" message="Loading verified summaries and qualification metadata." icon="◌" /></div>
         : viewState === 'error' || viewState === 'empty' || !summary || !inventory || !features ? <div className="page-body"><SourceTag source="unavailable" /><EmptyState title="Research data unavailable" message={loadError ?? 'The backend did not return the historical research snapshot.'} icon="!" />{retryCount > 0 && <p style={{ marginTop: '0.5rem', fontSize: '12px', color: '#617984' }}>Retry attempts: {retryCount}</p>}<button className="button-secondary" onClick={retryLoad} style={{ marginTop: '1rem' }}>Retry loading</button></div>
           : <div className="page-body">
