@@ -2,23 +2,28 @@
 
 ## Architecture
 
-GitHub Actions runs mandatory backend and frontend checks on pushes to `main` and pull requests targeting `main`. Successful checks feed a package job that creates one commit-addressed ZIP containing the Python application, tracked model artifacts, the already-tested frontend build, and `build-manifest.json`. Dataset files, local logs, caches, and untracked artifacts are excluded. The same ZIP is the only input to the later deploy job.
+GitHub Actions uses two workflows. **CreditAI CI** runs mandatory backend and frontend checks on pushes to `main` and pull requests targeting `main`. Successful checks feed a package job that creates one commit-addressed ZIP containing the Python application, tracked model artifacts, the already-tested frontend build, and `build-manifest.json`. Dataset files, local logs, caches, and untracked artifacts are excluded. **CreditAI CD** runs separately after a successful CI workflow for a push to `main` and downloads the ZIP from that exact CI run.
 
-The deploy job runs only for a successful push to `main`, uses the GitHub `production` environment, and reads `DEPLOYMENT_PROVIDER`. The `azure-container-apps` adapter builds an image from the exact immutable release ZIP (including the frontend build already tested in CI), pushes it to Azure Container Registry, updates an existing Azure Container App, routes traffic to its latest revision in multiple-revision mode, and returns its public URL. In single-revision mode Azure routes the active revision automatically. GitHub authenticates through OIDC; no Azure client secret is stored. The adapter sets `CREDITAI_BUILD_SHA` to the full commit SHA. The app exposes it through `/v1/build` and shows the short form in the dashboard header; the deploy job verifies it against the expected release SHA alongside `/health` and `/v1/status`. Azure resources are not created by this workflow. With the provider variable unset, Actions reports that deployment is pending. Unknown providers and missing settings/resources fail the deploy job.
+The CD deployment job runs only after successful CI from a push to `main`, uses the GitHub `production` environment, and reads `DEPLOYMENT_PROVIDER`. The `azure-container-apps` adapter builds an image from the exact immutable release ZIP (including the frontend build already tested in CI), pushes it to Azure Container Registry, updates an existing Azure Container App, routes traffic to its latest revision in multiple-revision mode, and returns its public URL. In single-revision mode Azure routes the active revision automatically. GitHub authenticates through OIDC; no Azure client secret is stored. The adapter sets `CREDITAI_BUILD_SHA` to the full commit SHA. The app exposes it through `/v1/build` and shows the short form in the dashboard header; the CD job verifies it against the expected release SHA alongside `/health` and `/v1/status`. Azure resources are not created by these workflows. With the provider variable unset, CD reports that deployment is pending. Unknown providers and missing settings/resources fail the deploy job. See [CreditAI CD README](CD_README.md) for the separate Actions view and Azure setup.
 
 ## Workflow jobs and triggers
 
-Workflow: `.github/workflows/ci.yml` (`CreditAI CI and CD`). Triggers are pushes to `main` and pull requests targeting `main`. A concurrency group cancels superseded runs for the same branch or pull request. Workflow permissions default to `contents: read`.
+CI workflow: `.github/workflows/ci.yml` (`CreditAI CI`). Triggers are pushes to `main` and pull requests targeting `main`. A concurrency group cancels superseded runs for the same branch or pull request. Workflow permissions default to `contents: read`.
 
 | Job | Runs | Required work |
 |---|---|---|
 | Backend Tests | Every trigger | Python 3.11, install `requirements.txt`, verify the `src.data` and FastAPI imports, run `python -m pytest tests/ -v --tb=short` |
 | Frontend Tests, Lint, TypeScript, and Build | Every trigger | Node 24, `npm ci`, `npm test`, `npm run lint`, `npx tsc -b`, `npm run build`; upload `frontend/dist` for 7 days |
 | Package Immutable Release | After both checks pass | Download the tested frontend output and package it with tracked Python/model inputs from a clean tracked worktree; retain for 30 days |
-| Deployment Pending Provider Selection | Successful `main` push when no provider is configured | Writes the explicit pending status to the run summary; does not call a deploy adapter |
-| Deploy and Verify | Successful `main` push when `vars.DEPLOYMENT_PROVIDER` is set | Requires the production environment, downloads the same release ZIP, authenticates to Azure with OIDC, deploys the registered adapter, then verifies live API health and safety status |
 
-Pull requests cannot deploy. Deployment cannot start unless backend tests, frontend tests/build, and release packaging all pass. A deployment or verification error makes the deploy job fail. No automatic rollback is configured.
+CD workflow: `.github/workflows/cd.yml` (`CreditAI CD`). It starts on completion of `CreditAI CI` for `main`, then explicitly requires the original CI event to be a successful push to `main`.
+
+| CD job | Runs | Required work |
+|---|---|---|
+| Deployment Pending Provider Selection | Successful CI for a `main` push when no provider is configured | Writes the pending status; does not call a deploy adapter |
+| Deploy and Verify | Successful CI for a `main` push when `vars.DEPLOYMENT_PROVIDER` is set | Requires the production environment, downloads the immutable release from the triggering CI run, authenticates to Azure with OIDC, deploys the registered adapter, then verifies live API health and safety status |
+
+Pull requests cannot deploy. CD starts only after the CI workflow succeeds, which means backend tests, frontend tests/build, and release packaging all passed. A deployment or verification error makes the deploy job fail. No automatic rollback is configured.
 
 ## Inspecting CI failures and running locally
 
@@ -109,4 +114,4 @@ The CI checkout does not fetch or package datasets. UCI identifies the Default o
 
 ## Known limits
 
-Azure is selected as the intended host, and a reviewed Container Apps adapter is registered. The target Azure resources, federated identity, GitHub environment secrets/variables, first deployment, and rollback are still unconfigured/unverified. Until the required settings exist, `DEPLOYMENT_PROVIDER` must remain unset; CI reports deployment pending and no cloud deployment occurs.
+Azure is selected as the intended host, and a reviewed Container Apps adapter is registered. The target Azure resources, federated identity, GitHub environment secrets/variables, first deployment, and rollback are still unconfigured/unverified. Until the required settings exist, `DEPLOYMENT_PROVIDER` must remain unset; the separate CD workflow reports deployment pending and no cloud deployment occurs.

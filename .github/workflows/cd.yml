@@ -1,0 +1,75 @@
+name: CreditAI CD
+
+on:
+  workflow_run:
+    workflows: [CreditAI CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: creditai-cd-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deployment-pending:
+    name: Deployment Pending Provider Selection
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      vars.DEPLOYMENT_PROVIDER == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report provider-neutral status
+        run: |
+          echo 'CI succeeded on main. No deployment provider is configured; deployment is pending provider selection.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No deployment was attempted.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy and Verify
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      vars.DEPLOYMENT_PROVIDER != ''
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download the release bundle from the successful CI run
+        uses: actions/download-artifact@v4
+        with:
+          name: creditai-release-${{ github.event.workflow_run.head_sha }}
+          path: release/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate configured provider adapter
+        env:
+          DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
+        run: python -c "from src.cicd.deployment import load_configured_adapter; load_configured_adapter()"
+      - name: Sign in to Azure with GitHub OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Install Azure Container Apps CLI extension
+        run: az extension add --name containerapp --upgrade
+      - name: Deploy exact tested release and verify health
+        env:
+          DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/deploy_release.py "release/creditai-${GITHUB_SHA}.zip"
