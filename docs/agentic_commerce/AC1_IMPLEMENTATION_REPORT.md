@@ -27,6 +27,7 @@ Commands run from the repository root unless noted:
 | Calibration artifact SHA-256 | `models/calibration_model.joblib` is `6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc`, matching the previously recorded value. No calibration/model file was changed. |
 | Static production-build inspection | Passed: built application includes the distinct Agentic Commerce section, both pages, the eight stages (including Comparison), research/demo and no-real-transaction warnings, human-confirmation notice, and no-event audit empty state. |
 | Release ZIP inspection | Passed from a clean detached commit: valid CRC and manifest SHA, required backend/runtime/KNN files and frontend build present, extracted app import and model paths passed. The archive contains 81 files and excludes test fixtures, CSV/XLSX datasets, secrets, logs, caches, and tests. |
+| Extracted ZIP startup command | Passed locally from a temporary extraction using `python -m uvicorn src.api.app:app --host 127.0.0.1 --port <ephemeral>`. `/`, `/health`, AC-1 status/workflow, and the valid dummy `/v1/score` safety response were verified. No Azure deployment was made. |
 
 ## ENVIRONMENT-LIMITED / NOT VERIFIED
 
