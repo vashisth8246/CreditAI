@@ -25,7 +25,9 @@ class DeploymentError(RuntimeError):
 
 # Register a provider only after its adapter has been implemented, reviewed,
 # and tested. An empty registry deliberately means no provider is deployable.
-PROVIDER_ADAPTERS: dict[str, str] = {}
+PROVIDER_ADAPTERS: dict[str, str] = {
+    "azure-container-apps": "src.cicd.azure_container_apps",
+}
 
 
 def load_configured_adapter():
@@ -66,7 +68,13 @@ def deploy_with_configured_adapter(release_dir: Path, version: str) -> dict[str,
     return {key: str(result[key]) for key in required}
 
 
-def verify_live_deployment(base_url: str, *, attempts: int = 12, delay_seconds: float = 5) -> dict[str, Any]:
+def verify_live_deployment(
+    base_url: str,
+    *,
+    expected_version: str | None = None,
+    attempts: int = 12,
+    delay_seconds: float = 5,
+) -> dict[str, Any]:
     """Check health and status without asserting that research models are valid."""
     base = base_url.rstrip("/")
     last_error: Exception | None = None
@@ -76,11 +84,20 @@ def verify_live_deployment(base_url: str, *, attempts: int = 12, delay_seconds: 
                 health = json.load(response)
             with urlopen(f"{base}/v1/status", timeout=5) as response:
                 status = json.load(response)
+            build = None
+            if expected_version is not None:
+                with urlopen(f"{base}/v1/build", timeout=5) as response:
+                    build = json.load(response)
             if health.get("status") != "ok":
                 raise DeploymentError("Live /health response did not report status=ok.")
             if health.get("scoring") != "not_validated" or status.get("indian_production_scoring") != "not_validated":
                 raise DeploymentError("Live API violated the not_validated production scoring contract.")
-            return {"health": health, "status": status}
+            if expected_version is not None and build.get("commit_sha") != expected_version:
+                raise DeploymentError("Live /v1/build does not report the deployed release commit SHA.")
+            result = {"health": health, "status": status}
+            if build is not None:
+                result["build"] = build
+            return result
         except (URLError, TimeoutError, json.JSONDecodeError) as exc:
             last_error = exc
             if attempt + 1 < attempts:

@@ -1,4 +1,4 @@
-name: CreditAI CI and CD
+name: CreditAI CI
 
 on:
   push:
@@ -89,44 +89,3 @@ jobs:
           path: release/creditai-${{ github.sha }}.zip
           if-no-files-found: error
           retention-days: 30
-
-  deployment-pending:
-    name: Deployment Pending Provider Selection
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOYMENT_PROVIDER == ''
-    needs: [backend, frontend, package]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Report provider-neutral status
-        run: |
-          echo 'No deployment provider configured. CI completed successfully; deployment is pending provider configuration.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'No deployment was attempted.' >> "$GITHUB_STEP_SUMMARY"
-
-  deploy:
-    name: Deploy and Verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOYMENT_PROVIDER != ''
-    needs: [backend, frontend, package]
-    runs-on: ubuntu-latest
-    environment: production
-    permissions:
-      contents: read
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Download this commit's release bundle
-        uses: actions/download-artifact@v4
-        with:
-          name: creditai-release-${{ github.sha }}
-          path: release/
-      - name: Validate configured provider adapter
-        env:
-          DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
-        run: python -c "from src.cicd.deployment import load_configured_adapter; load_configured_adapter()"
-      - name: Deploy exact tested release and verify health
-        env:
-          DEPLOYMENT_PROVIDER: ${{ vars.DEPLOYMENT_PROVIDER }}
-          CREDITAI_DEPLOYMENT_TOKEN: ${{ secrets.CREDITAI_DEPLOYMENT_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-        run: python scripts/deploy_release.py "release/creditai-${GITHUB_SHA}.zip"

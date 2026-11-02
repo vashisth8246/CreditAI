@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type DragEvent, type ChangeEvent, type KeyboardEvent } from 'react'
 import { researchApi } from './api'
 import { displayFeatureName, displayUserText } from './analytics'
+import { classifyResearchProbability } from './assessment'
 import type {
   BatchInspectResponse,
   BatchPredictionResult,
@@ -25,6 +26,7 @@ import {
   riskClass,
   sanitizeCell,
   sortResults,
+  selectPdExamples,
   summarizeBatch,
   TAIWAN_REQUIRED_FIELDS,
 } from './batch'
@@ -49,7 +51,7 @@ const STEPS = [
 const FILTERS: { id: ResultFilter; label: string }[] = [
   { id: 'all', label: 'All rows' },
   { id: 'scored', label: 'Scored' },
-  { id: 'failed', label: 'Failed / rejected' },
+  { id: 'failed', label: 'Needs review' },
   { id: 'Low', label: 'Low risk' },
   { id: 'Medium', label: 'Medium risk' },
   { id: 'High', label: 'High risk' },
@@ -82,6 +84,25 @@ function sheetStatusClass(status: string): string {
   if (status === 'ready_with_errors') return 'warn'
   if (status === 'needs_mapping') return 'review'
   return 'blocked'
+}
+
+function batchFeatureLabel(feature: string): string {
+  return ({
+    PAY_0: 'Most recent repayment status',
+    PAY_AMT1: 'Most recent payment amount',
+    BILL_AMT1: 'Most recent bill statement amount',
+  } as Record<string, string>)[feature] ?? displayFeatureName(feature)
+}
+
+function batchFeatureExplanation(feature: string): string {
+  return ({
+    PAY_0: 'The latest reported repayment status in the Taiwan research dataset.',
+    PAY_2: 'Repayment status from two months before the target month.',
+    PAY_3: 'Repayment status from three months before the target month.',
+    BILL_AMT1: 'The latest statement amount recorded in the Taiwan research dataset.',
+    PAY_AMT1: 'The latest payment amount recorded in the Taiwan research dataset.',
+    LIMIT_BAL: 'The reported credit limit in the Taiwan research dataset.',
+  } as Record<string, string>)[feature] ?? 'This feature contributed to the fitted model output; contribution is not a causal effect.'
 }
 
 export function BatchEvaluation() {
@@ -124,6 +145,7 @@ export function BatchEvaluation() {
   const activeAnalysis = activeSheet ? analyses[activeSheet] : null
   const activeMapping = activeSheet ? (mappings[activeSheet] ?? {}) : {}
   const summary = useMemo(() => (result ? summarizeBatch(result) : null), [result])
+  const pdExamples = useMemo(() => result ? selectPdExamples(result) : { lowest: null, highest: null }, [result])
 
   const sheetReadiness = useMemo(() => {
     const issues: string[] = []
@@ -1012,7 +1034,7 @@ export function BatchEvaluation() {
               <div className="batch-kpi-grid">
                 <div className="panel batch-kpi"><span>Total rows submitted</span><strong>{summary.total}</strong><small>All rows returned by the backend</small></div>
                 <div className="panel batch-kpi"><span>Successfully scored</span><strong>{summary.succeeded}</strong><small>Denominator for probability statistics</small></div>
-                <div className="panel batch-kpi"><span>Failed / rejected</span><strong>{summary.failed}</strong><small>Excluded from probability statistics</small></div>
+                <div className="panel batch-kpi"><span>Rows needing review / correction</span><strong>{summary.failed}</strong><small>Validation or inference did not complete</small></div>
                 <div className="panel batch-kpi"><span>Mean estimated PD</span><strong>{formatProbability(summary.meanProbability, 2)}</strong><small>{summary.succeeded ? `Denominator: ${summary.succeeded} scored rows` : 'No scored rows'}</small></div>
                 <div className="panel batch-kpi"><span>Median estimated PD</span><strong>{formatProbability(summary.medianProbability, 2)}</strong><small>{summary.succeeded ? `Denominator: ${summary.succeeded} scored rows` : 'No scored rows'}</small></div>
                 <div className="panel batch-kpi batch-kpi-risk">
@@ -1021,6 +1043,8 @@ export function BatchEvaluation() {
                   <small>Low &lt;25% · Medium 25% to &lt;50% · High ≥50% · denominator {summary.succeeded}</small>
                 </div>
               </div>
+
+              {summary.succeeded > 0 && <div className="batch-example-grid"><section className="panel"><h3>Lowest estimated PD example</h3><p>{pdExamples.lowest?.borrower_reference ?? `Row ${pdExamples.lowest?.row_index}`} · {formatProbability(pdExamples.lowest?.prediction?.probability, 2)}</p><small>Research estimate only; not a lending decision.</small></section><section className="panel"><h3>Highest estimated PD example</h3><p>{pdExamples.highest?.borrower_reference ?? `Row ${pdExamples.highest?.row_index}`} · {formatProbability(pdExamples.highest?.prediction?.probability, 2)}</p><small>Research estimate only; not a lending decision.</small></section></div>}
 
               {summary.succeeded === 0 && (
                 <div className="empty-state">
@@ -1129,7 +1153,15 @@ export function BatchEvaluation() {
                               : '—'}
                           </td>
                           <td className="batch-error-cell" title={displayUserText(row.error_message ?? '')}>
-                            {row.error_message ? displayUserText(row.error_message) : row.prediction ? `Predicted class: ${row.prediction.predicted_class} · classification threshold ${row.prediction.threshold}` : '—'}
+                            {row.error_message ? displayUserText(row.error_message) : row.prediction ? <details className="batch-row-explanation"><summary>View explanation</summary><div className="batch-explanation-body">
+                              <p><b>Assessment:</b> {formatProbability(row.prediction.probability, 2)} estimated PD; {formatProbability(repaymentComplement(row.prediction.probability), 2)} mathematical complement.</p>
+                              <p><b>Research classification:</b> {classifyResearchProbability(row.prediction.probability, row.prediction.threshold).label}; {row.prediction.probability.toFixed(4)} {row.prediction.probability < row.prediction.threshold ? '<' : '>='} {row.prediction.threshold.toFixed(4)} research threshold.</p>
+                              <p><b>Factors moving estimated risk higher:</b> {(row.prediction.feature_contributions ?? []).filter((item) => item.direction === 'increases_risk').map((item) => `${batchFeatureLabel(item.feature)} (${item.feature}) — ${batchFeatureExplanation(item.feature)} Submitted ${row.submitted_features?.[item.feature] ?? 'derived'} value${item.feature.match(/^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/) ? ' · Taiwan dataset monetary units (NT$)' : ''}; contribution ${item.contribution.toFixed(4)} model-output units.`).join(' ') || 'No risk-increasing attribution returned.'}</p>
+                              <p><b>Factors moving estimated risk lower:</b> {(row.prediction.feature_contributions ?? []).filter((item) => item.direction === 'decreases_risk').map((item) => `${batchFeatureLabel(item.feature)} (${item.feature}) — ${batchFeatureExplanation(item.feature)} Submitted ${row.submitted_features?.[item.feature] ?? 'derived'} value${item.feature.match(/^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/) ? ' · Taiwan dataset monetary units (NT$)' : ''}; contribution ${item.contribution.toFixed(4)} model-output units.`).join(' ') || 'No risk-decreasing attribution returned.'}</p>
+                              <p><b>Model / data:</b> {row.prediction.model_id} · {row.prediction.dataset_name ?? 'Default of Credit Card Clients'} · {row.prediction.geography ?? 'Taiwan'} · {row.prediction.calibration_method ?? 'not calibrated'}.</p>
+                              <p><b>Limitation:</b> Research/demo output only; not validated for Indian borrowers or lending. The complement is arithmetic, not a repayment guarantee.</p>
+                              <p className="batch-explanation-footnote">Attribution is a model explanation, not a causal explanation.</p>
+                            </div></details> : '—'}
                           </td>
                         </tr>
                       ))}

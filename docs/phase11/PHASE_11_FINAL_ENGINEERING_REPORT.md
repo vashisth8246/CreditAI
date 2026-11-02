@@ -1,8 +1,8 @@
 # CreditAI Phase 11 Final Engineering Report
 
 **Date:** 2026-11-01
-**Branch:** `main`
-**Commit at inspection:** `932c63f` (`Add KNN model and provider-neutral CI/CD pipeline`)
+**Branch:** `phase11-final-verification`
+**Commit at original inspection:** `932c63f` (`Add KNN model and provider-neutral CI/CD pipeline`)
 **Phase 11 source commit:** `f7739f9af25d2983fd2d1da5737a9102d5aac1da` (`Complete Phase 11 research, batch evaluation and reproducibility`)
 **Follow-up:** A documentation-only commit recorded the postcommit archive verification and final source-status matrix.
 **Scope:** Final source-control audit, Phase 11 staging/commit, and CI readiness follow-through. No production deployment was performed.
@@ -12,10 +12,10 @@
 | Stage | Scope | Final Status | Evidence |
 |---|---|---|---|
 | 1 | Repository audit and plan | PASS | `docs/phase11/IMPLEMENTATION_PLAN.md` and repository history. |
-| 2 | UI, Gender labels, dashboard/API behavior | PARTIAL | Current source inspection confirms API snapshot flow, historical source date, retrieval timestamp, model-specific evaluation failures, display-only Gender label, and `/v1/score` safety state. Full frontend re-verification is blocked by dependency installation. |
-| 3 | CSV/Excel batch evaluation | PARTIAL | Current seven-sheet synthetic acceptance test passed; complete Windows HTTP suite stalls at first health request. Prior WSL 22-test report is historical, not freshly rerun. |
-| 4 | Controlled Taiwan research experiments | PARTIAL | Research helper tests pass; the experiment reproduced in an isolated output directory from the current dirty worktree and local dataset. Fresh UCI download and clean-Git-checkout reproduction remain blocked. |
-| 5 | White paper, docs, full testing, Docker/CI preparation | PARTIAL | White paper, reproduction guide, final report, and test matrix created. Full verification, Docker runtime, and real Actions run remain unavailable. |
+| 2 | UI, Gender labels, dashboard/API behavior | PASS | The clean GitHub Actions PR run passed frontend tests, lint, TypeScript, and production build. |
+| 3 | CSV/Excel batch evaluation | PASS | Backend CI passed in the clean GitHub Actions PR run; earlier Windows TestClient stall and WSL result remain historical local-environment evidence. |
+| 4 | Controlled Taiwan research experiments | PASS WITH LIMITATIONS | Research implementation and saved evidence were included in committed source validated by CI. Fresh UCI network acquisition remains unverified; Taiwan remains research/demo only. |
+| 5 | White paper, docs, full testing, Docker/CI preparation | PASS WITH LIMITATIONS | Clean GitHub Actions verified backend, frontend, and immutable release packaging. Docker runtime and fresh UCI network acquisition remain unverified. |
 
 ## Changes in this completion pass
 
@@ -38,20 +38,21 @@ At inspection, pre-existing tracked modifications included `README.md`; `fronten
 | Focused research tests | PASS | `python -m pytest tests/test_phase11_research.py -v --tb=short` — 6 passed in 6.76s. |
 | Non-HTTP backend tests | PASS | `python -m pytest tests/ --ignore=tests/test_api_integration.py --ignore=tests/test_batch_workflow.py --ignore=tests/test_phase23_benchmark.py --ignore=tests/test_phase8_features.py -v --tb=short` — 92 passed, 36 warnings in 38.69s. |
 | Seven-sheet synthetic acceptance | PASS | `python -m pytest tests/test_batch_workflow.py -k synthetic_seven_sheet_workbook_inspects_and_scores_eligible_sheets -v --tb=short` — 1 passed, 21 deselected, 17 warnings in 9.43s. |
-| Full backend suite | PARTIAL | `python -m pytest tests/ -v --tb=short` collected 148 tests and passed the first eight contract tests, then stalled at `test_health_endpoint`; interrupted. No final pytest summary was produced. |
-| CSV/XLSX HTTP acceptance | PARTIAL | The focused XLSX export endpoint test similarly stalled at its first TestClient request. Earlier `docs/phase11/STAGE_3_4_BLOCKER_RESOLUTION.md` records 22 batch tests passing under WSL; WSL was inaccessible in this pass, so not counted as a fresh pass. |
-| Frontend clean install | FAIL | `npm ci` in existing tree failed with `EPERM` unlinking Rolldown's Windows native binary. In an isolated copy it ended with npm `Exit handler never called`; offline retry failed `ENOTCACHED` for Vite. Registry DNS was unavailable. |
-| Frontend tests | FAIL | Temporary-copy `npm test` showed 22 pass and one failed test file because React was missing after failed installation (`ERR_MODULE_NOT_FOUND`). This is an incomplete dependency environment, not a source pass. |
-| Frontend lint | FAIL | `npm run lint` failed because the Oxlint executable was missing after clean installation failed. Lint target was narrowed; rerun required. |
-| TypeScript | FAIL | `npx tsc -b` failed while resolving registry package `tsc` (`ENOTFOUND`) because the local TypeScript compiler was missing after installation failure. No TypeScript source diagnostic was produced. A previous Linux temp-copy report records this command passing after `npm ci`; GitHub Actions still has not confirmed it. |
-| Frontend build | FAIL | `npm run build` failed because Vite/TypeScript binaries were missing after clean installation failed. |
+| Full backend suite | PASS (GitHub Actions) | The Windows command collected 148 tests, passed the first eight, then stalled at `test_health_endpoint` and was interrupted without a summary. The later clean GitHub Actions Backend Tests job passed; exact test count was not included in supplied evidence. |
+| CSV/XLSX HTTP acceptance | PASS (GitHub Actions) | Backend Tests passed on the clean GitHub Actions PR run. Historical WSL report recorded 22 passing batch tests; the Windows TestClient stall remains documented. |
+| Frontend clean install | PASS (GitHub Actions) | Windows `npm ci` previously failed with `EPERM` unlinking Rolldown's Windows native binary; isolated retries were blocked by the local dependency environment. The clean GitHub Actions frontend job passed. |
+| Frontend tests | PASS (GitHub Actions) | Historical temporary-copy run showed 22 passes and a failed test file because React was missing after failed install. The later clean GitHub Actions frontend job passed. |
+| Frontend lint | PASS (GitHub Actions) | Historical local lint could not find Oxlint after dependency installation failed. The GitHub Actions frontend job passed lint. |
+| TypeScript | PASS (GitHub Actions) | Historical Windows/isolated `npx tsc -b` lacked the local compiler and could not resolve npm registry DNS; no source diagnostic was produced. The GitHub Actions frontend job passed TypeScript. |
+| Frontend build | PASS (GitHub Actions) | Historical local build lacked Vite/TypeScript executables after dependency installation failed. The clean GitHub Actions frontend job passed production build. |
 | Dataset local SHA | PASS | `python scripts/fetch_phase11_dataset.py --verify-only` confirmed expected SHA-256 `21b3cf4e30878150ae8db9386780e23febb613921747dec9e59dccb32f6104d3`. |
 | Dataset isolated download | NOT RUN | In an isolated empty path, fetch failed before download because DNS resolution failed (`getaddrinfo failed`). No dataset was written there. |
 | Full research reproduction | PASS | The runner completed in an isolated output directory from the dirty worktree. Dataset/split hashes matched; selective JSON matched exactly; SHAP CSV was byte-identical; metric CSV values matched within `1e-12`; JSON float delta was at most `1.5e-14`. Saved evidence was preserved; temporary comparison outputs were removed. |
 | Saved metric agreement | PASS | CSV and JSON each contain nine rows; field-by-field numeric values match within `1e-12`. |
 | Staged source-control audit | PASS | 41 intended files only; staged diff check passed; no calibration/model files, raw dataset, secrets, logs, caches, or temporary outputs staged. |
-| Docker | NOT RUN | `docker version` could not start the Windows system stub (`Access is denied`). No build or container runtime is claimed. |
-| GitHub Actions | NOT RUN | `gh auth status` reports no logged-in account and `git ls-remote origin HEAD` failed on DNS. No real Actions run; workflow syntax and job logic were not externally validated. |
+| Immutable release packaging | PASS (GitHub Actions) | Package Immutable Release passed and produced `creditai-release-689ff1941a0aa29742eca6ddccd2d6fe450293b8` and `frontend-dist-689ff1941a0aa29742eca6ddccd2d6fe450293b8`. |
+| Docker | NOT VERIFIED | `docker version` could not start the Windows system stub (`Access is denied`). No build or container runtime is claimed. |
+| GitHub Actions | PASS | PR #1, branch `phase11-final-verification`, workflow `CreditAI CI and CD`, run `41286784346`, trigger `pull_request`, result SUCCESS. Backend Tests, Frontend Tests/Lint/TypeScript/Build, and Package Immutable Release passed. Both deployment jobs were skipped; no deployment occurred. |
 | Clean checkout source completeness | PASS | A temporary archive of commit `f7739f9af25d2983fd2d1da5737a9102d5aac1da` contains the app/tests, research code and evidence, Docker files, and all three dashboard assets; it excludes the Taiwan workbook. `frontend/dist` is absent as expected because CI builds it. |
 
 Warnings were not suppressed. Model scoring emitted scikit-learn 1.9.0 artifact versus 1.9.1 runtime warnings, along with visible Starlette, Pydantic, and SHAP deprecations.
@@ -70,7 +71,7 @@ Results are mixed: Random Forest has the highest ROC-AUC (0.7816); XGBoost has t
 
 At initial inspection, working tree had 13 modified tracked files and numerous untracked files. The frontend lockfile is tracked at `frontend/package-lock.json`; the 87-byte root `package-lock.json` is unrelated and remains unstaged. The three required dashboard JSON inputs and Phase 11 research sources/evidence are tracked in local commit `f7739f9`. A postcommit Git archive verified these files and confirmed the raw Taiwan workbook is absent. Raw Taiwan and LendingClub data remain excluded by `/Data/` in `.gitignore`.
 
-The CI workflow uses Python 3.11 and Node 24 and makes packaging depend on backend and frontend checks. Docker remains unverified. GitHub Actions remains not run because `gh` is unauthenticated and the remote DNS lookup failed. A normal push to `main` could enter the workflow's production deployment job if `vars.DEPLOYMENT_PROVIDER` is configured; that setting could not be inspected, and this task does not authorize deployment, so no push was made.
+The CI workflow uses Python 3.11 and Node 24 and makes packaging depend on backend and frontend checks. The successful PR run verified the committed code and immutable release package. Docker remains unverified. GitHub Actions reported Node.js 20 deprecation notices for some action versions being forced onto Node.js 24; the `ubuntu-latest` migration notice was informational. These warnings did not invalidate the successful run.
 
 ## Safety boundary
 
@@ -84,17 +85,23 @@ The CI workflow uses Python 3.11 and Node 24 and makes packaging depend on backe
 
 | Dimension | Status |
 |---|---|
-| Engineering readiness | PARTIAL |
-| Research reproducibility | PARTIAL |
-| Exhibition/demo readiness | PARTIAL |
-| Indian lending validation | NOT APPLICABLE |
-| Production lending readiness | NOT APPLICABLE |
+| Engineering clean CI | PASS |
+| GitHub Actions | PASS |
+| Backend CI | PASS |
+| Frontend CI, lint, TypeScript, production build | PASS |
+| Immutable release packaging | PASS |
+| Deployment | NOT PERFORMED |
+| Docker | NOT VERIFIED |
+| Fresh UCI network acquisition | NOT VERIFIED |
+| Calibration original provenance | UNKNOWN / DOCUMENTED LIMITATION |
+| Indian lending validation | NOT VALIDATED |
+| Production lending readiness | NOT VALIDATED |
 
-**Phase 11 completion decision: PARTIAL.** Clean-checkout source completeness is resolved in the local commit, but no authenticated push or real Actions run is available. The failed Windows frontend install/TestClient checks remain unresolved pending clean Linux CI. Docker and fresh network dataset acquisition also remain unverified.
+**Phase 11 completion decision: COMPLETE WITH DOCUMENTED LIMITATIONS.** Clean committed-source CI passed on GitHub Actions PR #1. Earlier Windows TestClient and npm failures remain part of the record as local-environment limitations; the later clean runner verified backend, frontend, and packaging. No deployment occurred. Docker, fresh UCI network acquisition, and original calibration training provenance remain unverified or unknown. Indian lending validation and production lending readiness are not validated, and `/v1/score` remains `not_validated`.
 
 ## Required next steps
 
-1. When GitHub access and DNS are available, use a nondeploying PR path or confirm the production provider variable is unset before triggering CI; do not push to `main` while deployment behavior is unknown. The local commit is `f7739f9af25d2983fd2d1da5737a9102d5aac1da`.
-2. Inspect a real GitHub Actions run. If it fails, fix only the demonstrated issue and rerun without disabling checks.
-3. Run Docker build/runtime verification in a working Docker environment if available.
-4. Keep calibration provenance unresolved until original evidence is recovered; continue to preserve `/v1/score` as `not_validated`.
+1. Keep calibration provenance unresolved until original evidence is recovered; do not replace the shipped artifact based on an undocumented discrepancy.
+2. Verify Docker build/runtime separately when a working Docker environment is available.
+3. Fresh UCI network acquisition remains unverified; preserve the dataset hash check before any future experiment.
+4. Continue to preserve `/v1/score` as `not_validated`; do not claim Indian borrower validation or production lending readiness.

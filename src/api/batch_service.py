@@ -786,7 +786,7 @@ def predict_workbook(
                     break
             if row_error is None:
                 try:
-                    prediction = predict(MODEL_ID, raw_features, include_explanations=False)
+                    prediction = predict(MODEL_ID, raw_features, include_explanations=True)
                     results.append({
                         "result_index": len(results) + 1,
                         "sheet_name": name,
@@ -802,7 +802,14 @@ def predict_workbook(
                             "calibrated": prediction.calibrated,
                             "threshold": prediction.threshold,
                             "calibration_method": prediction.calibration_method,
+                            "dataset_id": prediction.dataset_id,
+                            "dataset_name": prediction.dataset_name,
+                            "geography": prediction.geography,
+                            "target_meaning": prediction.target_meaning,
+                            "feature_contributions": [item.model_dump() for item in (prediction.feature_contributions or [])],
+                            "explanation_available": bool(prediction.feature_contributions),
                         },
+                        "submitted_features": raw_features,
                     })
                     scored += 1
                 except Exception as exc:
@@ -878,6 +885,25 @@ def build_export_rows(results: Sequence[Dict[str, Any]]) -> List[List[Any]]:
             and 0.0 <= float(probability) <= 1.0
             else None
         )
+        threshold = prediction.get("threshold")
+        classification = None
+        comparison = None
+        if (isinstance(probability, (int, float)) and math.isfinite(float(probability))
+                and isinstance(threshold, (int, float)) and math.isfinite(float(threshold))):
+            comparison = "<" if float(probability) < float(threshold) else ">="
+            classification = "Lower predicted-default-risk class" if comparison == "<" else "Higher predicted-default-risk class"
+        contributions = prediction.get("feature_contributions") or []
+        def drivers(direction: str) -> str:
+            return "; ".join(
+                f"{str(item.get('feature', '')).replace('_', ' ')} ({float(item.get('contribution', 0.0)):.4f} model-output units)"
+                for item in contributions if item.get("direction") == direction
+            )
+        explanation = (
+            f"Estimated PD {float(probability) * 100:.2f}% {comparison} research threshold {float(threshold) * 100:.2f}%; "
+            f"research classification: {classification}. Complement is arithmetic only, not a repayment guarantee. "
+            "Research only; not a lending decision."
+            if classification and comparison else None
+        )
         rows.append([
             item.get("result_index"),
             item.get("sheet_name"),
@@ -892,6 +918,13 @@ def build_export_rows(results: Sequence[Dict[str, Any]]) -> List[List[Any]]:
             prediction.get("calibrated"),
             prediction.get("model_id"),
             item.get("error_message"),
+            classification,
+            f"{float(probability):.4f} {comparison} {float(threshold):.4f}" if comparison else None,
+            drivers("increases_risk") or ("Attribution unavailable" if item.get("status") == "success" else None),
+            drivers("decreases_risk") or ("Attribution unavailable" if item.get("status") == "success" else None),
+            f"{prediction.get('dataset_name', 'Default of Credit Card Clients')} ({prediction.get('geography', 'Taiwan')}); {prediction.get('calibration_method') or 'not calibrated'}" if item.get("status") == "success" else None,
+            "Research only; not validated for Indian borrowers or lending" if item.get("status") == "success" else None,
+            explanation,
         ])
     return rows
 
@@ -900,6 +933,8 @@ EXPORT_HEADERS = [
     "Result #", "Sheet", "Source row", "Sheet row", "Borrower reference",
     "Status", "Estimated default probability", "Estimated non-default complement (1 - PD)", "Risk category",
     "Predicted class", "Calibrated", "Model ID", "Validation / error message",
+    "Research classification", "Threshold comparison", "Risk-increasing model drivers", "Risk-decreasing model drivers",
+    "Model and dataset context", "Limitation status", "Plain-language explanation",
 ]
 
 
@@ -950,7 +985,7 @@ def build_xlsx(payload: Dict[str, Any]) -> bytes:
                 cell.alignment = Alignment(horizontal="left")
     worksheet.freeze_panes = "A2"
     worksheet.auto_filter.ref = worksheet.dimensions
-    widths = [9, 18, 12, 10, 22, 11, 16, 25, 14, 24, 11, 20, 60]
+    widths = [9, 18, 12, 10, 22, 11, 16, 25, 14, 24, 11, 20, 60, 34, 24, 48, 48, 42, 48, 70]
     for index, width in enumerate(widths, start=1):
         worksheet.column_dimensions[get_column_letter(index)].width = width
 

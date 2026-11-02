@@ -426,7 +426,16 @@ def _prediction_payload():
                     "risk_category": "Low",
                     "predicted_class": "Lower predicted default risk",
                     "calibrated": True,
+                    "threshold": 0.5,
+                    "dataset_name": "Default of Credit Card Clients",
+                    "geography": "Taiwan",
+                    "calibration_method": "Platt scaling (sigmoid)",
+                    "feature_contributions": [
+                        {"feature": "PAY_0", "contribution": 0.31, "direction": "increases_risk"},
+                        {"feature": "PAY_AMT1", "contribution": 0.08, "direction": "decreases_risk"},
+                    ],
                 },
+                "submitted_features": {"PAY_0": 2, "PAY_AMT1": 500},
             },
             {
                 "result_index": 2,
@@ -454,6 +463,12 @@ def test_csv_export_is_ordered_and_formula_injection_safe():
     assert '"1","Portfolio","2","1","\'=cmd|calc"' in text
     assert '"2","Portfolio","3","2","failed-row"' in text
     assert text.index("=cmd|calc") < text.index("failed-row")
+    assert '"Research classification"' in text
+    assert '"Threshold comparison"' in text
+    assert '"PAY 0 (0.3100 model-output units)"' in text
+    assert '"PAY AMT1 (0.0800 model-output units)"' in text
+    assert '"Default of Credit Card Clients (Taiwan); Platt scaling (sigmoid)"' in text
+    assert '"Research only; not validated for Indian borrowers or lending"' in text
 
 
 def test_xlsx_export_has_summary_formatting_and_injection_protection():
@@ -481,6 +496,12 @@ def test_xlsx_export_has_summary_formatting_and_injection_protection():
     assert predictions["E2"].value == "'=cmd|calc"
     assert predictions["G2"].value == 0.123456
     assert predictions["G2"].number_format == "0.00%"
+    assert predictions["N1"].value == "Research classification"
+    assert predictions["O2"].value == "0.1235 < 0.5000"
+    assert "PAY 0" in predictions["P2"].value
+    assert "PAY AMT1" in predictions["Q2"].value
+    assert "Taiwan" in predictions["R2"].value
+    assert "not validated for Indian borrowers" in predictions["S2"].value
     assert predictions["F3"].value == "Failed"
     summary = workbook["Summary"]
     labels = [row[0].value for row in summary.iter_rows(min_row=1, max_row=summary.max_row)]

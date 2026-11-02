@@ -19,6 +19,7 @@ import {
   repaymentComplement,
   sanitizeCell,
   sortResults,
+  selectPdExamples,
   summarizeBatch,
   TAIWAN_REQUIRED_FIELDS,
 } from '../src/batch.ts'
@@ -233,6 +234,35 @@ test('buildResultCsv keeps order, sheet, source row, reference and failures', ()
   assert.ok(lines[3].includes('"Beta","2","1","beta-1"'))
   assert.ok(lines[4].includes('"beta-bad","error"'))
   assert.ok(csv.indexOf('alpha-1') < csv.indexOf('beta-1'))
+})
+
+test('batch explanation CSV includes threshold, model drivers, context and limitations', () => {
+  const sample = sampleResult()
+  const first = sample.results[0]
+  if (first.prediction) {
+    first.prediction.feature_contributions = [
+      { feature: 'PAY_0', contribution: 0.31, direction: 'increases_risk' },
+      { feature: 'PAY_AMT1', contribution: 0.08, direction: 'decreases_risk' },
+    ]
+    first.prediction.dataset_name = 'Default of Credit Card Clients'
+    first.prediction.geography = 'Taiwan'
+    first.prediction.calibration_method = 'Platt scaling'
+  }
+  first.submitted_features = { PAY_0: 2, PAY_AMT1: 500 }
+  const csv = buildResultCsv(sample)
+  assert.match(csv, /research_classification/)
+  assert.match(csv, /threshold_comparison/)
+  assert.match(csv, /risk_increasing_drivers/)
+  assert.match(csv, /Default of Credit Card Clients \(Taiwan\); Platt scaling/)
+  assert.match(csv, /not validated for Indian borrowers or lending/)
+})
+
+test('portfolio PD examples use the scored rows without changing their order', () => {
+  const sample = sampleResult()
+  const examples = selectPdExamples(sample)
+  assert.equal(examples.lowest?.borrower_reference, 'alpha-1')
+  assert.equal(examples.highest?.borrower_reference, 'beta-1')
+  assert.equal(selectPdExamples({ model_id: 'x', results: [] }).lowest, null)
 })
 
 test('buildValidationCsv exports real validation issues and neutralises formulas', () => {

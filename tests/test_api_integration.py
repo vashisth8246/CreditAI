@@ -1,9 +1,13 @@
 """HTTP integration tests for CreditAI FastAPI adapter endpoints (/health and /v1/score)."""
 import json
-from fastapi.testclient import TestClient
-import pytest
+import sys
+from datetime import datetime
+from pathlib import Path
 
-from src.api.app import app, _load_dashboard_snapshot, dashboard_snapshot
+import pytest
+from fastapi.testclient import TestClient
+
+from src.api.app import app, _load_dashboard_snapshot, build_info, dashboard_snapshot
 
 
 client = TestClient(app)
@@ -34,6 +38,25 @@ def test_health_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data == {"status": "ok", "scoring": "not_validated"}
+
+
+def test_build_info_exposes_only_a_valid_release_sha_and_keeps_scoring_locked(monkeypatch):
+    sha = "a" * 40
+    monkeypatch.setenv("CREDITAI_BUILD_SHA", sha)
+    response = build_info()
+    assert response.headers["cache-control"] == "no-store"
+    assert json.loads(response.body) == {
+        "commit_sha": sha,
+        "short_commit": sha[:7],
+        "scoring_status": "not_validated",
+    }
+
+    monkeypatch.setenv("CREDITAI_BUILD_SHA", "not-a-commit")
+    assert json.loads(build_info().body) == {
+        "commit_sha": None,
+        "short_commit": None,
+        "scoring_status": "not_validated",
+    }
 
 
 def test_dashboard_snapshot_loader_reads_only_expected_historical_artifacts(tmp_path):
@@ -69,6 +92,80 @@ def test_dashboard_snapshot_handler_marks_payload_historical_and_uncached(monkey
     assert payload["source"] == "historical_research_snapshot"
     assert payload["source_snapshot_date"] == "2026-10-13"
     assert payload["retrieved_at"]
+
+
+def test_dashboard_frontend_backend_snapshot_contract_and_assets():
+    """Check the route contract, exact source files and real loaded dataset identity."""
+    repository = Path(__file__).resolve().parents[1]
+    api_source = (repository / "frontend" / "src" / "api.ts").read_text(encoding="utf-8")
+    backend_source = (repository / "src" / "api" / "app.py").read_text(encoding="utf-8")
+    required_files = (
+        "phase_9_lendingclub_summary.json",
+        "phase_9_dataset_inventory.json",
+        "phase_9_feature_inventory.json",
+    )
+
+    assert "request<T>('/v1/dashboard/snapshot'" in api_source
+    assert '@app.get("/v1/dashboard/snapshot")' in backend_source
+    for filename in required_files:
+        artifact = repository / "frontend" / "public" / "data" / filename
+        assert artifact.is_file(), f"Required dashboard artifact is missing: {artifact}"
+        assert json.loads(artifact.read_text(encoding="utf-8")), f"Dashboard artifact is empty: {artifact}"
+
+    route = next(route for route in app.routes if route.path == "/v1/dashboard/snapshot")
+    assert route.endpoint is dashboard_snapshot
+    payload = _load_dashboard_snapshot(repository)
+    assert payload["summary"]["dataset"]["id"] == "DS001"
+    assert payload["summary"]["dataset"]["name"] == "LendingClub accepted loans"
+    assert payload["inventory"]
+    assert payload["features"]
+    datetime.strptime(payload["summary"]["generated_at"], "%Y-%m-%d")
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows TestClient stalls on localhost requests; verify the live HTTP route separately.",
+)
+def test_dashboard_snapshot_http_returns_committed_artifacts_with_provenance():
+    response = client.get("/v1/dashboard/snapshot")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "historical_research_snapshot"
+    assert payload["source_snapshot_date"] == payload["summary"]["generated_at"]
+    assert payload["summary"]["dataset"]["id"] == "DS001"
+    assert payload["inventory"]
+    assert payload["features"]
+    assert response.headers["cache-control"] == "no-store"
+    datetime.fromisoformat(payload["retrieved_at"].replace("Z", "+00:00"))
+
+
+def test_dashboard_loader_does_not_substitute_phase6_or_taiwan_assets(tmp_path):
+    """Missing Phase 9 evidence must fail explicitly instead of using unrelated JSON."""
+    data_dir = tmp_path / "frontend" / "public" / "data"
+    data_dir.mkdir(parents=True)
+    unrelated = {
+        "phase_6_1_lendingclub_summary.json": {"generated_at": "unrelated"},
+        "phase_6_1_dataset_inventory.json": [{"dataset_id": "unrelated"}],
+        "uci_taiwan_eval.json": {"metadata": {"dataset_id": "DS003"}},
+    }
+    for filename, payload in unrelated.items():
+        (data_dir / filename).write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Historical dashboard artifacts are unavailable"):
+        _load_dashboard_snapshot(tmp_path)
+
+
+def test_dashboard_endpoint_reports_missing_artifacts_as_explicit_service_error(monkeypatch):
+    def missing(_root):
+        raise ValueError("Historical dashboard artifacts are unavailable on this server.")
+
+    monkeypatch.setattr("src.api.app._load_dashboard_snapshot", missing)
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as error:
+        next(dashboard_snapshot().__await__())
+    assert error.value.status_code == 503
+    assert "Historical dashboard artifacts are unavailable" in error.value.detail
 
 
 def test_valid_score_endpoint_returns_not_validated():
