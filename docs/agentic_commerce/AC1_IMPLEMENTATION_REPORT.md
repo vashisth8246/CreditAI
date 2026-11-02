@@ -14,9 +14,11 @@ Commands run from the repository root unless noted:
 
 | Check | Actual result |
 |---|---|
-| `python -m pytest tests/ -v --tb=short -o faulthandler_timeout=90` | 171 passed, 2 skipped, 58 warnings in 74.23 seconds. The run was repeated with normal Windows socket access after the restricted run stalled at `/health`; the full suite completed. The two skips are existing Windows-only HTTP guards for AC status/workflow and dashboard snapshot responses. |
+| `python -m pytest tests/ -v --tb=short -o faulthandler_timeout=90` (original workspace) | 172 passed, 2 skipped, 58 warnings in 76.37 seconds. The two skips are existing Windows-only HTTP guards for AC status/workflow and dashboard snapshot responses. |
+| `python -m pytest tests/ -v --tb=short -o faulthandler_timeout=90` (clean committed checkout) | 164 passed, 10 skipped, 57 warnings in 26.46 seconds. The additional eight skips require untracked raw Taiwan/LendingClub datasets; the datasets are intentionally absent from the clean release checkout. The other two skips are the Windows-only AC and dashboard HTTP guards. |
 | AC status/workflow requests through `httpx.ASGITransport` | Passed: both routes returned HTTP 200; status reported `agentic_commerce`, `AC-1`, `research_demo`, disabled real lending/transactions, and required human confirmation; all eight workflow stages were planned. |
 | Backend coverage in the full suite | AC contracts and gates, Borrower Prediction, `/v1/score`, Batch Evaluation including seven-sheet workbook, API contracts, model tests, and deployment adapter tests passed. Existing scikit-learn version warnings were visible and not suppressed. |
+| `python -m pytest tests/test_package_release.py -v --tb=short` | 1 passed; verifies that public batch test fixtures are excluded from frontend release entries while runtime assets remain included. |
 | `npm test` (from `frontend/`) | 39 passed, 0 failed, 0 skipped, including all three AC-1 tests. |
 | `npm run lint` (from `frontend/`) | Passed. |
 | `node node_modules/typescript/bin/tsc -b` (from `frontend/`) | Passed. The direct compiler invocation is used because the `npx tsc -b` shim misparses this Windows workspace path containing `&`. |
@@ -24,6 +26,7 @@ Commands run from the repository root unless noted:
 | `/v1/score` safety contract | Passed through the full regression suite and direct contract test: `score_status=not_validated`, `score_type=none`, `default_probability=null`, `validated_risk_estimate=false`, and `model_version=null`. |
 | Calibration artifact SHA-256 | `models/calibration_model.joblib` is `6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc`, matching the previously recorded value. No calibration/model file was changed. |
 | Static production-build inspection | Passed: built application includes the distinct Agentic Commerce section, both pages, the eight stages (including Comparison), research/demo and no-real-transaction warnings, human-confirmation notice, and no-event audit empty state. |
+| Release ZIP inspection | Passed from a clean detached commit: valid CRC and manifest SHA, required backend/runtime/KNN files and frontend build present, extracted app import and model paths passed. The archive contains 81 files and excludes test fixtures, CSV/XLSX datasets, secrets, logs, caches, and tests. |
 
 ## ENVIRONMENT-LIMITED / NOT VERIFIED
 
@@ -31,7 +34,8 @@ Commands run from the repository root unless noted:
 - Two tests remain intentionally skipped by their Windows platform guards: the combined AC status/workflow HTTP test and dashboard snapshot HTTP test. AC routes were independently exercised with in-process ASGI requests; the full suite includes direct route/contract verification.
 - Static/build verification was performed; no browser/manual visual acceptance was completed.
 - Azure CLI is unavailable and no Azure authentication or deployment was attempted.
-- At the time of this report update, no AC-1 release ZIP had been produced. Packaging is deferred until the verified AC-1 source is committed and the clean tracked-worktree/commit-SHA checks can run. The two pre-existing ZIPs (`release/creditai-8ca9881.zip` and `release/creditai-8ca98819af970b12e613e4d87ab349edef80a354.zip`) were left untouched and were not used as release evidence.
+- The first package candidate was rejected after inspection found tracked synthetic batch test fixtures copied into the Vite build. That candidate was removed and not used. The release packager now excludes those fixtures, with a regression test, and the final clean-checkout archive passed the checks above. The two pre-existing rejected ZIPs (`release/creditai-8ca9881.zip` and `release/creditai-8ca98819af970b12e613e4d87ab349edef80a354.zip`) remain untouched and unused.
+- GitHub Actions has not yet validated the AC-1 commits. The latest visible workflow run, `41422816270`, used the earlier `b37d670` commit and is not evidence for AC-1. No deployment was attempted.
 - Azure deployment was not attempted. Any package upload to the existing App Service remains a manual user action, followed by live verification.
 
 ## Route compatibility correction
@@ -44,4 +48,4 @@ Tool execution/orchestration, purchase-intent submission, affordability and rese
 
 ## Release and deployment status
 
-Azure ZIP readiness is **not yet established**. The verified backend and frontend checks now pass, but the package still must be generated from the exact committed source SHA and inspected before it can be called ready. Azure deployment remains **not performed** and requires the user to upload the verified ZIP to the existing App Service described in [the upload handoff](AC1_AZURE_APP_SERVICE_UPLOAD.md).
+The Azure ZIP is **verified and ready for manual upload**. Build manifest SHA must match the exact commit used to create the archive; use the newest `release/creditai-<full-commit-sha>.zip` output from the clean release checkout. Azure deployment remains **not performed** and requires the user to upload that verified ZIP to the existing App Service described in [the upload handoff](AC1_AZURE_APP_SERVICE_UPLOAD.md). No live Azure health or application verification is claimed.
