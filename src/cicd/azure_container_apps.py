@@ -18,7 +18,7 @@ from .deployment import DeploymentError
 
 
 PROVIDER_ID = "azure-container-apps"
-_REQUIRED_PATHS = ("requirements.txt", "src/api/app.py", "frontend/index.html", "models")
+_REQUIRED_PATHS = ("requirements.txt", "src/api/app.py", "frontend/dist/index.html", "models")
 
 
 def _setting(name: str) -> str:
@@ -55,7 +55,7 @@ COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY models/ ./models/
-COPY frontend/ ./frontend/dist/
+COPY frontend/dist/ ./frontend/dist/
 USER creditai
 EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \\
@@ -116,7 +116,7 @@ def deploy(release_dir: Path, version: str) -> dict[str, str]:
         shutil.copy2(release_dir / "requirements.txt", context / "requirements.txt")
         shutil.copytree(release_dir / "src", context / "src")
         shutil.copytree(release_dir / "models", context / "models")
-        shutil.copytree(release_dir / "frontend", context / "frontend" / "dist")
+        shutil.copytree(release_dir / "frontend" / "dist", context / "frontend" / "dist")
         (context / "Dockerfile").write_text(_dockerfile(), encoding="utf-8")
 
         _run(["az", "acr", "login", "--name", registry_name])

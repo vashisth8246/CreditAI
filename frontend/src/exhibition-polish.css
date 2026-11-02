@@ -1,0 +1,806 @@
+/* Exhibition presentation layer: motion and clarity only, with no data or UI-state logic. */
+:root {
+  font-size: 16px;
+  --motion-fast: 160ms;
+  --motion-standard: 260ms;
+  --motion-enter: 460ms;
+  --motion-ease: cubic-bezier(.2, .75, .25, 1);
+  --surface-canvas: #f2f7f5;
+  --surface-card: #ffffff;
+  --surface-soft: #f7fbf9;
+  --accent-green: #168b72;
+  --accent-green-strong: #10735f;
+  --ink-strong: #12343a;
+  --ink-muted: #5f777b;
+  --border-soft: #dce9e4;
+  --shadow-raised: 0 16px 36px rgba(18, 55, 64, .11), 0 3px 8px rgba(18, 55, 64, .05);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 76px;
+}
+
+button,
+input,
+select,
+textarea,
+a,
+.panel,
+.nav-item,
+.batch-dropzone,
+.batch-progress-step,
+.batch-sheet-tab,
+.batch-filter-group button,
+.preset-btn,
+.segment-controls button,
+.chart-tooltip {
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--motion-ease);
+}
+
+.page-body {
+  animation: creditai-page-enter var(--motion-enter) var(--motion-ease) both;
+}
+
+.page-body > .hero-panel,
+.page-body > .notice-strip,
+.page-body > .research-banner,
+.page-body > .research-warning,
+.page-body > .kpi-grid,
+.page-body > .grid-two,
+.page-body > .grid-three,
+.page-body > .panel,
+.prediction-layout > .panel,
+.batch-step-panel > .panel,
+.batch-step-panel > .batch-success,
+.batch-charts-grid > .panel,
+.batch-kpi-grid > .panel {
+  animation: creditai-card-enter 420ms var(--motion-ease) both;
+}
+
+.page-body > .hero-panel { animation-delay: 35ms; }
+.page-body > .notice-strip,
+.page-body > .research-banner,
+.page-body > .research-warning { animation-delay: 80ms; }
+.page-body > .kpi-grid { animation-delay: 125ms; }
+.page-body > .grid-two,
+.page-body > .grid-three { animation-delay: 170ms; }
+.page-body > .panel { animation-delay: 210ms; }
+.prediction-layout > .panel:nth-child(2) { animation-delay: 110ms; }
+.batch-step-panel > .panel:nth-child(2),
+.batch-charts-grid > .panel:nth-child(2n) { animation-delay: 90ms; }
+
+@media (hover: hover) and (pointer: fine) {
+  .panel {
+    transition: transform var(--motion-standard) var(--motion-ease),
+      box-shadow var(--motion-standard) var(--motion-ease),
+      border-color var(--motion-standard) var(--motion-ease);
+  }
+
+  .panel:hover {
+    transform: translateY(-2px);
+    border-color: #c6ded7;
+    box-shadow: var(--shadow-raised);
+  }
+
+  .nav-item {
+    transition-property: color, background-color, transform, box-shadow;
+  }
+
+  .nav-item:hover {
+    transform: translateX(2px);
+  }
+
+  .button-primary,
+  .button-secondary,
+  .button-quiet,
+  .icon-button,
+  .preset-btn,
+  .batch-progress-step,
+  .batch-sheet-tab,
+  .batch-filter-group button,
+  .text-link {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  }
+
+  .button-primary:hover:not(:disabled),
+  .button-secondary:hover:not(:disabled),
+  .icon-button:hover:not(:disabled),
+  .preset-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 16px rgba(14, 92, 76, .12);
+  }
+
+  .nav-symbol,
+  .brand-mark,
+  .icon-button {
+    transition: transform var(--motion-fast) var(--motion-ease), color var(--motion-fast) ease;
+  }
+
+  .nav-item:hover .nav-symbol,
+  .brand:hover .brand-mark,
+  .icon-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+button:active:not(:disabled),
+.batch-progress-step:active:not(:disabled),
+.batch-sheet-tab:active {
+  transform: scale(.985);
+}
+
+button:disabled,
+select:disabled,
+input:disabled {
+  box-shadow: none;
+  transform: none;
+}
+
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea {
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+}
+
+input:not([type='checkbox']):not([type='radio']):focus,
+select:focus,
+textarea:focus {
+  border-color: #36a88f;
+  box-shadow: 0 0 0 3px rgba(42, 171, 141, .13);
+}
+
+.api-online .api-dot,
+.status-node.status-ok .status-indicator-dot {
+  animation: creditai-status-pulse 2.6s ease-out infinite;
+}
+
+.api-offline .api-dot,
+.api-checking .api-dot,
+.status-node.status-bad .status-indicator-dot,
+.status-warning .status-indicator-dot {
+  animation: none;
+}
+
+.hero-art .orbit-outer {
+  animation: creditai-orbit-in 900ms var(--motion-ease) both;
+}
+
+.hero-art .orbit-inner {
+  animation: creditai-orbit-in 780ms 80ms var(--motion-ease) both;
+}
+
+.hero-core {
+  animation: creditai-core-in 600ms 140ms var(--motion-ease) both;
+}
+
+.hero-beam {
+  animation: creditai-beam-in 700ms 180ms var(--motion-ease) both;
+}
+
+.chart-wrap svg,
+.batch-cumulative-wrap svg,
+.histogram,
+.model-compare,
+.confusion-grid,
+.corr-table {
+  animation: creditai-chart-enter 520ms 100ms var(--motion-ease) both;
+  transform-origin: center;
+}
+
+.line-path {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: creditai-line-draw 1100ms 160ms var(--motion-ease) forwards;
+}
+
+.hbar-fill,
+.model-track i,
+.batch-risk-fill,
+.batch-status-track i,
+.batch-sheet-risk-track i,
+.shap-bar-fill,
+.importance-track i,
+.decile-fill,
+.gauge-fill {
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: creditai-bar-fill 760ms 180ms var(--motion-ease) forwards;
+}
+
+.feature-section,
+.assessment-summary,
+.assessment-math,
+.assessment-5w,
+.probability-block,
+.history-item,
+.evidence-driver,
+.batch-stat,
+.batch-success,
+.monitor-row,
+.arch-node,
+.step-card {
+  animation: creditai-card-enter 380ms var(--motion-ease) both;
+}
+
+.feature-section:nth-of-type(2),
+.evidence-driver:nth-child(2),
+.monitor-row:nth-child(2),
+.arch-node:nth-child(2),
+.step-card:nth-child(2),
+.batch-stat:nth-child(2) { animation-delay: 45ms; }
+.feature-section:nth-of-type(3),
+.evidence-driver:nth-child(3),
+.monitor-row:nth-child(3),
+.arch-node:nth-child(3),
+.step-card:nth-child(3),
+.batch-stat:nth-child(3) { animation-delay: 90ms; }
+.feature-section:nth-of-type(4),
+.evidence-driver:nth-child(4),
+.monitor-row:nth-child(4),
+.arch-node:nth-child(4),
+.step-card:nth-child(4),
+.batch-stat:nth-child(4) { animation-delay: 135ms; }
+
+.shap-bar-fill,
+.importance-track i,
+.decile-fill,
+.gauge-fill {
+  animation-delay: 260ms;
+}
+
+.batch-dropzone {
+  transition-property: background-color, border-color, box-shadow, transform;
+}
+
+.batch-dropzone:hover,
+.batch-dropzone.drag-active {
+  box-shadow: 0 12px 28px rgba(20, 113, 91, .09);
+}
+
+.batch-running {
+  border-color: #b9dfd1;
+  box-shadow: 0 8px 22px rgba(20, 113, 91, .06);
+}
+
+.batch-spinner {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+
+.batch-data-table tbody tr,
+.data-table tbody tr,
+.segment-table tbody tr,
+.metric-table tbody tr {
+  transition: background-color var(--motion-fast) ease;
+}
+
+.chart-tooltip {
+  opacity: 0;
+  transform: translateY(4px);
+  transition-property: opacity, transform;
+}
+
+.hist-column:hover .chart-tooltip,
+.hist-column:focus-visible .chart-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.panel-heading h2,
+.section-title h1,
+.kpi-value,
+.batch-kpi strong,
+.assessment-metrics strong {
+  text-wrap: pretty;
+}
+
+.page-body,
+.panel,
+.hero-panel,
+.batch-page,
+.prediction-layout,
+.chart-wrap,
+.grid-two,
+.grid-three {
+  min-width: 0;
+}
+
+.batch-table-scroll,
+.batch-mapping-scroll,
+.batch-sheet-tabs,
+.side-nav,
+.table-scroll,
+.segment-table-wrap,
+.metric-table-wrap {
+  overscroll-behavior-inline: contain;
+  scrollbar-color: #a8c9bf #edf4f1;
+  scrollbar-width: thin;
+}
+
+.page-footer {
+  padding-top: 18px;
+}
+
+/* Shared exhibition finish: keep the original palette, clarify hierarchy, and
+   give dense research pages more breathing room without changing their layout. */
+body {
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(45, 157, 123, .055), transparent 31rem),
+    var(--surface-canvas);
+  color: var(--ink-strong);
+  line-height: 1.5;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #102b33 0%, #0e3035 100%);
+}
+
+.topbar {
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 4px 18px rgba(18, 55, 64, .035);
+}
+
+.page-body {
+  padding-top: 32px;
+}
+
+.panel {
+  border-color: var(--border-soft);
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: 0 8px 24px rgba(18, 55, 64, .055), 0 1px 2px rgba(18, 55, 64, .035);
+}
+
+.hero-panel {
+  border: 1px solid rgba(199, 246, 222, .14);
+  background:
+    radial-gradient(ellipse at 82% 24%, rgba(105, 211, 164, .17), transparent 22rem),
+    linear-gradient(115deg, #0e3037, #15564e 65%, #1d7261);
+  box-shadow: 0 20px 46px rgba(13, 66, 58, .16);
+}
+
+.hero-copy h1,
+.section-title h1 {
+  text-wrap: balance;
+}
+
+.section-title h1 {
+  color: var(--ink-strong);
+}
+
+.eyebrow {
+  font-size: .75rem;
+  letter-spacing: .09em;
+}
+
+.crumb,
+.top-date,
+.api-chip,
+.source-tag,
+.mini-tag,
+.status-badge,
+.nav-item {
+  font-size: .8125rem;
+}
+
+.section-detail,
+.hero-copy > p,
+.notice-strip span,
+.research-banner,
+.panel-heading p:not(.eyebrow),
+.kpi-card p,
+.callout-soft,
+.profile-target p,
+.profile-unavailable p,
+.chart-footnote,
+.empty-state p {
+  font-size: .875rem;
+  line-height: 1.6;
+}
+
+.panel-heading h2,
+.subchart h3,
+.batch-section-head h3 {
+  font-size: 1.0625rem;
+}
+
+.kpi-top,
+.kpi-value small,
+.fact-label,
+.profile-facts span,
+.workflow-steps,
+.hero-float i,
+.hero-watermark {
+  font-size: .75rem;
+}
+
+.kpi-card p {
+  color: var(--ink-muted);
+}
+
+.button-primary,
+.button-secondary,
+.button-quiet,
+.text-link,
+.notice-strip button,
+.research-banner button {
+  font-size: .875rem;
+}
+
+.data-table,
+.segment-table,
+.metric-table,
+.corr-table,
+.portfolio-table,
+.model-table {
+  font-size: .8125rem;
+}
+
+.data-table th,
+.segment-table th,
+.metric-table th,
+.corr-table th,
+.portfolio-table th,
+.model-table th {
+  font-size: .75rem;
+  letter-spacing: .035em;
+}
+
+.data-table td,
+.segment-table td,
+.metric-table td,
+.corr-table td,
+.portfolio-table td,
+.model-table td {
+  line-height: 1.5;
+}
+
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea {
+  min-height: 40px;
+  font-size: .875rem;
+}
+
+/* Batch evaluation keeps its wide, scrollable tables; the type stays legible. */
+.batch-step-copy strong,
+.batch-template-row strong,
+.batch-file-facts strong,
+.batch-sheet-row,
+.batch-note,
+.batch-section-head p,
+.batch-required-item span,
+.batch-preview-tools input,
+.batch-result-toolbar input,
+.batch-column-list label,
+.batch-data-table,
+.batch-pagination,
+.batch-errors summary,
+.batch-run-sheet strong,
+.batch-run-sheet span,
+.batch-run-total span,
+.batch-running strong {
+  font-size: .75rem;
+}
+
+.batch-step-copy small,
+.batch-dropzone small,
+.batch-template-row p,
+.batch-file-facts span,
+.batch-sheet-head,
+.batch-status,
+.batch-inline-hint,
+.batch-inline-error,
+.batch-stat span,
+.batch-stat small,
+.batch-required-item strong,
+.batch-inline-badge,
+.batch-data-table thead th,
+.batch-run-sheet small,
+.batch-run-total small {
+  font-size: .75rem;
+}
+
+.batch-dropzone p {
+  font-size: .8125rem;
+}
+
+.batch-data-table th,
+.batch-data-table td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.batch-progress-step {
+  min-height: 54px;
+}
+
+.batch-stat {
+  padding: 14px;
+}
+
+.batch-status,
+.status-badge,
+.source-tag,
+.mini-tag {
+  line-height: 1.35;
+}
+
+.sidebar-foot p,
+.sidebar-version,
+.foot-status,
+.brand small,
+.workspace-switch strong,
+.workspace-switch small {
+  font-size: .75rem;
+  line-height: 1.45;
+}
+
+.nav-section {
+  font-size: .75rem;
+  letter-spacing: .1em;
+}
+
+.hero-kicker {
+  font-size: .75rem;
+  letter-spacing: .09em;
+}
+
+.hero-float small {
+  font-size: .75rem;
+}
+
+.hero-watermark {
+  letter-spacing: .12em;
+}
+
+@media (max-width: 900px) {
+  .page-body {
+    padding-top: 22px;
+  }
+
+  .sidebar-foot p,
+  .sidebar-version,
+  .foot-status,
+  .brand small,
+  .workspace-switch strong,
+  .workspace-switch small {
+    font-size: .75rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand small,
+  .sidebar-foot .foot-status,
+  .sidebar-foot p,
+  .api-chip {
+    font-size: .75rem;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(2rem, 9vw, 2.5rem);
+  }
+}
+
+@keyframes creditai-page-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes creditai-card-enter {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes creditai-chart-enter {
+  from { opacity: 0; transform: translateY(7px) scale(.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes creditai-orbit-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.92); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes creditai-core-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.9); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes creditai-beam-in {
+  from { opacity: 0; transform: scaleX(.7); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes creditai-line-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes creditai-bar-fill {
+  to { transform: scaleX(1); }
+}
+
+@keyframes creditai-status-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(40, 170, 120, .28); }
+  65% { box-shadow: 0 0 0 7px rgba(40, 170, 120, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 170, 120, 0); }
+}
+
+@media (max-width: 1100px) {
+  .page-body { padding-right: 24px; padding-left: 24px; }
+  .grid-three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-grid { gap: 12px; }
+  .hero-panel { grid-template-columns: 1.05fr .95fr; }
+  .hero-art { min-width: 0; }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: sticky;
+    inset: 0 0 auto;
+    width: 100%;
+    min-height: 0;
+    padding: 10px 12px 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    box-shadow: 0 8px 20px rgba(9, 39, 45, .12);
+  }
+
+  .brand { padding: 0 4px; }
+  .brand-mark { width: 34px; height: 34px; }
+  .workspace-switch { display: none; }
+  .side-nav {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 5px;
+    margin: 0;
+    padding: 1px 1px 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .side-nav > div { flex: 0 0 auto; }
+  .nav-section { display: none; }
+  .nav-item { width: auto; min-height: 39px; padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+  .nav-symbol { width: auto; }
+  .nav-shortcut { display: none; }
+  .sidebar-foot {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 12px;
+    margin: 0;
+    padding: 7px 4px 0;
+  }
+  .sidebar-foot p { margin: 0; font-size: 10px; line-height: 1.35; }
+  .sidebar-version { margin-left: auto; }
+  .main-shell { margin-left: 0; }
+  .topbar { height: auto; min-height: 56px; padding: 8px 14px; gap: 8px; }
+  .mobile-brand { display: block; border: 0; padding: 6px 0; background: transparent; color: var(--ink); font-weight: 800; white-space: nowrap; }
+  .crumb { display: none; }
+  .top-actions { gap: 7px; }
+  .top-date,
+  .build-chip { display: none; }
+  .page-body { padding: 22px 16px 26px; }
+  .section-title { gap: 12px; margin-bottom: 18px; }
+  .section-title h1 { font-size: clamp(23px, 6vw, 28px); }
+  .section-detail { font-size: 13px; }
+  .hero-panel { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 24px 20px; }
+  .hero-copy h1 { font-size: clamp(32px, 9vw, 40px); }
+  .hero-art { min-height: 190px; margin: 2px auto 0; width: min(100%, 390px); }
+  .hero-watermark { right: 12px; bottom: 10px; }
+  .grid-two,
+  .grid-three,
+  .overview-grid,
+  .portfolio-charts { grid-template-columns: minmax(0, 1fr); }
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .kpi-card { padding: 14px; }
+  .panel { padding: 17px; }
+  .prediction-layout { grid-template-columns: minmax(0, 1fr); }
+  .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .batch-page { min-width: 0; }
+  .batch-sheet-row { grid-template-columns: 34px minmax(94px, 1fr) 44px 52px 105px; }
+  .batch-results-table { min-width: 950px; }
+  .batch-data-table { width: max-content; }
+  .batch-table-scroll { max-width: 100%; }
+  .batch-actions,
+  .batch-export-actions { width: 100%; }
+  .batch-actions > button,
+  .batch-export-actions > button { flex: 1 1 auto; }
+  .chart-wrap svg { min-width: 430px; }
+  .research-banner { align-items: flex-start; flex-wrap: wrap; }
+  .research-banner > span { min-width: 0; flex: 1 1 100%; }
+}
+
+@media (max-width: 420px) {
+  .sidebar { padding-right: 8px; padding-left: 8px; }
+  .brand strong { font-size: 17px; }
+  .brand small { font-size: 8px; letter-spacing: 1px; }
+  .nav-item { gap: 7px; padding: 8px; }
+  .nav-item > span:nth-child(2) { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-foot .foot-status { font-size: 9px; }
+  .sidebar-foot p { font-size: 9px; }
+  .api-chip { padding: 6px 8px; font-size: 9px; }
+  .icon-button { flex: 0 0 31px; }
+  .page-body { padding-right: 12px; padding-left: 12px; }
+  .section-title { flex-direction: column; }
+  .kpi-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-art { transform: scale(.92); transform-origin: top center; margin-bottom: -10px; }
+  .feature-grid { grid-template-columns: minmax(0, 1fr); }
+  .batch-kpi-grid { grid-template-columns: minmax(0, 1fr); }
+  .batch-file-facts { grid-template-columns: minmax(0, 1fr); }
+  .batch-validation-grid { grid-template-columns: minmax(0, 1fr); }
+  .batch-required-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .batch-template-row { align-items: stretch; }
+  .batch-preview-tools input { min-width: 0; }
+  .assessment-metrics { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Keep later mobile component rules from shrinking navigation and batch text. */
+@media (max-width: 900px) {
+  .sidebar-foot p,
+  .sidebar-version,
+  .foot-status,
+  .brand small,
+  .nav-item,
+  .api-chip {
+    font-size: .75rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .sidebar-foot .foot-status,
+  .sidebar-foot p,
+  .brand small,
+  .api-chip,
+  .nav-item {
+    font-size: .75rem;
+  }
+}
+
+.batch-kpi small,
+.batch-risk-label,
+.batch-risk-label span,
+.batch-risk-label b,
+.batch-risk-row > small,
+.batch-status-label,
+.batch-status-row small,
+.batch-sheet-risk-head,
+.batch-sheet-risk-head span,
+.batch-sheet-risk-row > small,
+.batch-chart-legend,
+.batch-filter-group button,
+.batch-risk-pill,
+.batch-error-cell,
+.batch-export-actions .button-primary,
+.batch-export-actions .button-secondary,
+.batch-chart-empty {
+  font-size: .75rem;
+}
+
+.batch-sheet-row {
+  font-size: .75rem;
+}
+
+@media (max-width: 900px) {
+  .batch-sheet-row {
+    font-size: .75rem;
+  }
+}
