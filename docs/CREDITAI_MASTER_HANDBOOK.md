@@ -269,21 +269,23 @@ Data Discovery uses Research Ready, Available — Restricted Use, Evidence Gap, 
 
 | Check | Latest evidence | Result and limitations |
 |---|---|---|
-| Frontend tests | Local `npm test`; CI 41299626128 | PASS: local 36 passed, 0 failed, 0 skipped; CI job passed. |
-| Frontend lint | Local `npm run lint`; CI | PASS, exit 0. |
-| TypeScript | Local `node node_modules/typescript/bin/tsc -b`; CI `npx tsc -b` | PASS locally and on Linux. Do not weaken CI. |
-| Production build | Local `npm run build`; CI | PASS; Vite production frontend artifact uploaded. |
+| Frontend tests | Local `npm test`; CI 41421039804 | PASS: local 36 passed, 0 failed, 0 skipped; CI job passed. |
+| Frontend lint | Local `npm run lint`; CI 41421039804 | PASS, exit 0. |
+| TypeScript | Local `node node_modules/typescript/bin/tsc -b`; CI `npx tsc -b` | Direct local command and Linux CI PASS. Local `npx tsc -b` fails on the Windows `&` workspace path; CI is unaffected. Do not weaken CI. |
+| Production build | Local `npm run build`; CI 41421039804 | PASS; Vite production frontend artifact uploaded. |
 | Backend API contract | `pytest tests/test_api_contract.py -v --tb=short` | PASS locally, 9 passed. |
-| Full backend suite | CI Backend Tests job | PASS in run 41299626128. Local Windows TestClient suite stalled at HTTP integration tests and was interrupted; not a local pass. Exact CI test/skip counts were not obtained from logs here. |
+| Full backend suite | CI Backend Tests job | PASS in run 41421039804. Local focused Azure adapter tests 7 passed; build identity contract 1 passed. Local Windows full-suite TestClient limitation remains. Exact CI test/skip counts were not obtained from logs here. |
 | Batch | Current synthetic runtime flow; prior test/resolution reports; CI backend job | CSV and synthetic XLSX upload/inspect/predict/exports exercised; backend CI pass. Windows HTTP TestClient stall remains local limitation. |
 | Research | Saved CSV/JSON and source audit | Metrics match each other; experiment not rerun in this audit. Metadata says original run worktree dirty. |
-| Whitespace | `git diff --check` | Passed before this document; rerun after this document. |
+| Whitespace | `git diff --check` | Passed after the Azure CD implementation and handbook evidence update. |
 
 ### GitHub Actions and package
 
 `.github/workflows/ci.yml` triggers on pushes to `main` and PRs targeting `main`; permissions default `contents: read`. Backend and frontend jobs are required by packaging. Frontend job uses Node 24, `npm ci`, test, lint, TypeScript and production build, and uploads `frontend-dist-${github.sha}`. Package job downloads that tested build and packages tracked `src/`, `models/`, `requirements.txt`, frontend output and `build-manifest.json`. The manifest records SHA and `scoring_status: not_validated`. The release ZIP is commit-addressed; the same downloaded artifact is deployed if a future deploy job is enabled. Package script checks clean tracked status and all registered model paths.
 
 Run 41299626128: Backend Tests PASS; Frontend Tests/Lint/TypeScript/Build PASS; Package Immutable Release PASS; Deploy and Verify SKIPPED; Deployment Pending Provider Selection SKIPPED. No deployment. Artifacts present and unexpired when checked: `frontend-dist-e65d497ab2a7721672f00718d68f92d74b1bb194` and `creditai-release-e65d497ab2a7721672f00718d68f92d74b1bb194`. The artifact names use the PR merge SHA `e65d...`; the branch HEAD is `e03e...`. This audit did not download/unzip these artifacts independently and did not create a local ZIP from this workspace.
+
+After the Azure CD implementation, PR run [41421039804](https://github.com/vashisth8246/CreditAI/actions/runs/41421039804) passed on branch commit `db5d812fbbf0a03bbea07d60f63a3b96abf4efcb`: Backend Tests, Frontend Tests/Lint/TypeScript/Build, and Package Immutable Release all PASS. The workflow parsed and ran in GitHub Actions. `Deploy and Verify` and `Deployment Pending Provider Selection` were SKIPPED because this was a pull request. The successful package artifacts were `frontend-dist-cc599596dffc810cdcb9197d670c2eac4ddbf69d` and `creditai-release-cc599596dffc810cdcb9197d670c2eac4ddbf69d`. This run does not verify Azure login, container image build/push, or a live deployment.
 
 Deployment `if` conditions only permit a push to `refs/heads/main`; PRs cannot deploy. Deployment needs all three prior jobs to succeed and uses GitHub `production` environment. With `vars.DEPLOYMENT_PROVIDER` empty on a main push, pending-provider job records pending and does not deploy. Unknown IDs fail adapter validation. As of the Azure CD update, `PROVIDER_ADAPTERS` registers the Azure Container Apps implementation. It uses GitHub OIDC, builds a container image from the immutable release ZIP's already-tested frontend and backend/model files, pushes a full-SHA tag to ACR, and updates an existing Container App. It sets `CREDITAI_BUILD_SHA`; `/v1/build` reports the deployed source SHA, the dashboard header shows its short form, and the deploy job verifies it equals the intended release. The job also checks `/health` and `/v1/status` and preserves the `not_validated` contract. No Azure resources, identity, GitHub production secrets/variables, or public Azure URL have been configured or verified in this workspace, so no deployment has occurred. The Azure workflow is not live-enabled until the documented settings are supplied. Production environment's external reviewer/branch protection settings were not independently verified.
 
@@ -395,14 +397,14 @@ Release-critical tracked static assets include `frontend/public/data/phase_9_len
 | Field | Candidate |
 |---|---|
 | Branch/source commit | `phase11-final-verification` / `e03e91926f2242e4126edc68708f924e4687a1d5` before this handbook commit |
-| CI run | 41299626128 PASS for PR merge SHA `e65d497ab2a7721672f00718d68f92d74b1bb194` (parents: `main` and branch head) |
+| CI run | 41421039804 PASS for PR branch head `db5d812fbbf0a03bbea07d60f63a3b96abf4efcb`; deployment skipped |
 | Frontend | Tests 36/36; lint, TypeScript and build PASS |
 | Backend | CI PASS; local API contract 9 pass; local full Windows suite stalled |
 | Package | PASS in CI; immutable artifact exists |
 | Calibration | SHA-256 `6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc` |
 | Runtime | Backend/frontend connected; 11 pages and synthetic batch paths reviewed; no deployment |
 
-This is a research/demo freeze candidate, not a production tag. PR remains open and unmerged. Do not merge or deploy without explicit authorization. The Azure adapter was added after the cited CI run, so it has not yet been verified by GitHub Actions or a live Azure deployment.
+This is a research/demo freeze candidate, not a production tag. PR remains open and unmerged. Do not merge or deploy without explicit authorization. GitHub CI verified the adapter registration and release code, but the Azure login, container build/push, and live Azure verification remain unverified until the Azure resources and OIDC configuration are supplied and a main-branch deploy runs.
 
 ## Evidence Index
 
