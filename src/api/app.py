@@ -13,12 +13,28 @@ from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, Stric
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .contract import ContractError, not_validated_response, validate_request
-from .agentic_commerce import agentic_commerce_status, agentic_commerce_workflow, compare_financing_scenarios
+from .agentic_commerce import (
+    agentic_commerce_status,
+    agentic_commerce_workflow,
+    compare_financing_scenarios,
+    research_data_status,
+    research_records,
+    create_commerce_session,
+    commerce_session,
+    confirm_commerce_simulation,
+)
 from src.agentic_commerce.schemas import (
     AgenticCommerceStatus,
     CommerceComparisonRequest,
     CommerceComparisonResponse,
     WorkflowStage,
+)
+from src.agentic_commerce.schemas import (
+    AC3CreateSessionRequest,
+    AC3SimulationConfirmation,
+    CommerceSessionResponse,
+    ResearchDataStatus,
+    ResearchRecordListResponse,
 )
 from .batch_service import (
     BatchError,
@@ -70,6 +86,41 @@ app.add_api_route(
     methods=["GET"],
     response_model=AgenticCommerceStatus,
     tags=["Agentic Commerce — AC-1 Foundation"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/research-data",
+    research_data_status,
+    methods=["GET"],
+    response_model=ResearchDataStatus,
+    tags=["Agentic Commerce — Research Data"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/research-records",
+    research_records,
+    methods=["GET"],
+    response_model=ResearchRecordListResponse,
+    tags=["Agentic Commerce — Research Data"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/sessions",
+    create_commerce_session,
+    methods=["POST"],
+    response_model=CommerceSessionResponse,
+    tags=["Agentic Commerce — AC-3 Simulation"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/sessions/{session_id}",
+    commerce_session,
+    methods=["GET"],
+    response_model=CommerceSessionResponse,
+    tags=["Agentic Commerce — AC-3 Simulation"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/sessions/{session_id}/confirm",
+    confirm_commerce_simulation,
+    methods=["POST"],
+    response_model=CommerceSessionResponse,
+    tags=["Agentic Commerce — AC-3 Simulation"],
 )
 app.add_api_route(
     "/v1/agentic-commerce/workflow",

@@ -11,7 +11,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
 
 class ContractModel(BaseModel):
@@ -140,6 +140,7 @@ class AuditEvent(ContractModel):
     tool: str | None = Field(default=None, max_length=100)
     summary: str = Field(min_length=1, max_length=500)
     timestamp: datetime
+    provenance: dict[str, str] = Field(default_factory=dict)
 
 
 class WorkflowStage(ContractModel):
@@ -209,3 +210,104 @@ class CommerceComparisonResponse(ContractModel):
     real_transactions_enabled: Literal[False] = False
     model_validation_status: Literal["not_validated"] = "not_validated"
     event_summary: str
+
+
+class ResearchDataStatus(ContractModel):
+    status: Literal["available", "unavailable"]
+    dataset_name: Literal["UCI Taiwan Default of Credit Card Clients"] = "UCI Taiwan Default of Credit Card Clients"
+    sha256: str
+    row_count: int | None = None
+    target_column: Literal["default payment next month"] = "default payment next month"
+    target_excluded_from_record: Literal[True] = True
+    message: str
+
+
+class ResearchRecordListResponse(ContractModel):
+    status: Literal["available", "unavailable"]
+    dataset_name: Literal["UCI Taiwan Default of Credit Card Clients"] = "UCI Taiwan Default of Credit Card Clients"
+    sha256: str
+    row_count: int | None = None
+    records: list["TaiwanResearchRecord"] = Field(default_factory=list)
+    message: str
+
+
+class TaiwanResearchRecord(ContractModel):
+    reference: str
+    dataset_name: Literal["UCI Taiwan Default of Credit Card Clients"] = "UCI Taiwan Default of Credit Card Clients"
+    source_row: int
+    features: dict[str, int]
+    credit_limit_twd: int
+    age_years: int
+    repayment_status_codes: list[int]
+    statement_balances_twd: list[int]
+    payments_twd: list[int]
+    target_included: Literal[False] = False
+    model_inference_performed: bool = False
+
+
+class ResearchModelOutput(ContractModel):
+    model_id: Literal["uci_taiwan_xgb"] = "uci_taiwan_xgb"
+    geography: Literal["Taiwan"] = "Taiwan"
+    probability: float = Field(ge=0, le=1)
+    predicted_class: str
+    calibrated: bool
+    limitations: list[str]
+    interpretation: Literal["research_only_not_validated_for_indian_borrowers"] = "research_only_not_validated_for_indian_borrowers"
+
+
+class CommerceProvenance(ContractModel):
+    purchase_context: Literal["user_input"] = "user_input"
+    monthly_income: Literal["user_input"] = "user_input"
+    financing_rates: Literal["simulated_parameter"] = "simulated_parameter"
+    payment_estimates: Literal["deterministic_calculation"] = "deterministic_calculation"
+    preferred_option: Literal["deterministic_comparison"] = "deterministic_comparison"
+    research_record: str
+    model_inference: Literal["not_used", "uci_taiwan_research_model"] = "not_used"
+    ground_truth_target: Literal["excluded"] = "excluded"
+
+
+class AC3CreateSessionRequest(CommerceComparisonRequest):
+    research_record_reference: str | None = Field(default=None, pattern=r"^UCI-TW-\d{5}$")
+    research_profile: dict[str, StrictInt] | None = None
+
+
+class AC3SimulationConfirmation(ContractModel):
+    decision: Literal["confirm_simulation"]
+    option_id: str = Field(min_length=1, max_length=80)
+
+
+class SimulatedTransactionRecord(ContractModel):
+    simulation_id: str
+    session_id: str
+    research_record_reference: str | None
+    selected_option: SimulatedFinancingOption
+    purchase_price: Decimal
+    down_payment: Decimal
+    financed_amount: Decimal
+    monthly_payment: Decimal
+    tenure_months: int
+    total_estimated_repayment: Decimal
+    confirmation_status: Literal["confirmed"] = "confirmed"
+    confirmation_source: Literal["explicit_user_action"] = "explicit_user_action"
+    execution_status: Literal["simulation_completed"] = "simulation_completed"
+    simulation_status: Literal["research_transaction_simulated"] = "research_transaction_simulated"
+    timestamp: datetime
+    audit_reference: str
+    simulated: Literal[True] = True
+    real_transaction_executed: Literal[False] = False
+
+
+class CommerceSessionResponse(ContractModel):
+    session_id: str
+    status: Literal["awaiting_confirmation", "simulation_completed"]
+    comparison: CommerceComparisonResponse
+    research_record: TaiwanResearchRecord | None
+    research_output: ResearchModelOutput | None = None
+    provenance: CommerceProvenance
+    audit_events: list[AuditEvent]
+    transaction: SimulatedTransactionRecord | None
+    human_confirmation_required: Literal[True] = True
+    real_lending_enabled: Literal[False] = False
+    real_transactions_enabled: Literal[False] = False
+    model_validation_status: Literal["not_validated"] = "not_validated"
+    idempotent_replay: bool = False
