@@ -1,3 +1,4 @@
+import MoneyHealth from './MoneyHealthPage'
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { DataSource, InventoryItem } from './analytics'
@@ -104,7 +105,7 @@ function CorrelationMap({ summary }: { summary: Summary }) {
   return <div className="corr-scroll"><table className="corr-table"><thead><tr><th></th>{fields.map((name) => <th key={name}>{displayFeatureName(name)}</th>)}</tr></thead><tbody>{matrix.map((row) => <tr key={row.feature}><th>{displayFeatureName(row.feature)}</th>{fields.map((name) => { const value = row.values[name] ?? 0; const opacity = Math.min(0.8, Math.abs(value) * 0.8); return <td key={name} style={{ backgroundColor: value >= 0 ? `rgba(48, 196, 169, ${opacity})` : `rgba(110, 147, 246, ${opacity})` }} title={`${displayFeatureName(row.feature)} × ${displayFeatureName(name)}: ${value.toFixed(2)}`}>{value.toFixed(2)}</td> })}</tr>)}</tbody></table><p className="chart-footnote">Pearson correlation, complete observations only (n={summary.portfolio.numeric_correlation_complete_rows.toLocaleString()}); association is not causation.</p></div>
 }
 
-function App() {
+function ResearchApp() {
   const [page, setPage] = useState<Page>('overview')
   const [summary, setSummary] = useState<Summary | null>(null)
   const [inventory, setInventory] = useState<InventoryItem[] | null>(null)
@@ -210,12 +211,12 @@ function App() {
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark"><span>c</span><i /></div><div><strong>creditai</strong><small>RISK WORKBENCH</small></div></div>
       <div className="workspace-switch"><span className="workspace-dot" /><div><strong>Research workspace</strong><small>Phase 9 · Research</small></div><span className="chevron">⌄</span></div>
-      <nav className="side-nav" aria-label="Main navigation">{nav.map((item, index) => <div key={item.id}>{item.section && <div className="nav-section">{item.section}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => go(item.id)} aria-current={page === item.id ? 'page' : undefined} title={index < 9 ? `Press ${index + 1} to navigate` : item.title}><span className="nav-symbol" aria-hidden="true">{item.icon}</span><span>{item.title}</span>{item.id === 'explorer' && <span className="nav-pill">LAB</span>}{index < 9 && <span className="nav-shortcut" aria-hidden="true">{index + 1}</span>}</button></div>)}</nav>
+      <nav className="side-nav" aria-label="Main navigation"><a className="nav-item" href="/money-health">My Money Health</a>{nav.map((item, index) => <div key={item.id}>{item.section && <div className="nav-section">{item.section}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => go(item.id)} aria-current={page === item.id ? 'page' : undefined} title={index < 9 ? `Press ${index + 1} to navigate` : item.title}><span className="nav-symbol" aria-hidden="true">{item.icon}</span><span>{item.title}</span>{item.id === 'explorer' && <span className="nav-pill">LAB</span>}{index < 9 && <span className="nav-shortcut" aria-hidden="true">{index + 1}</span>}</button></div>)}</nav>
       <div className="sidebar-foot"><div className="foot-status"><span className="pulse-dot" /><span>Research environment</span></div><p>Historical analysis only<br />Production risk score disabled</p><div className="sidebar-version">CREDITAI <span>·</span> 9</div></div>
     </aside>
 
     <main className="main-shell">
-      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
+      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><a className="text-link" href="/money-health">My Money Health</a><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
 
       {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
@@ -359,3 +360,5 @@ function DatasetDetailModal({ dataset, onClose }: { dataset: InventoryItem; onCl
 }
 
 export default App
+
+function App() { return /^\/money-health\/?$/.test(window.location.pathname) ? <MoneyHealth /> : <ResearchApp /> }

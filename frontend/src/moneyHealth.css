@@ -1,0 +1,34 @@
+.mh { max-width: 1120px; margin: auto; padding: clamp(12px, 3vw, 36px); color: #18352a; }
+.mh-hero { background: #154936; color: #fff; border-radius: 24px; padding: clamp(22px, 6vw, 62px); }
+.mh h1 { font-size: clamp(2rem, 7vw, 4rem); margin: .15em 0; color: inherit; }
+.mh h2 { margin: 0 0 1rem; color: inherit; }
+.mh-panel { background: white; border: 1px solid #d8e7df; border-radius: 18px; margin-top: 16px; padding: clamp(14px, 3vw, 28px); }
+.mh-grid, .mh-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 16px; margin: 16px 0; }
+.mh-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.mh button, .mh footer a { min-height: 44px; padding: 9px 14px; border: 1px solid #96bbab; border-radius: 9px; color: #164a36; background: #f0f8f3; font: inherit; cursor: pointer; }
+.mh button[aria-pressed="true"], .mh .mh-primary { color: white; background: #176445; }
+.mh button:disabled { opacity: .6; cursor: default; }
+.mh label { display: block; font-weight: 650; }
+.mh label small { display: block; font-weight: normal; }
+.mh input { display: block; margin: 6px 0; width: 100%; box-sizing: border-box; min-height: 44px; font: inherit; padding: 8px 12px; background: white; color: #18352a; border: 1px solid #96bbab; border-radius: 8px; }
+.mh summary { cursor: pointer; color: #176445; }
+.mh-metric, .mh-chart { margin: 0; padding: 14px; border: 1px solid #d8e7df; border-radius: 12px; overflow-wrap: anywhere; }
+.mh-metric h3 { font-size: .95rem; margin: 0 0 .4rem; }
+.mh-metric strong { font-size: 1.15rem; }
+.mh-chart figcaption { font-weight: bold; margin-bottom: 10px; }
+.mh-bar > div { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.mh-bar svg { width: 100%; height: 10px; display: block; margin: 5px 0 9px; }
+.mh-report-only { display: none; }
+@page { size: A4; margin: 15mm; }
+@media print {
+  .mh { max-width: none; padding: 0; font-size: 10pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .mh .mh-controls, .mh details { display: none; }
+  .mh .mh-report-only { display: block; }
+  .mh section { border: 0; padding: 0; margin: 16px 0; }
+  body { background: white !important; }
+  .mh-hero { padding: 14px; }
+  .mh h2, .mh h3 { break-after: avoid; }
+  .mh p, .mh-chart, .mh-metric { break-inside: avoid; }
+  .mh-grid, .mh-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mh-chart, .mh-metric { margin-bottom: 8px; }
+}

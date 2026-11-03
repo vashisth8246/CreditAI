@@ -449,4 +449,10 @@ async def batch_export_csv_endpoint(payload: BatchExportRequest):
 # development remains usable before the frontend has been built.
 frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if frontend_dist.is_dir():
+    @app.get("/money-health", include_in_schema=False)
+    def money_health_page():
+        from fastapi.responses import FileResponse
+
+        return FileResponse(frontend_dist / "index.html")
+
     app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
