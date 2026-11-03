@@ -1,0 +1,46 @@
+{
+  "model_id": "uci_taiwan_knn",
+  "algorithm": "KNeighborsClassifier",
+  "pipeline": [
+    "SimpleImputer(strategy='median')",
+    "StandardScaler()",
+    "KNeighborsClassifier"
+  ],
+  "selected_parameters": {
+    "n_neighbors": 51,
+    "metric": "manhattan",
+    "weights": "uniform"
+  },
+  "cv_search_grid": {
+    "n_neighbors": [
+      5,
+      11,
+      21,
+      31,
+      51
+    ],
+    "weights": [
+      "uniform",
+      "distance"
+    ],
+    "metric": [
+      "euclidean",
+      "manhattan"
+    ],
+    "total_candidates": 20,
+    "cv_folds": 5,
+    "scoring": "roc_auc"
+  },
+  "cv_score_mean": 0.7721,
+  "cv_score_std": 0.0095,
+  "calibration": {
+    "method": "Platt scaling (sigmoid)",
+    "fitted_split": "Validation (4,500 samples)",
+    "slope": 0.8633,
+    "intercept": -0.1464
+  },
+  "threshold_selection": {
+    "strategy": "Maximize validation-set F1-score",
+    "optimal_threshold": 0.28
+  }
+}
