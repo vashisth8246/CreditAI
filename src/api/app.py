@@ -13,8 +13,13 @@ from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, Stric
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .contract import ContractError, not_validated_response, validate_request
-from .agentic_commerce import agentic_commerce_status, agentic_commerce_workflow
-from src.agentic_commerce.schemas import AgenticCommerceStatus, WorkflowStage
+from .agentic_commerce import agentic_commerce_status, agentic_commerce_workflow, compare_financing_scenarios
+from src.agentic_commerce.schemas import (
+    AgenticCommerceStatus,
+    CommerceComparisonRequest,
+    CommerceComparisonResponse,
+    WorkflowStage,
+)
 from .batch_service import (
     BatchError,
     MAX_UPLOAD_BYTES,
@@ -72,6 +77,13 @@ app.add_api_route(
     methods=["GET"],
     response_model=list[WorkflowStage],
     tags=["Agentic Commerce — AC-1 Foundation"],
+)
+app.add_api_route(
+    "/v1/agentic-commerce/compare",
+    compare_financing_scenarios,
+    methods=["POST"],
+    response_model=CommerceComparisonResponse,
+    tags=["Agentic Commerce — AC-2 Research Simulation"],
 )
 
 # Vite development uses a same-origin proxy. Cross-origin deployments must

@@ -10,13 +10,15 @@ from pydantic import ValidationError
 
 from src.agentic_commerce.schemas import (
     AgenticCommerceStatus,
+    CommerceComparisonRequest,
     CommerceWorkflowState,
     HumanConfirmation,
     PurchaseIntent,
     Recommendation,
 )
 from src.agentic_commerce.workflow import ALLOWED_STATE_TRANSITIONS, WORKFLOW_STAGES
-from src.api.agentic_commerce import agentic_commerce_status, agentic_commerce_workflow
+from src.agentic_commerce.comparison import compare_purchase, monthly_payment
+from src.api.agentic_commerce import agentic_commerce_status, agentic_commerce_workflow, compare_financing_scenarios
 from src.api.app import ScoreRequest, app, score
 
 
@@ -155,3 +157,69 @@ def test_score_endpoint_remains_safety_locked_with_valid_dummy_request():
     assert response["score_status"] == "not_validated"
     assert response["default_probability"] is None
     assert response["validated_risk_estimate"] is False
+
+
+def comparison_payload() -> dict:
+    return {
+        "intent": valid_intent_payload(),
+        "annual_rate_scenarios_percent": ["12", "0", "8"],
+    }
+
+
+def test_monthly_payment_handles_zero_rate_and_reducing_balance():
+    assert monthly_payment(Decimal("1200"), Decimal("0"), 12) == Decimal("100.00")
+    assert monthly_payment(Decimal("1200"), Decimal("12"), 12) == Decimal("106.62")
+    assert monthly_payment(Decimal("0"), Decimal("12"), 12) == Decimal("0.00")
+
+
+def test_comparison_is_deterministic_and_selects_lowest_total_interest():
+    request = CommerceComparisonRequest.model_validate(comparison_payload())
+    first = compare_purchase(request)
+    second = compare_purchase(request)
+    assert first == second
+    assert first.status == "research_simulation"
+    assert len(first.options) == 3
+    assert [option.annual_rate_percent for option in first.options] == [Decimal("0"), Decimal("8"), Decimal("12")]
+    assert first.preferred_option_id == "scenario-1"
+    assert first.options[0].estimated_monthly_payment == Decimal("3333.33")
+    assert first.options[0].payment_to_income_ratio == Decimal("0.041667")
+    assert first.options[0].estimated_remaining_income_after_obligations == Decimal("64666.67")
+    assert first.human_confirmation_required is True
+    assert first.real_lending_enabled is False
+    assert first.real_transactions_enabled is False
+    assert "not an affordability assessment" in first.recommendation_explanation
+    assert "not a lender offer" in first.options[0].research_notes
+    assert "no transaction or audit event was persisted" in first.event_summary
+    assert all(option.estimated_total_interest >= 0 for option in first.options)
+
+
+@pytest.mark.parametrize("rates", [[], ["5"], ["5", "5"], ["-1", "5"], ["5", "101"], ["NaN", "5"], ["Infinity", "5"]])
+def test_comparison_rejects_incomplete_or_invalid_rate_scenarios(rates):
+    payload = comparison_payload()
+    payload["annual_rate_scenarios_percent"] = rates
+    with pytest.raises(ValidationError):
+        CommerceComparisonRequest.model_validate(payload)
+
+
+def test_comparison_endpoint_is_registered_and_has_typed_contract():
+    assert "/v1/agentic-commerce/compare" in app.openapi()["paths"]
+    response = compare_financing_scenarios(CommerceComparisonRequest.model_validate(comparison_payload()))
+    assert response.model_dump(mode="json")["phase"] == "AC-2"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="HTTP loopback/ASGI request tests are exercised by GitHub Linux CI in this workspace.")
+def test_comparison_http_endpoint_validates_and_returns_research_simulation():
+    async def request_endpoint():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://creditai.test") as client:
+            valid = await client.post("/v1/agentic-commerce/compare", json=comparison_payload())
+            invalid_payload = comparison_payload()
+            invalid_payload["intent"]["down_payment"] = "60000"
+            invalid = await client.post("/v1/agentic-commerce/compare", json=invalid_payload)
+        return valid, invalid
+
+    valid, invalid = asyncio.run(request_endpoint())
+    assert valid.status_code == 200
+    assert valid.json()["status"] == "research_simulation"
+    assert valid.json()["human_confirmation_required"] is True
+    assert invalid.status_code == 422

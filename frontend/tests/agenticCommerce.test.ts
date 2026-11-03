@@ -15,16 +15,26 @@ test('Agentic Commerce navigation is a distinct section', () => {
   assert.equal(AGENTIC_COMMERCE_NAVIGATION[1].title, 'Commerce Audit Trail')
 })
 
-test('Agentic Commerce foundation renders all planned stages and safety boundaries', () => {
+test('AC-2 comparison workspace renders purchase context, assumptions, and truthful stage states', () => {
   const markup = renderToStaticMarkup(createElement(AgenticCommercePage))
   assert.equal((markup.match(/commerce-stage-status/g) ?? []).length, 8)
   for (const stage of AGENTIC_COMMERCE_STAGES) assert.ok(markup.includes(stage))
-  for (const boundary of ['RESEARCH / DEMO', 'No real loan', 'No real payment', 'No real purchase', 'Human confirmation required']) {
+  for (const boundary of ['RESEARCH SIMULATION', 'No lender offers', 'No credit decision', 'No transaction execution', 'Human confirmation remains a future step']) {
     assert.ok(markup.includes(boundary))
   }
-  assert.match(markup, /Foundation ready/)
-  assert.match(markup, /workflow implementation begins in AC-2/)
-  assert.match(markup, /No agent run, financing offer, or simulated transaction has been executed/)
+  assert.match(markup, /Compare research scenarios/)
+  assert.match(markup, /annual rate scenarios/)
+  assert.match(markup, /Not assessed/)
+  assert.match(markup, /No comparison has been run yet/)
+  assert.match(markup, /research-only/)
+})
+
+test('AC-2 workspace declares scoped result and motion presentation hooks', () => {
+  const markup = renderToStaticMarkup(createElement(AgenticCommercePage))
+  assert.match(markup, /commerce-input-panel/)
+  assert.match(markup, /commerce-submit/)
+  assert.match(markup, /commerce-stepper/)
+  assert.doesNotMatch(markup, /SIMULATED_TRANSACTION_COMPLETE|Demo event/)
 })
 
 test('Commerce Audit Trail renders an honest empty state without sample events', () => {

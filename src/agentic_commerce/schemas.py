@@ -159,3 +159,53 @@ class AgenticCommerceStatus(ContractModel):
     real_lending_enabled: Literal[False] = False
     human_confirmation_required: Literal[True] = True
     audit_store_enabled: Literal[False] = False
+
+
+class CommerceComparisonRequest(ContractModel):
+    """Purchase context and explicit rate assumptions for AC-2."""
+
+    intent: PurchaseIntent
+    annual_rate_scenarios_percent: list[Decimal] = Field(min_length=2, max_length=3)
+
+    @model_validator(mode="after")
+    def validate_rate_scenarios(self) -> CommerceComparisonRequest:
+        if any(not rate.is_finite() or rate < 0 or rate > 100 for rate in self.annual_rate_scenarios_percent):
+            raise ValueError("annual rate scenarios must be between 0 and 100 percent")
+        if len(set(self.annual_rate_scenarios_percent)) != len(self.annual_rate_scenarios_percent):
+            raise ValueError("annual rate scenarios must be distinct")
+        return self
+
+
+class SimulatedFinancingOption(ContractModel):
+    option_id: str
+    display_name: str
+    principal: Decimal
+    annual_rate_percent: Decimal
+    tenure_months: int
+    estimated_monthly_payment: Decimal
+    estimated_total_payment: Decimal
+    estimated_total_interest: Decimal
+    payment_to_income_ratio: Decimal | None
+    estimated_remaining_income_after_obligations: Decimal
+    simulation: Literal[True] = True
+    research_notes: str
+
+
+class CommerceComparisonResponse(ContractModel):
+    phase: Literal["AC-2"] = "AC-2"
+    status: Literal["research_simulation"] = "research_simulation"
+    currency: str
+    purchase_price: Decimal
+    down_payment: Decimal
+    financed_amount: Decimal
+    requested_tenure_months: int
+    options: list[SimulatedFinancingOption]
+    preferred_option_id: str
+    recommendation_label: Literal["research_preferred_option"] = "research_preferred_option"
+    recommendation_explanation: str
+    comparison_factors: list[str]
+    human_confirmation_required: Literal[True] = True
+    real_lending_enabled: Literal[False] = False
+    real_transactions_enabled: Literal[False] = False
+    model_validation_status: Literal["not_validated"] = "not_validated"
+    event_summary: str
