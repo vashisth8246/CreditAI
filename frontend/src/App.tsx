@@ -8,6 +8,7 @@ import { PredictionWorkspace } from './PredictionWorkspace'
 import { ModelPerformanceLab } from './ModelPerformanceLab'
 import { BatchEvaluation } from './BatchEvaluation'
 import { researchApi } from './api'
+import { useCountUpValue } from './motion'
 import './App.css'
 
 type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'architecture'
@@ -55,7 +56,7 @@ function SourceTag({ source }: { source: DataSource }) {
 }
 
 function SectionTitle({ eyebrow, title, detail, source = 'historical' }: { eyebrow: string; title: string; detail: string; source?: DataSource }) {
-  return <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="section-detail">{detail}</p></div><SourceTag source={source} /></div>
+  return <div className="section-title exhibition-page-heading"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="section-detail">{detail}</p></div><SourceTag source={source} /></div>
 }
 
 function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -64,6 +65,15 @@ function Card({ children, className = '' }: { children: ReactNode; className?: s
 
 function EmptyState({ title, message, icon = '◌' }: { title: string; message: string; icon?: string }) {
   return <div className="empty-state"><span className="empty-icon" aria-hidden="true">{icon}</span><h3>{title}</h3><p>{message}</p></div>
+}
+
+function EvidenceGapCard({ icon, title, message, required }: { icon: string; title: string; message: string; required: string }) {
+  return <Card className="evidence-gap-card">
+    <div className="evidence-gap-top"><span className="evidence-gap-icon" aria-hidden="true">{icon}</span><span className="evidence-gap-status"><i /> Not saved</span></div>
+    <h3>{title}</h3>
+    <p>{message}</p>
+    <div className="evidence-gap-needed"><span>Evidence needed</span><strong>{required}</strong></div>
+  </Card>
 }
 
 function LineChart({ data }: { data: SegmentRow[] }) {
@@ -203,29 +213,29 @@ function App() {
 
   function go(target: Page) { setPage(target); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
-  return <div className="shell">
-    <aside className="sidebar">
+  return <div className="shell exhibition-shell">
+    <aside className="sidebar exhibition-sidebar">
       <div className="brand"><div className="brand-mark"><span>c</span><i /></div><div><strong>creditai</strong><small>RISK WORKBENCH</small></div></div>
       <div className="workspace-switch"><span className="workspace-dot" /><div><strong>Research workspace</strong><small>Phase 9 · Research</small></div><span className="chevron">⌄</span></div>
       <nav className="side-nav" aria-label="Main navigation">{nav.map((item, index) => <div key={item.id}>{item.section && <div className="nav-section">{item.section}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => go(item.id)} aria-current={page === item.id ? 'page' : undefined} title={index < 9 ? `Press ${index + 1} to navigate` : item.title}><span className="nav-symbol" aria-hidden="true">{item.icon}</span><span>{item.title}</span>{item.id === 'explorer' && <span className="nav-pill">LAB</span>}{index < 9 && <span className="nav-shortcut" aria-hidden="true">{index + 1}</span>}</button></div>)}</nav>
       <div className="sidebar-foot"><div className="foot-status"><span className="pulse-dot" /><span>Research environment</span></div><p>Historical analysis only<br />Production risk score disabled</p><div className="sidebar-version">CREDITAI <span>·</span> 9</div></div>
     </aside>
 
-    <main className="main-shell">
-      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
+    <main className="main-shell exhibition-main">
+      <header className="topbar exhibition-topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="platform-state"><i /><span>Research environment</span><small>Production score disabled</small></span><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
 
-      {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
-        : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
-        : page === 'performance' ? <div className="page-body"><ModelPerformanceLab /></div>
-        : viewState === 'loading' ? <div className="page-body"><EmptyState title="Preparing research workspace" message="Loading verified summaries and qualification metadata." icon="◌" /></div>
-        : viewState === 'error' || viewState === 'empty' || !summary || !inventory || !features ? <div className="page-body"><SourceTag source="unavailable" /><EmptyState title="Research data unavailable" message={loadError ?? 'The backend did not return the historical research snapshot.'} icon="!" />{retryCount > 0 && <p style={{ marginTop: '0.5rem', fontSize: '12px', color: '#617984' }}>Retry attempts: {retryCount}</p>}<button className="button-secondary" onClick={retryLoad} style={{ marginTop: '1rem' }}>Retry loading</button></div>
-          : <div className="page-body">
+      {page === 'prediction' ? <div key={page} className="page-body exhibition-page-body"><PredictionWorkspace /></div>
+        : page === 'batch' ? <div key={page} className="page-body exhibition-page-body"><BatchEvaluation /></div>
+        : page === 'performance' ? <div key={page} className="page-body exhibition-page-body"><ModelPerformanceLab /></div>
+        : viewState === 'loading' ? <div key={page} className="page-body exhibition-page-body"><EmptyState title="Preparing research workspace" message="Loading verified summaries and qualification metadata." icon="◌" /></div>
+        : viewState === 'error' || viewState === 'empty' || !summary || !inventory || !features ? <div key={page} className="page-body exhibition-page-body"><SourceTag source="unavailable" /><EmptyState title="Research data unavailable" message={loadError ?? 'The backend did not return the historical research snapshot.'} icon="!" />{retryCount > 0 && <p style={{ marginTop: '0.5rem', fontSize: '12px', color: '#617984' }}>Retry attempts: {retryCount}</p>}<button className="button-secondary" onClick={retryLoad} style={{ marginTop: '1rem' }}>Retry loading</button></div>
+          : <div key={page} className="page-body exhibition-page-body">
             <div className="research-banner"><SourceTag source="historical" /><span>Source snapshot: {summary.generated_at} · Retrieved from the backend: {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'} · Historical research data, not live portfolio activity.</span><button type="button" onClick={() => { void checkHealth(); retryLoad() }} disabled={loading}>Refresh</button></div>
             {page === 'overview' && <>
-              <div className="hero-panel"><div className="hero-copy"><div className="hero-kicker"><span className="hero-kicker-dot" />CREDIT RISK DECISION WORKBENCH</div><h1>Historical credit<br /><em>risk research.</em></h1><p>Explore a leakage-audited historical loan benchmark, inspect portfolio outcomes and evaluate model evidence — with every limitation visible.</p><div className="hero-actions"><button className="button-primary" onClick={() => go('portfolio')}>Start research demo <span>→</span></button><button className="button-quiet" onClick={() => go('discovery')}>Explore datasets</button></div></div><div className="hero-art" aria-hidden="true"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-core"><span>RISK</span><strong>↗</strong><small>RESEARCH</small></div><div className="hero-float float-a"><small>TEST AUC</small><strong>{formatMetric(metricNumber(bestTest, 'roc_auc'))}</strong><i>HISTORICAL</i></div><div className="hero-float float-b"><small>DATA STATUS</small><strong>Qualified</strong><i>WITH LIMITATIONS</i></div><div className="hero-beam" /></div><div className="hero-watermark">CREDIT INTELLIGENCE · RESEARCH ONLY</div></div>
+              <div className="hero-panel exhibition-hero"><div className="hero-copy"><div className="hero-kicker"><span className="hero-kicker-dot" />CREDIT RISK DECISION WORKBENCH</div><h1>Historical credit<br /><em>risk research.</em></h1><p>Explore a leakage-audited historical loan benchmark, inspect portfolio outcomes and evaluate model evidence — with every limitation visible.</p><div className="hero-actions"><button className="button-primary" onClick={() => go('portfolio')}>Start research demo <span>→</span></button><button className="button-quiet" onClick={() => go('discovery')}>Explore datasets</button></div><div className="hero-proof"><span><i /> Historical evidence</span><span><i /> Research only</span><span><i /> Production scoring disabled</span></div></div><div className="hero-art" aria-hidden="true"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-core"><span>RISK</span><strong>↗</strong><small>RESEARCH</small></div><div className="hero-float float-a"><small>TEST AUC</small><strong>{formatMetric(metricNumber(bestTest, 'roc_auc'))}</strong><i>HISTORICAL</i></div><div className="hero-float float-b"><small>DATA STATUS</small><strong>Qualified</strong><i>WITH LIMITATIONS</i></div><div className="hero-beam" /></div><div className="hero-watermark">CREDIT INTELLIGENCE · RESEARCH ONLY</div></div>
               <div className="notice-strip"><span className="notice-icon">!</span><div><strong>Indian production performance has not been validated.</strong><span>All model metrics below refer to a historical U.S. LendingClub closed-loan cohort; the score API remains disabled.</span></div><button onClick={() => go('architecture')}>View validation gates <span>→</span></button></div>
-              <div className="kpi-grid"><Kpi label="Source records" value={compact(summary.dataset.records)} suffix="loans" detail="LendingClub · U.S. · 2007–2018Q4" icon="◫" /><Kpi label="Observed closed default" value={formatPercent(summary.dataset.closed_default_rate, 2)} suffix="" detail={`${summary.dataset.closed_defaults.toLocaleString()} of ${summary.dataset.closed_records.toLocaleString()} terminal outcomes`} icon="↗" accent="red" /><Kpi label="Test ROC-AUC" value={formatMetric(metricNumber(bestTest, 'roc_auc'))} suffix="" detail="HistGradientBoosting · untouched 2016–18 test" icon="⌁" accent="blue" /><Kpi label="Research-qualified" value={String(researchCount)} suffix="datasets" detail="Each for its scoped research use only" icon="◈" accent="green" /></div>
-              <div className="grid-two overview-grid"><Card><div className="panel-heading"><div><p className="eyebrow">COHORT PERFORMANCE</p><h2>Default rate by vintage</h2><p>Closed-loan outcomes across issue years</p></div><span className="mini-tag">N = {summary.dataset.closed_records.toLocaleString()}</span></div><LineChart data={summary.portfolio.vintage} /></Card><Card><div className="panel-heading"><div><p className="eyebrow">HELD-OUT TEST</p><h2>Model comparison</h2><p>Saved metrics · cohort and target held constant</p></div><button className="text-link" onClick={() => go('lab')}>Full evaluation →</button></div><ModelComparison summary={summary} compactView /></Card></div>
+              <div className="kpi-grid exhibition-kpi-grid"><Kpi animateValue label="Source records" value={compact(summary.dataset.records)} suffix="loans" detail="LendingClub · U.S. · 2007–2018Q4" icon="◫" /><Kpi animateValue label="Observed closed default" value={formatPercent(summary.dataset.closed_default_rate, 2)} suffix="" detail={`${summary.dataset.closed_defaults.toLocaleString()} of ${summary.dataset.closed_records.toLocaleString()} terminal outcomes`} icon="↗" accent="red" /><Kpi animateValue label="Test ROC-AUC" value={formatMetric(metricNumber(bestTest, 'roc_auc'))} suffix="" detail="HistGradientBoosting · untouched 2016–18 test" icon="⌁" accent="blue" /><Kpi animateValue label="Research-qualified" value={String(researchCount)} suffix="datasets" detail="Each for its scoped research use only" icon="◈" accent="green" /></div>
+              <div className="grid-two overview-grid"><Card className="analytics-panel"><div className="panel-heading"><div><p className="eyebrow">COHORT PERFORMANCE</p><h2>Default rate by vintage</h2><p>Closed-loan outcomes across issue years</p></div><span className="mini-tag">N = {summary.dataset.closed_records.toLocaleString()}</span></div><LineChart data={summary.portfolio.vintage} /></Card><Card className="analytics-panel"><div className="panel-heading"><div><p className="eyebrow">HELD-OUT TEST</p><h2>Model comparison</h2><p>Saved metrics · cohort and target held constant</p></div><button className="text-link" onClick={() => go('lab')}>Full evaluation →</button></div><ModelComparison summary={summary} compactView /></Card></div>
               <div className="workflow-strip"><div><p className="eyebrow">FROM RAW DATA TO DECISION SUPPORT</p><h2>A traceable path from intake to insight.</h2></div><div className="workflow-steps"><span>01 <b>Qualify data</b></span><i>→</i><span>02 <b>Audit time</b></span><i>→</i><span>03 <b>Evaluate</b></span><i>→</i><span className="planned">04 <b>Partner pilot</b></span></div></div>
             </>}
 
@@ -252,7 +262,17 @@ function App() {
               <div className="kpi-grid lab-kpis"><Kpi label="ROC-AUC" value={formatMetric(metricNumber(currentEval, 'roc_auc'))} detail="Ranking discrimination" accent="blue" /><Kpi label="PR-AUC" value={formatMetric(metricNumber(currentEval, 'pr_auc'))} detail={`Test prevalence baseline ${formatMetric(metricNumber(summary.evaluation.all_split_metrics.find((row) => row.model_name === 'Prevalence Baseline' && row.split_name === selectedSplit), 'pr_auc'))}`} /><Kpi label="Brier score" value={formatMetric(metricNumber(currentEval, 'brier_score'))} detail={`Prevalence baseline ${formatMetric(metricNumber(summary.evaluation.all_split_metrics.find((row) => row.model_name === 'Prevalence Baseline' && row.split_name === selectedSplit), 'brier_score'))}`} accent="green" /><Kpi label="Threshold" value={formatMetric(metricNumber(currentEval, 'selected_threshold'), 2)} detail="Chosen on validation split" accent="amber" /></div>
               <div className="grid-two lab-charts"><Card><div className="panel-heading"><div><p className="eyebrow">SAVED TEST METRICS</p><h2>Model comparison</h2><p>ROC-AUC and PR-AUC are separate scales from 0 to 1</p></div></div><ModelComparison summary={summary} /></Card><Card><div className="panel-heading"><div><p className="eyebrow">THRESHOLD SNAPSHOT</p><h2>Confusion matrix</h2><p>{selectedModel} · {selectedSplit} · threshold {formatMetric(metricNumber(currentEval, 'selected_threshold'), 2)}</p></div></div>{currentEval && <ConfusionMatrix row={currentEval} />}</Card></div>
               <Card><div className="panel-heading"><div><p className="eyebrow">EVALUATION RECORD</p><h2>Evidence, not just a score</h2></div><span className="mini-tag">SAVED ARTIFACT</span></div><div className="evaluation-meta"><Fact label="Target" value={summary.evaluation.target} /><Fact label="Split design" value={summary.evaluation.split_design} /><Fact label="Calibration" value={summary.evaluation.calibration} /><Fact label="Evaluation audit" value="Independently reproduced · 11 Oct 2026" /></div><div className="metric-table-wrap"><table className="data-table metric-table"><thead><tr><th>MODEL</th><th>ROC-AUC</th><th>PR-AUC</th><th>PREVALENCE</th><th>BRIER</th><th>LOG LOSS</th><th>KS</th><th>GINI</th><th>PRECISION</th><th>RECALL</th><th>F1</th></tr></thead><tbody>{summary.evaluation.all_split_metrics.filter((row) => row.split_name === selectedSplit).map((row) => <tr key={String(row.model_name)}><td><strong>{String(row.model_name)}</strong></td>{['roc_auc','pr_auc','prevalence_baseline','brier_score','log_loss','ks_statistic','gini_coefficient','precision','recall','f1_score'].map((metric) => <td key={metric}>{formatMetric(metricNumber(row, metric))}</td>)}</tr>)}</tbody></table></div></Card>
-              <div className="unavailable-grid"><Card><EmptyState title="ROC curve unavailable" message="No saved per-loan probability scores or ROC coordinates exist. Aggregate AUC values cannot recreate a curve." /></Card><Card><EmptyState title="Calibration plot unavailable" message="The benchmark did not fit a calibration model. Calibration bins and genuine probabilities are not saved." /></Card><Card><EmptyState title="Threshold sensitivity unavailable" message="The archived artifact contains one validation-selected threshold per fitted model, not a threshold sweep." /></Card></div>
+              <section className="lab-evidence-section" aria-labelledby="lab-evidence-heading">
+                <div className="lab-evidence-heading">
+                  <div><p className="eyebrow">VISUAL DIAGNOSTICS</p><h2 id="lab-evidence-heading">Evidence availability</h2><p>These plots need saved scores or evaluation outputs that this benchmark does not contain.</p></div>
+                  <span className="evidence-boundary-pill"><i /> Historical artifact boundary</span>
+                </div>
+                <div className="unavailable-grid">
+                  <EvidenceGapCard icon="↗" title="ROC curve" message="No per-loan held-out scores or ROC coordinates were saved. Aggregate AUC values cannot recreate the curve." required="Per-loan held-out scores and observed labels" />
+                  <EvidenceGapCard icon="◎" title="Calibration plot" message="No fitted calibration model or calibration-bin probabilities are present in this benchmark." required="Calibrated scores, outcome labels, and bin definitions" />
+                  <EvidenceGapCard icon="⌁" title="Threshold sensitivity" message="The artifact records one validation-selected threshold per model, not a threshold sweep." required="Validation scores evaluated across documented cutoffs" />
+                </div>
+              </section>
             </>}
 
             {page === 'explorer' && <>
@@ -290,14 +310,16 @@ function App() {
   </div>
 }
 
-function Kpi({ label, value, suffix, detail, icon, accent = '' }: { label: string; value: string; suffix?: string; detail: string; icon?: string; accent?: string }) {
+function Kpi({ label, value, suffix, detail, icon, accent = '', animateValue = true }: { label: string; value: string; suffix?: string; detail: string; icon?: string; accent?: string; animateValue?: boolean }) {
+  const displayValue = useCountUpValue(value, animateValue)
+
   const help: Record<string, string> = {
     'ROC-AUC': 'Ranking discrimination across classification cutoffs; 0.5 is random ranking.',
     'PR-AUC': 'Precision-recall summary; compare with default prevalence.',
     'Brier score': 'Average squared difference between predicted probability and observed outcome; lower is better.',
     Threshold: 'Research class cutoff chosen on validation evidence; not a lending policy.',
   }
-  return <Card className={`kpi-card ${accent}`}><div className="kpi-top"><span title={help[label]}>{label}</span><b>{icon}</b></div><div className="kpi-value">{value}<small>{suffix}</small></div><p>{detail}</p></Card>
+  return <Card className={`kpi-card exhibition-kpi ${accent}`}><div className="kpi-top"><span title={help[label]}>{label}</span><b>{icon}</b></div><div className="kpi-value">{displayValue}<small>{suffix}</small></div><p>{detail}</p></Card>
 }
 
 function StatusBadge({ dataset }: { dataset: InventoryItem }) {

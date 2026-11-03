@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { EvaluationArtifact } from './api';
 import { researchApi } from './api';
 import { hasCurveEvidence } from './assessment'
+import { useCountUpValue } from './motion'
 
 export function ModelPerformanceLab() {
   // ---------- State ----------
@@ -11,6 +12,12 @@ export function ModelPerformanceLab() {
   const [loading, setLoading] = useState(true);
   // New state: which model to display (XGBoost or KNN)
   const [selectedModelId, setSelectedModelId] = useState<string>('uci_taiwan_xgb');
+  const metrics = evalData?.summary_metrics
+  const animatedRocAuc = useCountUpValue(metrics?.test_roc_auc.toFixed(4) ?? '0.0000', Boolean(metrics))
+  const animatedPrAuc = useCountUpValue(metrics?.test_pr_auc.toFixed(4) ?? '0.0000', Boolean(metrics))
+  const animatedBrier = useCountUpValue(metrics?.brier_score_calibrated.toFixed(4) ?? '0.0000', Boolean(metrics))
+  const animatedGini = useCountUpValue(metrics?.gini_coefficient.toFixed(3) ?? '0.000', Boolean(metrics))
+  const animatedKs = useCountUpValue(metrics?.ks_statistic.toFixed(3) ?? '0.000', Boolean(metrics))
 
   // ---------- Effect: fetch evaluation ----------
   useEffect(() => {
@@ -145,7 +152,7 @@ export function ModelPerformanceLab() {
             <span>ROC‑AUC (Discrimination)</span>
             <b>⌁</b>
           </div>
-          <div className="kpi-value">{summary_metrics.test_roc_auc.toFixed(4)}</div>
+          <div className="kpi-value">{animatedRocAuc}</div>
           <p>Baseline: 0.5000 (Random) · Reproduced from Phase 1</p>
         </div>
         <div className="panel kpi-card green">
@@ -153,7 +160,7 @@ export function ModelPerformanceLab() {
             <span>PR‑AUC (Precision‑Recall)</span>
             <b>↗</b>
           </div>
-          <div className="kpi-value">{summary_metrics.test_pr_auc.toFixed(4)}</div>
+          <div className="kpi-value">{animatedPrAuc}</div>
           <p>Prevalence baseline: {metadata.test_prevalence.toFixed(4)} ({(metadata.test_prevalence * 100).toFixed(1)}%)</p>
         </div>
         <div className="panel kpi-card amber">
@@ -161,7 +168,7 @@ export function ModelPerformanceLab() {
             <span>Brier Score (Calibrated)</span>
             <b>◎</b>
           </div>
-          <div className="kpi-value">{summary_metrics.brier_score_calibrated.toFixed(4)}</div>
+          <div className="kpi-value">{animatedBrier}</div>
           <p>
             Raw: {summary_metrics.brier_score_raw.toFixed(4)} ({summary_metrics.brier_improvement_pct}% improvement)
           </p>
@@ -172,7 +179,7 @@ export function ModelPerformanceLab() {
             <b>◈</b>
           </div>
           <div className="kpi-value">
-            {summary_metrics.gini_coefficient.toFixed(3)} / {summary_metrics.ks_statistic.toFixed(3)}
+            {animatedGini} / {animatedKs}
           </div>
           <p>Gini coefficient and Kolmogorov‑Smirnov statistic</p>
         </div>

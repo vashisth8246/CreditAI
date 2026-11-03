@@ -421,8 +421,8 @@ export function PredictionWorkspace() {
         </div>
       )}
 
-      <div className="prediction-layout">
-        <section className="panel prediction-form-panel">
+      <div className="prediction-layout exhibition-prediction-workspace">
+        <section className="panel prediction-form-panel exhibition-form-panel">
           <div className="panel-heading">
             <div>
               <p className="eyebrow">BORROWER PROFILE</p>
@@ -567,6 +567,7 @@ export function PredictionWorkspace() {
                   disabled={submitting || loading}
                 >
                   {submitting ? 'Executing XGBoost & SHAP…' : 'Run Prediction'}
+                  {submitting && <span className="prediction-loading-indicator" aria-hidden="true" />}
                   <span aria-hidden="true"> →</span>
                 </button>
                 <button
@@ -585,7 +586,7 @@ export function PredictionWorkspace() {
         </section>
 
         {/* Prediction Results & Explanation Panel */}
-        <section className="panel prediction-result-panel" aria-live="polite">
+        <section className="panel prediction-result-panel exhibition-intelligence-panel" aria-live="polite">
           <div className="panel-heading">
             <div>
               <p className="eyebrow">INFERENCE ENGINE</p>
@@ -757,14 +758,22 @@ function PredictionResult({
     BILL_AMT1: 'Most recent bill statement amount',
     PAY_AMT1: 'Most recent payment amount',
   } as Record<string, string>)[name] ?? displayFeatureName(name)
-  const contributionRows = (items: FeatureContribution[]) => items.map((item) => {
-    const submitted = values[item.feature]
-    return <div className="evidence-driver" key={item.feature}>
-      <div><strong>{featureLabel(item.feature)}</strong><code>{item.feature}</code></div>
-      <span>{submitted !== undefined ? `Submitted value: ${submitted}${/^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/.test(item.feature) ? ` · ${currencyContext}` : ''}` : 'Engineered signal derived from submitted fields'}</span>
-      <b>{item.contribution.toFixed(4)} model-output units</b>
-    </div>
-  })
+  const contributionRows = (items: FeatureContribution[], direction: 'risk-increasing' | 'risk-reducing') => {
+    const maxMagnitude = Math.max(...items.map((item) => Math.abs(item.contribution)).filter(Number.isFinite), Number.EPSILON)
+    return items.map((item) => {
+      const submitted = values[item.feature]
+      const magnitude = Number.isFinite(item.contribution) ? Math.abs(item.contribution) : 0
+      const relativeMagnitude = Math.min(1, magnitude / maxMagnitude)
+      return <div className="evidence-driver" key={item.feature}>
+        <div><strong>{featureLabel(item.feature)}</strong><code>{item.feature}</code></div>
+        <span>{submitted !== undefined ? `Submitted value: ${submitted}${/^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/.test(item.feature) ? ` · ${currencyContext}` : ''}` : 'Engineered signal derived from submitted fields'}</span>
+        <b>{item.contribution.toFixed(4)} model-output units</b>
+        <div className={`evidence-driver-bar ${direction}`} aria-hidden="true">
+          <span style={{ '--driver-fill': relativeMagnitude } as React.CSSProperties} />
+        </div>
+      </div>
+    })
+  }
 
   return (
     <div className="prediction-output">
@@ -842,8 +851,8 @@ function PredictionResult({
             <span className="attribution-tag">{result.model_id.includes('knn') ? 'Local neighbor attribution' : 'TreeExplainer SHAP'}</span>
           </div>
           <p className="attribution-caption">Positive-class SHAP sign indicates movement in the model output toward or away from default. Magnitudes are model-output units, not probability percentage points. SHAP describes model attribution, not causation.</p>
-          {increasing.length > 0 && <section><h5>Factors moving estimated risk higher</h5><div className="evidence-driver-list">{contributionRows(increasing)}</div></section>}
-          {decreasing.length > 0 && <section><h5>Factors moving estimated risk lower</h5><div className="evidence-driver-list">{contributionRows(decreasing)}</div></section>}
+          {increasing.length > 0 && <section><h5>Factors moving estimated risk higher</h5><div className="evidence-driver-list">{contributionRows(increasing, 'risk-increasing')}</div></section>}
+          {decreasing.length > 0 && <section><h5>Factors moving estimated risk lower</h5><div className="evidence-driver-list">{contributionRows(decreasing, 'risk-reducing')}</div></section>}
           {unknown.length > 0 && <div className="unavailable-note"><strong>Direction not supplied</strong><span>{unknown.map((item) => fieldLabel(item.feature)).join(', ')} are shown without an inferred direction.</span></div>}
         </div>
       ) : (

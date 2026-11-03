@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState, type DragEvent, type ChangeEvent, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ChangeEvent, type KeyboardEvent } from 'react'
 import { researchApi } from './api'
 import { displayFeatureName, displayUserText } from './analytics'
 import { classifyResearchProbability } from './assessment'
+import { useCountUpValue } from './motion'
 import type {
   BatchInspectResponse,
   BatchPredictionResult,
@@ -135,6 +136,8 @@ export function BatchEvaluation() {
   const [result, setResult] = useState<BatchPredictionResult | null>(null)
   const [exportError, setExportError] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [exportNotice, setExportNotice] = useState('')
+  const exportNoticeTimer = useRef<number | null>(null)
 
   const [filter, setFilter] = useState<ResultFilter>('all')
   const [resultQuery, setResultQuery] = useState('')
@@ -146,6 +149,21 @@ export function BatchEvaluation() {
   const activeMapping = activeSheet ? (mappings[activeSheet] ?? {}) : {}
   const summary = useMemo(() => (result ? summarizeBatch(result) : null), [result])
   const pdExamples = useMemo(() => result ? selectPdExamples(result) : { lowest: null, highest: null }, [result])
+  const animatedTotal = useCountUpValue(String(summary?.total ?? 0), Boolean(summary))
+  const animatedSucceeded = useCountUpValue(String(summary?.succeeded ?? 0), Boolean(summary))
+  const animatedFailed = useCountUpValue(String(summary?.failed ?? 0), Boolean(summary))
+  const animatedMean = useCountUpValue(summary ? formatProbability(summary.meanProbability, 2) : '0.00%', Boolean(summary))
+  const animatedMedian = useCountUpValue(summary ? formatProbability(summary.medianProbability, 2) : '0.00%', Boolean(summary))
+
+  useEffect(() => () => {
+    if (exportNoticeTimer.current !== null) window.clearTimeout(exportNoticeTimer.current)
+  }, [])
+
+  function showExportNotice(message: string) {
+    if (exportNoticeTimer.current !== null) window.clearTimeout(exportNoticeTimer.current)
+    setExportNotice(message)
+    exportNoticeTimer.current = window.setTimeout(() => setExportNotice(''), 2400)
+  }
 
   const sheetReadiness = useMemo(() => {
     const issues: string[] = []
@@ -412,12 +430,14 @@ export function BatchEvaluation() {
 
   function downloadTemplate() {
     downloadBlob(`\uFEFF${buildTemplateCsv()}`, 'text/csv;charset=utf-8', 'creditai_batch_template.csv')
+    showExportNotice('Template CSV download started')
   }
 
   function downloadPredictionsCsv() {
     if (!result) return
     setExportError('')
     downloadBlob(`\uFEFF${buildResultCsv(result)}`, 'text/csv;charset=utf-8', 'creditai_batch_predictions.csv')
+    showExportNotice('Predictions CSV download started')
   }
 
   async function downloadPredictionsXlsx() {
@@ -432,6 +452,7 @@ export function BatchEvaluation() {
       })
       const blob = await researchApi.batchExportXlsx(payload)
       downloadBlob(blob, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'creditai_batch_predictions.xlsx')
+      showExportNotice('Excel download started')
     } catch (error) {
       setExportError(error instanceof Error ? error.message : String(error))
     } finally {
@@ -450,6 +471,7 @@ export function BatchEvaluation() {
     }
     setExportError('')
     downloadBlob(`\uFEFF${buildValidationCsv(sheets)}`, 'text/csv;charset=utf-8', 'creditai_validation_errors.csv')
+    showExportNotice('Validation CSV download started')
   }
 
   function downloadReport() {
@@ -466,6 +488,7 @@ export function BatchEvaluation() {
       format: inspect?.file_format ?? result.file_format,
     }, validation)
     downloadBlob(report, 'text/markdown;charset=utf-8', 'creditai_batch_analysis_report.md')
+    showExportNotice('Analysis report download started')
   }
 
   function startNewBatch() {
@@ -491,8 +514,9 @@ export function BatchEvaluation() {
   const selectedRowTotal = selectedSheets.reduce((total, name) => total + (analyses[name]?.row_count ?? 0), 0)
 
   return (
-    <div className="batch-page">
-      <div className="batch-progress" role="navigation" aria-label="Batch evaluation progress">
+    <div className={`batch-page exhibition-batch-page ${inspect ? 'has-inspected-file' : ''} ${runState === 'running' ? 'is-processing' : ''} ${result ? 'has-results' : ''}`}>
+      {exportNotice && <div className="exhibition-export-toast" role="status" aria-live="polite">✓ {exportNotice}</div>}
+      <div className="batch-progress exhibition-batch-workflow" role="navigation" aria-label="Batch evaluation progress">
         {STEPS.map((item) => {
           const disabled = (item.number === 2 && (!inspect || !selectedSheets.length)) || (item.number === 3 && !canContinue && !result)
           const active = step === item.number
@@ -529,7 +553,7 @@ export function BatchEvaluation() {
 
       {step === 1 && (
         <div className="batch-step-panel">
-          <section className="panel batch-upload-panel">
+          <section className="panel batch-upload-panel exhibition-upload-panel">
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">STEP 1</p>
@@ -540,7 +564,7 @@ export function BatchEvaluation() {
             </div>
 
             <div
-              className={`batch-dropzone ${dragActive ? 'drag-active' : ''} ${inspectState === 'loading' ? 'is-loading' : ''}`}
+              className={`batch-dropzone exhibition-upload-zone ${dragActive ? 'drag-active' : ''} ${inspectState === 'loading' ? 'is-loading' : ''}`}
               role="button"
               tabIndex={0}
               aria-label="Upload a CSV or Excel workbook"
@@ -1031,12 +1055,12 @@ export function BatchEvaluation() {
                 <button type="button" className="button-secondary" onClick={() => setStep(2)}>Back to validation</button>
               </div>
 
-              <div className="batch-kpi-grid">
-                <div className="panel batch-kpi"><span>Total rows submitted</span><strong>{summary.total}</strong><small>All rows returned by the backend</small></div>
-                <div className="panel batch-kpi"><span>Successfully scored</span><strong>{summary.succeeded}</strong><small>Denominator for probability statistics</small></div>
-                <div className="panel batch-kpi"><span>Rows needing review / correction</span><strong>{summary.failed}</strong><small>Validation or inference did not complete</small></div>
-                <div className="panel batch-kpi"><span>Mean estimated PD</span><strong>{formatProbability(summary.meanProbability, 2)}</strong><small>{summary.succeeded ? `Denominator: ${summary.succeeded} scored rows` : 'No scored rows'}</small></div>
-                <div className="panel batch-kpi"><span>Median estimated PD</span><strong>{formatProbability(summary.medianProbability, 2)}</strong><small>{summary.succeeded ? `Denominator: ${summary.succeeded} scored rows` : 'No scored rows'}</small></div>
+              <div className="batch-kpi-grid exhibition-result-kpis">
+                <div className="panel batch-kpi"><span>Total rows submitted</span><strong>{animatedTotal}</strong><small>All rows returned by the backend</small></div>
+                <div className="panel batch-kpi"><span>Successfully scored</span><strong>{animatedSucceeded}</strong><small>Denominator for probability statistics</small></div>
+                <div className="panel batch-kpi"><span>Rows needing review / correction</span><strong>{animatedFailed}</strong><small>Validation or inference did not complete</small></div>
+                <div className="panel batch-kpi"><span>Mean estimated PD</span><strong>{animatedMean}</strong><small>{summary.succeeded ? `Denominator: ${summary.succeeded} scored rows` : 'No scored rows'}</small></div>
+                <div className="panel batch-kpi"><span>Median estimated PD</span><strong>{animatedMedian}</strong><small>{summary.succeeded ? `Denominator: ${summary.succeeded} scored rows` : 'No scored rows'}</small></div>
                 <div className="panel batch-kpi batch-kpi-risk">
                   <span>Risk mix</span>
                   <strong>L {summary.lowRisk} · M {summary.mediumRisk} · H {summary.highRisk}</strong>
@@ -1055,7 +1079,7 @@ export function BatchEvaluation() {
               )}
 
               {summary.succeeded > 0 && (
-                <div className="batch-charts-grid">
+                <div className="batch-charts-grid exhibition-result-charts">
                   <RiskDistributionChart summary={summary} />
                   <ProbabilityHistogram summary={summary} />
                   <CumulativeProbabilityChart summary={summary} />
@@ -1064,7 +1088,7 @@ export function BatchEvaluation() {
                 </div>
               )}
 
-              <section className="panel">
+              <section className="panel exhibition-results-table-panel">
                 <div className="panel-heading">
                   <div>
                     <h2>Individual borrower results</h2>
