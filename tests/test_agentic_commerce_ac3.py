@@ -107,6 +107,7 @@ def test_manual_profile_is_inferred_by_the_research_model_and_recorded_separatel
         return SimpleNamespace(
             model_id=model_id, probability=0.25, predicted_class="Lower predicted default risk",
             calibrated=True, limitations=["Taiwan 2005 research data", "Not validated for Indian borrowers"],
+            feature_contributions=[{"feature": "PAY_0", "contribution": 0.12, "direction": "increases_risk"}],
         )
 
     monkeypatch.setattr(runtime, "predict", fake_predict)
@@ -114,14 +115,35 @@ def test_manual_profile_is_inferred_by_the_research_model_and_recorded_separatel
     payload["research_profile"] = profile
     created = create_session(AC3CreateSessionRequest.model_validate(payload))
 
-    assert calls == [("uci_taiwan_xgb", profile, False)]
+    assert calls == [("uci_taiwan_xgb", profile, True)]
     assert created.research_output is not None
     assert created.research_output.probability == 0.25
     assert created.research_output.interpretation == "research_only_not_validated_for_indian_borrowers"
+    assert created.research_output.feature_contributions[0].feature == "PAY_0"
     assert created.provenance.model_inference == "uci_taiwan_research_model"
+    assert created.provenance.research_profile_source == "manual_user_input"
     assert created.audit_events[1].event_type == CommerceWorkflowState.AFFORDABILITY_RESEARCH
     assert "financing calculations" in created.audit_events[1].summary
     assert created.comparison.model_validation_status == "not_validated"
+
+
+def test_example_profile_provenance_is_explicit_in_session_and_audit(monkeypatch):
+    profile = {
+        "LIMIT_BAL": 200000, "SEX": 2, "EDUCATION": 2, "MARRIAGE": 1, "AGE": 35,
+        "PAY_0": 0, "PAY_2": 0, "PAY_3": -1, "PAY_4": 0, "PAY_5": -1, "PAY_6": 0,
+        **{f"BILL_AMT{i}": 50000 for i in range(1, 7)},
+        **{f"PAY_AMT{i}": 5000 for i in range(1, 7)},
+    }
+    monkeypatch.setattr(runtime, "predict", lambda *args, **kwargs: SimpleNamespace(
+        model_id="uci_taiwan_xgb", probability=0.25, predicted_class="Lower predicted default risk",
+        calibrated=True, limitations=[], feature_contributions=None,
+    ))
+    payload = request_payload("ac3-example-profile-research-0001")
+    payload["research_profile"] = profile
+    payload["research_profile_source"] = "test_example"
+    created = create_session(AC3CreateSessionRequest.model_validate(payload))
+    assert created.provenance.research_profile_source == "test_example"
+    assert created.audit_events[1].provenance["research_profile"] == "test_example"
 
 
 def test_session_requires_explicit_confirmation_then_records_simulation_and_audit():

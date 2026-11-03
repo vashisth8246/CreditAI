@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import os
 import subprocess
@@ -82,6 +83,14 @@ def frontend_release_files(dist: Path) -> list[tuple[Path, str]]:
     return entries
 
 
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def main() -> int:
     dirty = subprocess.run(
         ["git", "status", "--porcelain", "--untracked-files=no"],
@@ -96,6 +105,9 @@ def main() -> int:
         )
 
     head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    branch = subprocess.check_output(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=ROOT, text=True,
+    ).strip()
     sha = os.getenv("GITHUB_SHA") or head_sha
     if sha != head_sha:
         raise SystemExit(f"GITHUB_SHA ({sha}) does not match checked-out commit ({head_sha}).")
@@ -117,20 +129,57 @@ def main() -> int:
         raise SystemExit(f"Registered model files are not included in the release: {', '.join(missing_models)}")
     entries.extend(frontend_release_files(dist))
 
+    calibration_path = ROOT / "models" / "calibration_model.joblib"
+    if not calibration_path.is_file():
+        raise SystemExit("Required shipped calibration artifact is missing from the release.")
+    backend_test_result = os.getenv(
+        "CREDITAI_BACKEND_TEST_RESULT",
+        "PASS (GitHub Actions packaging depends on the successful backend test job)"
+        if os.getenv("GITHUB_ACTIONS") == "true" else "NOT_RECORDED",
+    )
+    frontend_test_result = os.getenv(
+        "CREDITAI_FRONTEND_TEST_RESULT",
+        "PASS (GitHub Actions packaging depends on successful frontend checks)"
+        if os.getenv("GITHUB_ACTIONS") == "true" else "NOT_RECORDED",
+    )
     manifest = {
         "application": "CreditAI",
+        "branch": branch,
         "commit_sha": sha,
         "version": sha[:12],
         "worktree_clean": True,
         "built_at_utc": datetime.now(timezone.utc).isoformat(),
         "contents": [name for _, name in entries],
+        "frontend_build_status": "PASS",
+        "backend_test_result": backend_test_result,
+        "frontend_test_result": frontend_test_result,
+        "calibration_sha256": sha256(calibration_path),
+        "dataset_provisioning_mode": "external_verified_workbook_required; raw_workbook_not_packaged",
         "scoring_status": "not_validated",
+        "score_safety_status": {
+            "score_status": "not_validated",
+            "score_type": "none",
+            "default_probability": None,
+            "validated_risk_estimate": False,
+            "model_version": None,
+        },
     }
     with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
         for path, arcname in entries:
             bundle.write(path, arcname)
         bundle.writestr("build-manifest.json", json.dumps(manifest, indent=2) + "\n")
-    print(json.dumps({"artifact": str(archive_path), "version": sha[:12], "file_count": len(entries)}))
+    package_hash = sha256(archive_path)
+    release_manifest = {
+        **manifest,
+        "artifact": archive_path.name,
+        "package_sha256": package_hash,
+    }
+    sidecar_path = archive_path.with_suffix(".manifest.json")
+    sidecar_path.write_text(json.dumps(release_manifest, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "artifact": str(archive_path), "manifest": str(sidecar_path),
+        "package_sha256": package_hash, "version": sha[:12], "file_count": len(entries),
+    }))
     return 0
 
 

@@ -1,5 +1,6 @@
 import { createElement as h, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { researchFieldGroup, researchFieldTitle } from './commerceFieldGuidance.ts'
 
 export type AgenticCommercePageId = 'commerce' | 'commerce-audit'
 
@@ -9,9 +10,14 @@ export const AGENTIC_COMMERCE_NAVIGATION = [
 ] as const
 
 export const AGENTIC_COMMERCE_STAGES = [
-  'Purchase Intent', 'Research Context', 'Financing Options', 'Comparison',
+  'Purchase Context', 'Research Profile', 'Research Inference', 'Financing Comparison',
   'Recommendation', 'Human Confirmation', 'Simulated Execution', 'Audit Trail',
 ] as const
+
+export const EXHIBITION_EXAMPLE = {
+  purchase: { product: 'Example laptop purchase', category: 'Electronics', price: '85000', down: '15000', tenure: '24', income: '65000', obligations: '12000', rate1: '12.5', rate2: '14', rate3: '16' },
+  research: { LIMIT_BAL: '200000', SEX: '2', EDUCATION: '2', MARRIAGE: '1', AGE: '35', PAY_0: '0', PAY_2: '0', PAY_3: '-1', PAY_4: '0', PAY_5: '-1', PAY_6: '0', BILL_AMT1: '50000', BILL_AMT2: '46000', BILL_AMT3: '42000', BILL_AMT4: '39000', BILL_AMT5: '35000', BILL_AMT6: '32000', PAY_AMT1: '5000', PAY_AMT2: '6000', PAY_AMT3: '7000', PAY_AMT4: '6500', PAY_AMT5: '5000', PAY_AMT6: '4500' },
+} as const
 
 type Option = {
   option_id: string
@@ -75,9 +81,42 @@ type Session = {
 type RecordList = { status: 'available' | 'unavailable'; records: ResearchRecord[]; message: string }
 type ResearchField = { type: 'numeric' | 'categorical'; description: string; required: boolean; range?: number[]; values?: number[]; value_labels?: Record<string, string> }
 type ResearchSchema = { model_id: string; raw_features: Record<string, ResearchField> }
-type ResearchPrediction = { model_id: string; probability: number; predicted_class: string; limitations: string[]; calibrated: boolean }
+type ResearchPrediction = { model_id: string; probability: number; predicted_class: string; limitations: string[]; calibrated: boolean; feature_contributions?: { feature: string; contribution: number; direction: string }[] | null }
 type WorkflowStep = 'purchase' | 'profile' | 'results'
+type ProfileSource = 'manual' | 'example' | 'dataset'
 const RESEARCH_MODEL_ID = 'uci_taiwan_xgb'
+
+const FIELD_GUIDE_GROUPS = ['Borrower profile', 'Repayment status', 'Bill statements', 'Previous payments'] as const
+
+function renderResearchFieldGuide(schema: ResearchSchema) {
+  return h('details', { className: 'commerce-field-guide' },
+    h('summary', null, 'Understand the 23 research fields'),
+    ...FIELD_GUIDE_GROUPS.map((group) => {
+      const fields = Object.entries(schema.raw_features).filter(([name]) => researchFieldGroup(name) === group)
+      return h('section', { key: group },
+        h('h3', null, group),
+        h('ul', null, ...fields.map(([name, field]) => h('li', { key: name },
+          h('strong', null, `${researchFieldTitle(name)} · ${name}`),
+          h('span', null, field.description),
+          field.values ? h('small', null, field.values.map((value) => `${value}: ${field.value_labels?.[String(value)] ?? 'supported source code'}`).join(' · ')) : null,
+        ))),
+      )
+    }),
+  )
+}
+
+const PURCHASE_HELP: Record<keyof typeof EXHIBITION_EXAMPLE.purchase, string> = {
+  product: 'Short description used only to identify this research scenario.',
+  category: 'Type of purchase being evaluated; this is user-entered context.',
+  price: 'Total assumed purchase value in Indian rupees.',
+  down: 'Amount paid upfront. The remaining amount is used for the financing comparison.',
+  tenure: 'Preferred repayment duration in months.',
+  income: 'User-entered monthly income used only for affordability research. This value is not in the Taiwan dataset.',
+  obligations: 'Current monthly payment obligations entered for context.',
+  rate1: 'User-entered simulated annual rate for a hypothetical scenario. Not lender pricing.',
+  rate2: 'User-entered simulated annual rate for a hypothetical scenario. Not lender pricing.',
+  rate3: 'Optional user-entered simulated annual rate. Not a lender offer.',
+}
 
 export function parseResearchProfile(values: Record<string, string>, schema: ResearchSchema): Record<string, number> {
   const entries = Object.entries(schema.raw_features).map(([name, field]) => {
@@ -133,7 +172,7 @@ export function AgenticCommercePage() {
   const [step, setStep] = useState<WorkflowStep>('purchase')
   const [researchSchema, setResearchSchema] = useState<ResearchSchema | null>(null)
   const [profileValues, setProfileValues] = useState<Record<string, string>>({})
-  const [profileMode, setProfileMode] = useState<'manual' | 'dataset'>('manual')
+  const [profileMode, setProfileMode] = useState<ProfileSource>('manual')
   const [researchPrediction, setResearchPrediction] = useState<ResearchPrediction | null>(null)
   const [values, setValues] = useState({ product: '', category: '', price: '', down: '', tenure: '', income: '', obligations: '', rate1: '', rate2: '', rate3: '' })
 
@@ -150,12 +189,17 @@ export function AgenticCommercePage() {
     let active = true
     fetch(`${API_BASE}/v1/models/${RESEARCH_MODEL_ID}/schema`)
       .then(async (response) => { if (!response.ok) throw new Error(await responseMessage(response)); return response.json() as Promise<ResearchSchema> })
-      .then((schema) => { if (active) { setResearchSchema(schema); setProfileValues(Object.fromEntries(Object.keys(schema.raw_features).map((name) => [name, '']))) } })
+      .then((schema) => { if (active) { setResearchSchema(schema); setProfileValues((current) => Object.fromEntries(Object.keys(schema.raw_features).map((name) => [name, current[name] ?? '']))) } })
       .catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Research model input schema is unavailable.') })
     return () => { active = false }
   }, [])
 
   const update = (key: keyof typeof values) => (event: { target: { value: string } }) => setValues((current) => ({ ...current, [key]: event.target.value }))
+  function loadExhibitionExample() {
+    setValues({ ...EXHIBITION_EXAMPLE.purchase })
+    setProfileValues(Object.fromEntries(Object.entries(EXHIBITION_EXAMPLE.research)))
+    setProfileMode('example'); setRecordReference(''); setResearchPrediction(null); setSession(null); setError('')
+  }
   async function recheckDataStatus() {
     setDataStatusChecking(true)
     try {
@@ -187,6 +231,11 @@ export function AgenticCommercePage() {
     setProfileValues(Object.fromEntries(Object.keys(researchSchema?.raw_features ?? {}).map((name) => [name, ''])))
   }
 
+  function clearExample() {
+    setValues({ product: '', category: '', price: '', down: '', tenure: '', income: '', obligations: '', rate1: '', rate2: '', rate3: '' })
+    clearResearchProfile()
+  }
+
   async function prepare(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setPending(true); setError(''); setSession(null); setSelectedOptionId('')
     try {
@@ -204,6 +253,7 @@ export function AgenticCommercePage() {
           annual_rate_scenarios_percent: rates,
           research_record_reference: recordReference || null,
           research_profile: recordReference ? null : features,
+          research_profile_source: profileMode === 'example' ? 'test_example' : 'manual_user_input',
         }),
       })
       if (!response.ok) throw new Error(await responseMessage(response))
@@ -229,18 +279,23 @@ export function AgenticCommercePage() {
   }
 
   const field = (label: string, key: keyof typeof values, type = 'text', required = true) => h('label', { className: 'commerce-field', key },
-    h('span', null, label, h('small', { className: 'provenance-label' }, 'USER INPUT')),
-    h('input', { type, min: type === 'number' ? (key === 'tenure' ? '1' : '0') : undefined, max: key.startsWith('rate') ? '100' : undefined, step: type === 'number' ? 'any' : undefined, value: values[key], required, onChange: update(key), autoComplete: 'off' }))
+    h('span', null, label, h('small', { className: 'provenance-label' }, profileMode === 'example' ? 'EXAMPLE INPUT' : 'USER INPUT')),
+    h('input', { type, min: type === 'number' ? (key === 'tenure' ? '1' : '0') : undefined, max: key.startsWith('rate') ? '100' : undefined, step: type === 'number' ? 'any' : undefined, value: values[key], required, onChange: update(key), autoComplete: 'off' }),
+    h('small', { className: 'commerce-field-help' }, PURCHASE_HELP[key]))
   const comparison = session?.comparison
   const selectedOption = comparison?.options.find((option) => option.option_id === selectedOptionId)
+  const preferredOption = comparison?.options.find((option) => option.option_id === comparison.preferred_option_id)
+  const highestInterestOption = comparison?.options.reduce((highest, option) => Number(option.estimated_total_interest) > Number(highest.estimated_total_interest) ? option : highest, comparison.options[0])
+  const interestDifference = preferredOption && highestInterestOption ? Number(highestInterestOption.estimated_total_interest) - Number(preferredOption.estimated_total_interest) : 0
   const stageStates = [
-    session ? 'Complete' : 'Awaiting input',
-    session?.research_record ? 'Verified dataset record' : researchPrediction ? 'Manual research estimate ready' : dataStatus?.status === 'unavailable' ? 'Dataset unavailable · manual input available' : 'Manual input available',
-    comparison ? 'Simulated options created' : 'Pending', comparison ? 'Compared' : 'Pending',
-    comparison ? 'Research output ready' : 'Pending',
-    session?.transaction ? 'Confirmed by user' : session ? 'Waiting for user' : 'Pending',
-    session?.transaction ? 'Simulation complete' : 'Not executed',
-    session ? `${session.audit_events.length} factual events` : 'No events',
+    step !== 'purchase' || Boolean(session) ? 'Complete' : 'Awaiting input',
+    step === 'profile' ? profileMode === 'dataset' ? 'Current · verified dataset record' : profileMode === 'example' ? 'Current · example/test input' : 'Current · manual input available' : session ? 'Complete · profile submitted' : profileMode === 'dataset' ? 'Verified dataset selected' : 'Pending',
+    researchPrediction ? 'Complete · research estimate ready' : session ? 'No model estimate' : 'Pending',
+    comparison ? 'Complete · calculated options' : 'Pending',
+    comparison ? 'Complete · deterministic selection' : 'Pending',
+    session?.transaction ? 'Complete · user confirmed' : session ? 'Current · user decision required' : 'Pending',
+    session?.transaction ? 'Complete · local simulation' : 'Pending · not executed',
+    session ? `Complete · ${session.audit_events.length} actual events` : 'Pending · no events recorded',
   ]
 
   return h('div', { className: 'page-body commerce-page commerce-workspace' },
@@ -249,6 +304,12 @@ export function AgenticCommercePage() {
       h('h1', null, 'A research workflow from intent to audit'),
       h('p', { className: 'section-detail' }, 'Enter purchase context, provide a research profile, review calculated scenarios, then decide whether to record a local simulation.'),
     ), h('span', { className: 'source-tag source-synthetic' }, 'NO REAL TRANSACTION')),
+    h('section', { className: 'commerce-intro panel', 'aria-label': 'Agentic Commerce workflow overview' },
+      h('div', null, h('p', { className: 'eyebrow' }, 'PURCHASE → RESEARCH → COMPARE → CONFIRM'),
+        h('h2', null, 'Explore a financing scenario with transparent assumptions.'),
+        h('p', null, 'A guided research workflow. You control the inputs, review deterministic calculations, and decide whether to record a local simulation.'),
+        h('div', { className: 'commerce-intro-points' }, h('span', null, '01 · Your assumptions'), h('span', null, '02 · Research only'), h('span', null, '03 · Human confirmation'))),
+      h('div', { className: 'commerce-intro-mark', 'aria-hidden': 'true' }, h('span', null, 'CREDITAI'), h('strong', null, 'AC'), h('small', null, 'RESEARCH WORKSPACE'))),
     h('section', { className: 'commerce-safety panel', 'aria-label': 'Agentic Commerce safety boundaries' },
       h('strong', null, 'Research simulation only'),
       h('ul', null, h('li', null, 'No lending decision'), h('li', null, 'No lender offer'), h('li', null, 'No payment or order'), h('li', null, 'Human confirmation required')),
@@ -256,8 +317,8 @@ export function AgenticCommercePage() {
     h('ol', { className: 'commerce-stage-list commerce-stepper', 'aria-label': 'Commerce journey stage status' },
       ...AGENTIC_COMMERCE_STAGES.map((stage, index) => {
         const status = stageStates[index]
-        const complete = status === 'Complete' || status === 'Simulated options created' || status === 'Compared' || status === 'Research output ready' || status === 'Simulation complete' || status.endsWith('factual events') || status.startsWith('Record loaded')
-        const current = !complete && ((index === 0 && !session) || (index === 5 && session && !session.transaction))
+        const complete = status.startsWith('Complete')
+        const current = status.startsWith('Current') || (index === 0 && !session && step === 'purchase')
         return h('li', { key: stage, className: `commerce-stage ${complete ? 'is-complete' : current ? 'is-current' : 'is-future'}` },
           h('span', { className: 'commerce-stage-number', 'aria-hidden': 'true' }, String(index + 1).padStart(2, '0')),
           h('span', { className: 'commerce-stage-name' }, stage), h('span', { className: 'commerce-stage-status' }, status))
@@ -287,16 +348,17 @@ export function AgenticCommercePage() {
       dataStatus?.sha256 && h('small', { className: 'commerce-dataset-hash' }, `Expected SHA-256: ${dataStatus.sha256}`),
     ),
     step === 'purchase' && h('section', { className: 'panel commerce-input-panel', 'aria-label': 'AC-1 purchase intent' },
-      h('div', { className: 'panel-heading' }, h('div', null, h('p', { className: 'eyebrow' }, 'PURCHASE CONTEXT'), h('h2', null, 'Enter the assumptions to compare'), h('p', null, 'No borrower or purchase example is prefilled. The income and obligation context is user-entered and is not dataset-backed.'))),
+      h('div', { className: 'panel-heading' }, h('div', null, h('p', { className: 'eyebrow' }, 'PURCHASE CONTEXT'), h('h2', null, 'Enter the assumptions to compare'), h('p', null, 'The form starts blank. Income and obligation context is user-entered and is not dataset-backed.')),
+        h('div', { className: 'commerce-example-actions' }, profileMode === 'example' && h('span', { className: 'commerce-example-badge' }, 'EXAMPLE / TEST INPUT'), h('button', { type: 'button', className: 'button-secondary', onClick: loadExhibitionExample }, 'Load exhibition example'), profileMode === 'example' && h('button', { type: 'button', className: 'button-quiet', onClick: clearExample }, 'Clear example'))),
       h('form', { className: 'commerce-form', onSubmit: continueToProfile },
         h('div', { className: 'commerce-fields' }, field('Purchase label', 'product'), field('Category', 'category'), field('Purchase price (INR)', 'price', 'number'), field('Down payment (INR)', 'down', 'number'), field('Requested tenure (months)', 'tenure', 'number'), field('Monthly income context (INR)', 'income', 'number'), field('Existing monthly obligations (INR)', 'obligations', 'number')),
-        h('div', { className: 'commerce-rate-assumptions' }, h('div', null, h('strong', null, 'Simulated annual rate parameters'), h('span', null, 'User-entered assumptions · 0% to 100% · no lender pricing')),
+        h('div', { className: 'commerce-rate-assumptions' }, h('div', null, h('strong', null, 'Simulated annual rate assumptions'), h('span', null, 'User-entered hypothetical rates · not lender offers or market pricing')),
           h('div', { className: 'commerce-rate-fields' }, field('Scenario A · %', 'rate1', 'number'), field('Scenario B · %', 'rate2', 'number'), field('Scenario C · optional %', 'rate3', 'number', false))),
         h('button', { type: 'submit', className: 'button-primary commerce-submit' }, 'Continue to research profile →'),
       ),
     ),
     step === 'profile' && h('section', { className: 'panel commerce-input-panel', 'aria-label': 'AC-2 research profile' },
-      h('div', { className: 'panel-heading' }, h('div', null, h('p', { className: 'eyebrow' }, 'AC-2 · MANUAL RESEARCH INPUT'), h('h2', null, 'Enter the model-required research fields'), h('p', null, 'This form is generated from the connected backend model schema. Fields start empty. Manual values are USER INPUT; they are not dataset-backed or validated lending evidence.'))),
+      h('div', { className: 'panel-heading' }, h('div', null, h('p', { className: 'eyebrow' }, profileMode === 'dataset' ? 'AC-2 · VERIFIED DATASET RECORD' : profileMode === 'example' ? 'AC-2 · EXHIBITION EXAMPLE' : 'AC-2 · MANUAL RESEARCH INPUT'), h('h2', null, 'Enter the model-required research fields'), h('p', null, 'This form follows the connected backend model schema. The Taiwan research model is not validated for Indian borrowers and is not lending evidence.'))),
       h('div', { className: 'commerce-record-controls' },
         h('button', { type: 'button', className: `button-secondary ${profileMode === 'manual' ? 'is-selected' : ''}`, onClick: clearResearchProfile }, 'Manual Research Input'),
         dataStatus?.status === 'available'
@@ -305,14 +367,17 @@ export function AgenticCommercePage() {
         dataStatus?.status === 'unavailable' && h('p', { className: 'commerce-research-note' }, 'Dataset-backed mode is unavailable until the workbook passes the recorded SHA-256 check. Manual research input remains available.'),
         profileMode === 'dataset' && recordReference && h('p', { className: 'commerce-record-facts' }, `DATASET · ${recordReference} · verified source row selected; historical target withheld.`),
       ),
+      h('div', { className: 'commerce-example-actions commerce-profile-example' }, profileMode === 'example' && h('span', { className: 'commerce-example-badge' }, 'EXAMPLE / TEST INPUT · NOT DATASET-BACKED'), h('button', { type: 'button', className: 'button-secondary', onClick: loadExhibitionExample }, 'Load exhibition example'), profileMode === 'example' && h('button', { type: 'button', className: 'button-quiet', onClick: clearExample }, 'Clear example')),
       researchSchema
         ? h('form', { className: 'commerce-form', onSubmit: prepare },
           h('div', { className: 'commerce-fields commerce-research-fields' }, ...Object.entries(researchSchema.raw_features).map(([name, field]) => h('label', { className: 'commerce-field', key: name },
-            h('span', null, name, h('small', { className: 'provenance-label' }, profileMode === 'dataset' ? 'DATASET' : 'USER INPUT')),
+            h('span', null, researchFieldTitle(name), h('code', { className: 'commerce-feature-code' }, name), h('small', { className: 'provenance-label' }, profileMode === 'dataset' ? 'DATASET' : profileMode === 'example' ? 'EXAMPLE INPUT' : 'USER INPUT')),
             field.values ? h('select', { value: profileValues[name] ?? '', required: field.required, disabled: profileMode === 'dataset', onChange: (event: { target: { value: string } }) => setProfileValues((current) => ({ ...current, [name]: event.target.value })) },
               h('option', { value: '' }, `Select ${name}`), ...field.values.map((value) => h('option', { key: value, value: String(value) }, `${value}${field.value_labels?.[String(value)] ? ` · ${field.value_labels[String(value)]}` : ''}`)))
               : h('input', { type: 'number', min: field.range?.[0], max: field.range?.[1], step: '1', required: field.required, disabled: profileMode === 'dataset', value: profileValues[name] ?? '', placeholder: field.range ? `${field.range[0]} to ${field.range[1]}` : '', onChange: (event: { target: { value: string } }) => setProfileValues((current) => ({ ...current, [name]: event.target.value })), autoComplete: 'off' }),
+            h('small', { className: 'commerce-field-help' }, field.description),
           ))),
+          renderResearchFieldGuide(researchSchema),
           h('p', { className: 'commerce-research-note' }, 'Research inference uses the Taiwan-trained artifact and is not validated for Indian borrowers. It is not an approval, eligibility or lending decision.'),
           h('div', { className: 'commerce-form-actions' }, h('button', { type: 'button', className: 'button-secondary', onClick: () => setStep('purchase') }, '← Back to purchase intent'), h('button', { type: 'submit', className: 'button-primary commerce-submit', disabled: pending }, pending ? 'Running research comparison…' : 'Run research comparison →')),
           error && h('p', { className: 'commerce-error', role: 'alert' }, error),
@@ -320,7 +385,25 @@ export function AgenticCommercePage() {
         : h('p', { className: 'commerce-research-note', role: 'status' }, 'Loading the exact required input fields from the connected backend…'),
     ),
     comparison && session && h('div', { className: 'commerce-results', key: session.session_id },
-      researchPrediction && h('section', { className: 'panel commerce-research-output', 'aria-label': 'Research model output' }, h('p', { className: 'eyebrow' }, 'RESEARCH OUTPUT · UCI TAIWAN MODEL'), h('h2', null, 'Research estimate'), h('p', null, `Model output: ${(researchPrediction.probability * 100).toFixed(1)}% estimated historical default probability · ${researchPrediction.predicted_class}. This research result is not a lending decision and is not validated for Indian borrowers.`), h('span', { className: 'source-tag source-unavailable' }, session.research_record ? 'DATASET INPUT' : 'USER-ENTERED INPUT')),
+      researchPrediction && h('section', { className: 'panel commerce-research-output', 'aria-label': 'Research model output' },
+        h('p', { className: 'eyebrow' }, 'RESEARCH OUTPUT · UCI TAIWAN MODEL'), h('h2', null, 'Research estimate'),
+        h('div', { className: 'commerce-estimate-hero' }, h('strong', null, `${(researchPrediction.probability * 100).toFixed(1)}%`), h('span', null, 'estimated historical default probability'), h('small', null, researchPrediction.predicted_class)),
+        h('p', null, 'This is a research estimate from a model trained on historical Taiwan credit-card data. It is not a lending decision and is not validated for Indian borrowers.'),
+        h('div', { className: 'commerce-provenance-row' }, h('span', null, h('strong', null, 'PROFILE SOURCE'), session.provenance.research_profile_source === 'verified_dataset_record' ? 'VERIFIED UCI DATASET RECORD' : session.provenance.research_profile_source === 'test_example' ? 'EXAMPLE / TEST INPUT' : 'MANUAL USER INPUT'), h('span', null, h('strong', null, 'MODEL STATUS'), 'RESEARCH ONLY · NOT VALIDATED')),
+        researchPrediction.feature_contributions?.length
+          ? h('div', { className: 'commerce-explanation', 'aria-label': 'Existing SHAP feature contributions' }, h('h3', null, 'Why did the research model produce this estimate?'), h('p', null, 'Local SHAP contributions from CreditAI’s existing inference explainer. Bars show relative contribution magnitude and direction, not causal effects.'),
+            ...researchPrediction.feature_contributions.map((item) => {
+              const maximum = Math.max(...researchPrediction.feature_contributions!.map((driver) => driver.contribution), 0.0001)
+              const increasing = item.direction === 'increases_risk'
+              return h('article', { className: 'commerce-driver', key: item.feature },
+                h('div', { className: 'commerce-driver-label' }, h('strong', null, `${researchFieldTitle(item.feature)} · ${item.feature}`), h('span', null, `${item.contribution.toFixed(4)} · ${increasing ? 'increases model output' : 'decreases model output'}`)),
+                h('div', { className: `commerce-driver-track ${increasing ? 'is-risk-up' : 'is-risk-down'}` }, h('span', { style: { width: `${Math.max(3, item.contribution / maximum * 100)}%` } })),
+                profileValues[item.feature] !== undefined ? h('small', null, `Submitted value: ${profileValues[item.feature]}`) : null,
+              )
+            }))
+          : h('div', { className: 'commerce-explanation commerce-explanation-limited' }, h('h3', null, 'Model explanation unavailable for this request'), h('p', null, 'The existing local explanation service did not return feature contributions. No substitute drivers are shown.')),
+        researchPrediction.limitations.length > 0 && h('ul', { className: 'commerce-model-limitations' }, ...researchPrediction.limitations.map((limitation) => h('li', { key: limitation }, limitation))),
+      ),
       h('div', { className: 'commerce-provenance-row', 'aria-label': 'Data provenance' }, ...[
         ['PURCHASE', 'USER INPUT'], ['PAYMENT', 'CALCULATED'], ['RATES', 'SIMULATED'], ['RECOMMENDATION', 'RESEARCH OUTPUT'],
       ].map(([label, value]) => h('span', { key: label }, h('strong', null, label), value))),
@@ -341,9 +424,24 @@ export function AgenticCommercePage() {
           h('small', null, option.research_notes),
         ))),
       ),
+      h('section', { className: 'panel commerce-interest-chart', 'aria-label': 'Calculated total interest comparison' },
+        h('div', { className: 'panel-heading' }, h('div', null, h('p', { className: 'eyebrow' }, 'CALCULATED FROM THE CURRENT INPUTS'), h('h2', null, 'Compare estimated total interest'), h('p', null, 'Bars are scaled to the highest calculated interest amount in these scenarios.'))),
+        h('div', { className: 'commerce-interest-rows' }, ...comparison.options.map((option) => {
+          const maximum = Math.max(...comparison.options.map((item) => Number(item.estimated_total_interest)), 1)
+          return h('div', { className: 'commerce-interest-row', key: option.option_id }, h('div', null, h('strong', null, option.display_name), h('span', null, `${Number(option.annual_rate_percent).toFixed(2)}% simulated · ${money(option.estimated_total_interest, comparison.currency)} interest`)), h('div', { className: 'commerce-interest-track' }, h('span', { style: { width: `${Number(option.estimated_total_interest) / maximum * 100}%` } })))
+        })),
+      ),
       h('section', { className: 'panel commerce-recommendation' }, h('div', null,
         h('p', { className: 'eyebrow' }, 'CALCULATED / RESEARCH OUTPUT'), h('h2', null, 'Research-preferred option'), h('p', null, comparison.recommendation_explanation)),
-        h('div', { className: 'commerce-why' }, h('strong', null, 'COMPARISON FACTORS'), h('ul', null, ...comparison.comparison_factors.map((factor) => h('li', { key: factor }, factor)))),
+        h('div', { className: 'commerce-why' }, h('strong', null, 'WHY THIS OPTION?'), h('p', null, preferredOption ? `${preferredOption.display_name} was selected by the deterministic comparison because it has the lowest estimated total interest; monthly payment is the tie-breaker. All options use the same requested ${preferredOption.tenure_months}-month term.` : comparison.recommendation_explanation),
+          preferredOption && h('ul', null,
+            h('li', null, `Simulated annual rate: ${Number(preferredOption.annual_rate_percent).toFixed(2)}%`),
+            h('li', null, `Calculated monthly payment: ${money(preferredOption.estimated_monthly_payment, comparison.currency)}`),
+            h('li', null, `Calculated total interest: ${money(preferredOption.estimated_total_interest, comparison.currency)}`),
+            h('li', null, interestDifference > 0 ? `Estimated interest is ${money(interestDifference, comparison.currency)} lower than the highest-interest scenario (${highestInterestOption?.display_name}).` : 'Estimated total interest is tied across the supplied scenarios; monthly payment breaks the tie.'),
+          ),
+          h('details', { className: 'commerce-comparison-method' }, h('summary', null, 'How the options differ'), h('p', null, 'The comparison keeps the financed amount and requested tenure constant, then applies each user-entered simulated annual rate. Monthly payment, total repayment, and total interest are calculated outputs. Payment-to-income is descriptive and is not an approval threshold.')),
+        ),
         h('p', { className: 'commerce-human-boundary' }, 'This comparison is not a credit decision, a lender offer, or validated affordability assessment. Select an option and explicitly confirm to create only a local simulation.'),
       ),
       !session.transaction && h('section', { className: 'panel commerce-confirmation', 'aria-label': 'Human confirmation' },
@@ -369,7 +467,7 @@ export function AgenticCommercePage() {
   )
 }
 
-export function CommerceAuditTrailPage() {
+export function CommerceAuditTrailPage({ onStart }: { onStart?: () => void }) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [unavailable, setUnavailable] = useState(false)
   useEffect(() => {
@@ -390,6 +488,6 @@ export function CommerceAuditTrailPage() {
       h('span', { className: `source-tag ${sessions.length ? '' : 'source-unavailable'}` }, sessions.length ? `${sessions.length} LOCAL SESSION${sessions.length === 1 ? '' : 'S'}` : 'NO SESSION')),
     unavailable && h('p', { className: 'commerce-research-note', role: 'status' }, 'A prior session is no longer available. This can happen after the backend restarts; no audit event is fabricated.'),
     sessions.length ? sessions.map((session) => h('section', { className: 'panel commerce-timeline', key: session.session_id }, h('div', { className: 'panel-heading' }, h('div', null, h('p', { className: 'eyebrow' }, 'LOCAL SIMULATION'), h('h2', null, `Session ${session.session_id}`))), h('ol', null, ...session.audit_events.map((event) => h('li', { key: event.event_id }, h('span', { className: 'commerce-timeline-dot', 'aria-hidden': 'true' }), h('div', null, h('strong', null, event.event_type.replaceAll('_', ' ')), h('p', null, event.summary), h('small', null, `${new Date(event.timestamp).toLocaleString()} · ${event.actor} · ${Object.entries(event.provenance).map(([key, value]) => `${key}: ${value}`).join(' · ')}`)))))))
-      : !unavailable && h('section', { className: 'panel commerce-audit-empty' }, h('span', { className: 'empty-icon', 'aria-hidden': 'true' }, '≋'), h('h2', null, 'No simulated commerce sessions are recorded in this browser.'), h('p', null, 'Complete an AC-3 comparison and explicit confirmation to create factual local audit events. No audit events are fabricated.')),
+      : !unavailable && h('section', { className: 'panel commerce-audit-empty' }, h('span', { className: 'empty-icon', 'aria-hidden': 'true' }, '≋'), h('p', { className: 'eyebrow' }, 'WORKFLOW PREVIEW · NO EVENTS RECORDED YET'), h('h2', null, 'No simulated commerce sessions are recorded in this browser.'), h('p', null, 'This preview describes event types that may be recorded after actual workflow actions. It is not event history.'), h('ol', { className: 'commerce-audit-preview' }, ...['Purchase context provided', 'Research profile processed when submitted', 'Financing scenarios calculated', 'Recommendation prepared', 'Simulation recorded only after explicit confirmation'].map((item) => h('li', { key: item }, item))), h('p', null, 'No audit events are fabricated.'), h('button', { type: 'button', className: 'button-primary', onClick: onStart }, 'Go to Agentic Commerce →')),
   )
 }

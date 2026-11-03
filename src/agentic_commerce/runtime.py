@@ -51,7 +51,7 @@ def create_session(request: AC3CreateSessionRequest) -> CommerceSessionResponse:
     research_output = None
     if research_features is not None:
         try:
-            prediction = predict("uci_taiwan_xgb", research_features, include_explanations=False)
+            prediction = predict("uci_taiwan_xgb", research_features, include_explanations=True)
         except InvalidInputError as exc:
             raise ValueError(str(exc)) from exc
         except (ArtifactNotFoundError, FileNotFoundError, ModelLoadError, OSError) as exc:
@@ -63,6 +63,7 @@ def create_session(request: AC3CreateSessionRequest) -> CommerceSessionResponse:
             predicted_class=prediction.predicted_class,
             calibrated=prediction.calibrated,
             limitations=prediction.limitations,
+            feature_contributions=prediction.feature_contributions,
         )
         if research_record:
             research_record = research_record.model_copy(update={"model_inference_performed": True})
@@ -70,6 +71,11 @@ def create_session(request: AC3CreateSessionRequest) -> CommerceSessionResponse:
     comparison = compare_purchase(request)
     provenance = CommerceProvenance(
         research_record=("uci_taiwan_research_dataset" if research_record else "unavailable_or_not_selected"),
+        research_profile_source=(
+            "verified_dataset_record" if research_record
+            else request.research_profile_source if research_features is not None
+            else "not_provided"
+        ),
         model_inference=("uci_taiwan_research_model" if research_output else "not_used"),
     )
     provenance_map = provenance.model_dump()
@@ -84,7 +90,7 @@ def create_session(request: AC3CreateSessionRequest) -> CommerceSessionResponse:
     elif research_output:
         events.append(_event(session_id, CommerceWorkflowState.AFFORDABILITY_RESEARCH, "tool",
                              "User-entered raw profile supplied to the Taiwan research model; output is separate from financing calculations.",
-                             {"research_profile": "user_input", "model_inference": "uci_taiwan_research_model", "ground_truth_target": "not_provided"}))
+                             {"research_profile": provenance.research_profile_source, "model_inference": "uci_taiwan_research_model", "ground_truth_target": "not_provided"}))
     events.extend([
         _event(session_id, CommerceWorkflowState.OFFER_DISCOVERY, "tool",
                f"Generated {len(comparison.options)} simulated rate scenarios from user-supplied parameters.",

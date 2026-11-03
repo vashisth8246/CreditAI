@@ -10,6 +10,7 @@ import { BatchEvaluation } from './BatchEvaluation'
 import { researchApi } from './api'
 import { AGENTIC_COMMERCE_NAVIGATION, AgenticCommercePage, CommerceAuditTrailPage } from './agenticCommerce'
 import './App.css'
+import './commerce-exhibition.css'
 
 type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'commerce' | 'commerce-audit' | 'architecture'
 type Segment = 'vintage' | 'grade' | 'purpose'
@@ -220,7 +221,7 @@ function App() {
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
         : page === 'performance' ? <div className="page-body"><ModelPerformanceLab /></div>
         : page === 'commerce' ? <AgenticCommercePage />
-        : page === 'commerce-audit' ? <CommerceAuditTrailPage />
+        : page === 'commerce-audit' ? <CommerceAuditTrailPage onStart={() => go('commerce')} />
         : viewState === 'loading' ? <div className="page-body"><EmptyState title="Preparing research workspace" message="Loading verified summaries and qualification metadata." icon="◌" /></div>
         : viewState === 'error' || viewState === 'empty' || !summary || !inventory || !features ? <div className="page-body"><SourceTag source="unavailable" /><EmptyState title="Research data unavailable" message={loadError ?? 'The backend did not return the historical research snapshot.'} icon="!" />{retryCount > 0 && <p style={{ marginTop: '0.5rem', fontSize: '12px', color: '#617984' }}>Retry attempts: {retryCount}</p>}<button className="button-secondary" onClick={retryLoad} style={{ marginTop: '1rem' }}>Retry loading</button></div>
           : <div className="page-body">

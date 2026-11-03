@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
+from src.inference.schemas import FeatureContribution
 
 
 class ContractModel(BaseModel):
@@ -252,6 +253,7 @@ class ResearchModelOutput(ContractModel):
     predicted_class: str
     calibrated: bool
     limitations: list[str]
+    feature_contributions: list[FeatureContribution] | None = None
     interpretation: Literal["research_only_not_validated_for_indian_borrowers"] = "research_only_not_validated_for_indian_borrowers"
 
 
@@ -262,6 +264,7 @@ class CommerceProvenance(ContractModel):
     payment_estimates: Literal["deterministic_calculation"] = "deterministic_calculation"
     preferred_option: Literal["deterministic_comparison"] = "deterministic_comparison"
     research_record: str
+    research_profile_source: Literal["not_provided", "manual_user_input", "test_example", "verified_dataset_record"] = "not_provided"
     model_inference: Literal["not_used", "uci_taiwan_research_model"] = "not_used"
     ground_truth_target: Literal["excluded"] = "excluded"
 
@@ -269,6 +272,7 @@ class CommerceProvenance(ContractModel):
 class AC3CreateSessionRequest(CommerceComparisonRequest):
     research_record_reference: str | None = Field(default=None, pattern=r"^UCI-TW-\d{5}$")
     research_profile: dict[str, StrictInt] | None = None
+    research_profile_source: Literal["manual_user_input", "test_example"] = "manual_user_input"
 
 
 class AC3SimulationConfirmation(ContractModel):
