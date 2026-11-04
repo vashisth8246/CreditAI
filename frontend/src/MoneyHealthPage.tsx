@@ -1,3 +1,5 @@
+import MoneyPassport from './MoneyPassport'
+import { loadSaved } from './moneyPassportStorage'
 import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { calculate, charts, example, metrics, money, parseAmount, profiles, timeline } from './moneyHealth'
@@ -23,6 +25,9 @@ function Chart({ title, rows }: ReturnType<typeof charts>[number]) {
 }
 
 export default function MoneyHealth() {
+  const [saved, setSaved] = useState(loadSaved)
+  const [passportVisited, setPassportVisited] = useState(false)
+  const [passportOpen, setPassportOpen] = useState(false)
   const [profile, select] = useState<number | null>(null)
   const [entries, setEntries] = useState<Entries>({})
   const [source, setSource] = useState(false)
@@ -129,6 +134,7 @@ export default function MoneyHealth() {
     }
   }
   return <main className="mh">
+    <div hidden={passportOpen}>
     <header className="mh-hero">
       <p>CreditAI · Exhibition experience</p>
       <h1>My Money Health</h1>
@@ -238,6 +244,11 @@ export default function MoneyHealth() {
         <h3>Explore CreditAI</h3><a href={link.url}>{link.label} · {link.url}</a>
       </section>
     </>}
+    <section className="mh-panel mh-controls">
+      <h2>Money Challenge</h2>
+      <p>Make a plan, record actual progress and keep a Money Passport on this browser if you choose.</p>
+      <button onClick={() => { setPassportVisited(true); setPassportOpen(true); window.scrollTo(0, 0) }}>{saved.passports.length ? 'Continue My Money Challenge' : 'Start My Money Challenge'}</button>
+    </section>
     <footer className="mh-panel mh-controls mh-actions">
             {result && <>
         <button className="mh-primary" disabled={!scenario || pdfBusy} onClick={() => { void download(new Date().toLocaleString('en-IN', { timeZoneName: 'short' })) }}>{pdfBusy ? 'Preparing PDF…' : 'Download PDF'}</button>
@@ -246,5 +257,10 @@ export default function MoneyHealth() {
       {pdfError && <p role="alert">{pdfError}</p>}
       <a href="/">Explore Full CreditAI →</a>
     </footer>
+    </div>
+    {passportVisited && <div hidden={!passportOpen}>
+      <MoneyPassport initial={saved} onSaved={setSaved} onBack={() => setPassportOpen(false)} onClear={() => { clear(); select(null); setPassportOpen(false) }}
+        context={chosen && result ? { profile: chosen.name, balance: result.balance, example: source } : null} />
+    </div>}
   </main>
 }

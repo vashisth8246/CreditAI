@@ -32,3 +32,8 @@
   .mh-grid, .mh-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .mh-chart, .mh-metric { margin-bottom: 8px; }
 }
+
+.mh select { display: block; width: 100%; min-height: 44px; font: inherit; color: inherit; }
+.mh input[type="checkbox"] { display: inline-block; width: auto; min-height: 0; margin-right: 6px; }
+.mh progress, .mh meter { width: 100%; accent-color: #176445; }
+.mh [aria-label="Money Passport"] { overflow-wrap: anywhere; }

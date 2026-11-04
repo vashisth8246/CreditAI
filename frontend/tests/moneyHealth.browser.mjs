@@ -177,6 +177,115 @@ try {
   assert(pageCount > 1)
   await writeFile(new URL('print-fallback.pdf', output), bytes)
   console.log('Generated PDF with ' + pageCount + ' pages and ' + bytes.length + ' bytes')
+  // Rehearse all three challenge types and the browser-local return journey.
+  const passport = () => evaluate(`document.querySelector('[aria-label="Money Passport"]').innerText`)
+
+  const setField = (name, value) => evaluate(`{
+    const field = document.querySelector('[aria-label="Money Passport"] [name="' + ${JSON.stringify(name)} + '"]')
+    field.value = ${JSON.stringify(value)}
+  }`)
+  const chooseKind = kind => evaluate(`{
+    const field = document.querySelector('[aria-label="Money Passport"] form select')
+    field.value = ${JSON.stringify(kind)}
+    field.dispatchEvent(new Event('change', { bubbles: true }))
+  }`)
+  socket.addEventListener('message', event => {
+    if (JSON.parse(event.data).method === 'Page.javascriptDialogOpening') {
+      void call('Page.handleJavaScriptDialog', { accept: true })
+    }
+  })
+  await call('Page.enable')
+  await call('Page.reload')
+  await ready('.mh')
+  const challengeCases = [
+    ['Student', 'savings', 'Student laptop', { target: '1000', planned: '100' }],
+    ['Working Professional', 'spending', 'Professional food', { category: 'Food', baseline: '1000', target: '300', end: '2099-01-01' }],
+    ['Freelancer / Self-Employed', 'emergency', 'Freelancer buffer', { essential: '1000', coverage: '2' }],
+    ['Other / Not Currently Earning', 'savings', 'Other goal', { target: '500' }],
+  ]
+  for (const [profile, type, name, values] of challengeCases) {
+    await click(profile)
+    await click('Calculate Sample')
+    await click((await evaluate('localStorage.length')) ? 'Continue My Money Challenge' : 'Start My Money Challenge')
+    await click('New challenge')
+    await chooseKind(type)
+    await setField('name', name)
+    for (const [field, value] of Object.entries(values)) await setField(field, value)
+    await evaluate("document.querySelector('[name=context]').click()")
+    await click('Review plan')
+    await click('Confirm challenge')
+    assert((await passport()).includes(name))
+    assert((await passport()).includes('EXAMPLE-BASED PLAN'))
+    assert((await passport()).includes('No entries yet'))
+    assert.equal(await evaluate('document.querySelector("progress").value'), 0)
+    for (const width of [320, 375, 390, 430]) {
+      await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
+      assert(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Passport overflow at ' + width)
+    }
+    assert(await evaluate('[...document.querySelectorAll("button")].find(x => x.textContent === "Save Money Passport").disabled'))
+    await evaluate('document.querySelector(\'[aria-label="Money Passport"] input[type=checkbox]\').click()')
+    await click('Save Money Passport')
+    assert((await passport()).includes('Passport saved on this browser'))
+    await click('Back to My Money Health')
+  }
+  await call('Page.reload')
+  await ready('.mh')
+  await click('Continue My Money Challenge')
+  assert((await passport()).includes('Student laptop'))
+  await setField('amount', '300.25')
+  await setField('note', 'Recorded contribution')
+  await click('Add entry')
+  assert((await passport()).includes('₹300.25'))
+  assert((await passport()).includes('25% · ₹250 · Reached'))
+  await click('Edit entry')
+  await setField('amount', '550.50')
+  await click('Save edit')
+  assert((await passport()).includes('50% · ₹500 · Reached'))
+  await click('Export Passport')
+  await click('Download Money Passport PDF')
+  const backupPath = new URL('CreditAI-Money-Passport.json', output)
+  const reportPath = new URL('CreditAI-Money-Passport.pdf', output)
+  let backup, passportPdf
+  for (let attempt = 0; attempt < 150 && (!backup || !passportPdf); attempt++) {
+    const raw = await readFile(backupPath, 'utf8').catch(() => '')
+    if (raw.endsWith('}')) backup = JSON.parse(raw)
+    const bytes = await readFile(reportPath).catch(() => null)
+    if (bytes?.subarray(-16).toString().includes('%%EOF')) passportPdf = bytes
+    if (!backup || !passportPdf) await delay()
+  }
+  assert.equal(backup?.entries[0]?.amount, 55050)
+  assert.equal(passportPdf?.subarray(0, 5).toString(), '%PDF-')
+  await click('Delete entry')
+  assert((await passport()).includes('No entries yet'))
+  await click('Delete My Passport')
+  const root = await call('DOM.getDocument')
+  const input = await call('DOM.querySelector', { nodeId: root.root.nodeId, selector: 'input[type=file]' })
+  await call('DOM.setFileInputFiles', { nodeId: input.nodeId, files: [(await import('node:url')).fileURLToPath(backupPath)] })
+  for (let attempt = 0; attempt < 100 && !(await passport()).includes('₹550.5'); attempt++) await delay()
+  assert((await passport()).includes('₹550.5'))
+  const passportBrowser = await fetch(debugging + '/json/version').then(response => response.json())
+  const privateClient = await connect(passportBrowser.webSocketDebuggerUrl)
+  try {
+    const { browserContextId } = await privateClient.call('Target.createBrowserContext')
+    const { targetId } = await privateClient.call('Target.createTarget', { url: app + '/money-health', browserContextId })
+    const { sessionId } = await privateClient.call('Target.attachToTarget', { targetId, flatten: true })
+    let fresh
+    for (let attempt = 0; attempt < 100 && !fresh; attempt++) {
+      const check = await privateClient.call('Runtime.evaluate', {
+        expression: 'document.querySelector(".mh") && [localStorage.length, document.body.innerText.includes("Start My Money Challenge"), location.search]',
+        returnByValue: true,
+      }, sessionId)
+      fresh = check.result.value
+      if (!fresh) await delay()
+    }
+    assert.deepEqual(fresh, [0, true, ''])
+    await privateClient.call('Target.disposeBrowserContext', { browserContextId })
+  } finally {
+    privateClient.socket.close()
+  }
+  await click('Clear All Data')
+  assert.equal(await evaluate('localStorage.length'), 0)
+  console.log('Passport checks passed: four profiles, three types, consent, refresh, milestones, edit/delete, backup restore, PDF, private context and four mobile widths.')
   await call('Page.reload')
   await ready('.mh')
   assert.equal(await evaluate('document.querySelectorAll("input").length'), 0)
