@@ -5,26 +5,8 @@ import type { FeatureField, FeatureContribution, ModelDetails, ModelSchema, Mode
 import { researchApi } from './api'
 import { displayFeatureName } from './analytics'
 import { calculateAssessment, contributionDirection, predictionFiveW } from './assessment'
-import { MonthlyHistoryEditor } from './MonthlyHistoryEditor'
-import { currentMonth, historyFromFeatures, inspectHistory, monthIndex, periodAt, type HistoryCurrency, type MonthlyRecord } from './monthlyHistory'
-import { HistoryInsights } from './HistoryInsights'
-import { historyMoney } from './historyAnalytics'
 
 const fieldLabel = displayFeatureName
-const profileHints: Record<string, string> = {
-  LIMIT_BAL: 'Assigned credit-card limit. It is distinct from income, available cash and outstanding debt.',
-  SEX: 'Recorded gender category in the historical dataset.',
-  EDUCATION: 'Education level as recorded in the Taiwan dataset.',
-  MARRIAGE: 'Marital-status category as recorded in the Taiwan dataset.',
-  AGE: 'Age in completed years at the reporting period.',
-}
-const visitorFields: Record<string, FeatureField> = {
-  LIMIT_BAL: { type: 'numeric', description: '', required: false, range: [0, 1e9] },
-  SEX: { type: 'categorical', description: '', required: false, values: [1, 2], value_labels: { 1: 'Male', 2: 'Female' } },
-  EDUCATION: { type: 'categorical', description: '', required: false, values: [1, 2, 3, 4, 0, 5, 6], value_labels: { 1: 'Graduate school', 2: 'University', 3: 'High school', 4: 'Other', 0: 'Unclassified', 5: 'Unclassified', 6: 'Unclassified' } },
-  MARRIAGE: { type: 'categorical', description: '', required: false, values: [1, 2, 3, 0], value_labels: { 1: 'Married', 2: 'Single', 3: 'Other', 0: 'Unclassified' } },
-  AGE: { type: 'numeric', description: '', required: false, range: [0, 120] },
-}
 
 type PresetProfile = {
   name: string
@@ -37,7 +19,7 @@ const PRESET_BORROWERS: PresetProfile[] = [
   {
     name: 'Low Risk Borrower',
     tag: 'Low Risk',
-    description: 'High credit limit (TWD 200k), prime age, university degree, zero repayment delays, healthy payment-to-bill ratio.',
+    description: 'High credit limit (NT$ 200k), prime age, university degree, zero repayment delays, healthy payment-to-bill ratio.',
     values: {
       LIMIT_BAL: 200000,
       SEX: 2,
@@ -67,7 +49,7 @@ const PRESET_BORROWERS: PresetProfile[] = [
   {
     name: 'Moderate Risk Borrower',
     tag: 'Moderate',
-    description: 'Moderate limit (TWD 80k), revolving balance, 1 month recent delay in September, partially paying statements.',
+    description: 'Moderate limit (NT$ 80k), revolving balance, 1 month recent delay in September, partially paying statements.',
     values: {
       LIMIT_BAL: 80000,
       SEX: 1,
@@ -97,7 +79,7 @@ const PRESET_BORROWERS: PresetProfile[] = [
   {
     name: 'High Risk Delinquent',
     tag: 'High Risk',
-    description: 'Low credit limit (TWD 20k), 2+ months persistent payment delays, near max utilization, minimal repayment amounts.',
+    description: 'Low credit limit (NT$ 20k), 2+ months persistent payment delays, near max utilization, minimal repayment amounts.',
     values: {
       LIMIT_BAL: 20000,
       SEX: 2,
@@ -143,11 +125,6 @@ export function PredictionWorkspace() {
   const [schema, setSchema] = useState<ModelSchema | null>(null)
   const [details, setDetails] = useState<ModelDetails | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
-  const [currency, setCurrency] = useState<HistoryCurrency>('INR')
-  const [months, setMonths] = useState<MonthlyRecord[]>([])
-  const [exampleHistory, setExampleHistory] = useState(false)
-  const monthReview = inspectHistory(months, currency)
-  const modelValues = { ...values, ...monthReview.features }
   const [assessment, setAssessment] = useState<GuardianAssessment | null>(null)
   useEffect(() => {
     if (!assessment) return
@@ -295,9 +272,7 @@ export function PredictionWorkspace() {
     )
     setAssessment(null)
     setResult(null)
-    setValues(Object.fromEntries(Object.entries(stringified).filter(([key]) => !key.startsWith('PAY_') && !key.startsWith('BILL_AMT'))))
-    setMonths(historyFromFeatures(stringified))
-    setExampleHistory(true)
+    setValues(stringified)
     setSyntheticProfile(true)
     setError(null)
   }
@@ -305,39 +280,8 @@ export function PredictionWorkspace() {
   function clearForm() {
     setAssessment(null)
     setValues({})
-    setMonths([])
-    setExampleHistory(false)
-    setSyntheticProfile(false)
     setResult(null)
     setError(null)
-  }
-
-  function updateMonths(records: MonthlyRecord[], example = exampleHistory && records.length > 0) {
-    setMonths(records)
-    setExampleHistory(example)
-    setAssessment(null)
-    setResult(null)
-    setError(null)
-  }
-
-  function switchCurrency(next: HistoryCurrency) {
-    if (next === currency || submitting) return
-    if ((months.length || Object.values(values).some(Boolean)) && !window.confirm('Switching currency clears the current profile and history. Continue?')) return
-    clearForm()
-    setCurrency(next)
-  }
-
-  function loadHistoryExample() {
-    if (currency === 'TWD') {
-      updateMonths(historyFromFeatures(Object.fromEntries(
-        Object.entries(PRESET_BORROWERS[0].values).map(([key, value]) => [key, String(value)])
-      )), true)
-      return
-    }
-    const latest = monthIndex(currentMonth())! - 1
-    updateMonths([
-      ['0', '20000', '25000'], ['1', '0', '1500'], ['-1', '-2500', '0'], ['-2', '150000', '12500'],
-    ].map(([status, bill, paid], index) => ({ id: index + 1, period: periodAt(latest - index), status, bill, paid })), true)
   }
 
   function clearHistory() {
@@ -361,12 +305,12 @@ export function PredictionWorkspace() {
     event.preventDefault()
     setError(null)
     setResult(null)
-    if (currency !== 'TWD' || !schema || !monthReview.ready) return
+    if (!schema) return
 
     setAssessment(null)
     setSubmitting(true)
     try {
-      const response = await researchApi.guardian(modelId, modelValues)
+      const response = await researchApi.guardian(modelId, values)
       setAssessment(response.assessment)
       const prediction = response.prediction
       if (!prediction) return
@@ -401,6 +345,9 @@ export function PredictionWorkspace() {
 
   // Group features into logical subsets for user readability
   const demographicKeys = ['LIMIT_BAL', 'SEX', 'EDUCATION', 'MARRIAGE', 'AGE']
+  const delinquencyKeys = ['PAY_0', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6']
+  const billKeys = ['BILL_AMT1', 'BILL_AMT2', 'BILL_AMT3', 'BILL_AMT4', 'BILL_AMT5', 'BILL_AMT6']
+  const paymentKeys = ['PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6']
 
   const isConnected = systemStatus?.backend_connectivity === 'connected'
 
@@ -459,7 +406,7 @@ export function PredictionWorkspace() {
         </div>
       </div>
 
-      {currency === 'TWD' && loadError && (
+      {loadError && (
         <div className="api-error" role="alert">
           <strong>Backend Service Unreachable</strong>
           <p>{loadError}</p>
@@ -469,23 +416,17 @@ export function PredictionWorkspace() {
         </div>
       )}
 
-      <div className={currency === 'INR' ? 'prediction-layout prediction-layout-inr' : 'prediction-layout'}>
+      <div className="prediction-layout">
         <section className="panel prediction-form-panel">
           <div className="panel-heading">
             <div>
               <p className="eyebrow">BORROWER PROFILE</p>
               <h2>Input Features</h2>
-              <p>{currency === 'INR' ? 'Optional profile context for your descriptive history.' : 'Taiwan research inputs use the original New Taiwan dollar (TWD) units.'}</p>
+              <p>Raw fields expected by the model. 27 engineered signals are computed server-side.</p>
             </div>
-            <span className="field-count">{currency === 'INR' ? 'INR · Analytics' : 'TWD · Research'}</span>
+            <span className="field-count">{schema ? `${Object.keys(schema.raw_features).length} fields` : '—'}</span>
           </div>
 
-          <div className="monthly-actions" role="group" aria-label="History currency mode">
-            <button type="button" className="button-secondary" disabled={submitting} aria-pressed={currency === 'INR'} onClick={() => switchCurrency('INR')}>INR history analytics</button>
-            <button type="button" className="button-secondary" disabled={submitting} aria-pressed={currency === 'TWD'} onClick={() => switchCurrency('TWD')}>Taiwan research mode (TWD)</button>
-          </div>
-          <p className="monthly-help">Each mode keeps amounts in its own currency. Switching modes clears the current form. INR inputs are for analytics only because there is no validated conversion workflow for this model.</p>
-          {currency === 'TWD' && <>
           <div className="form-group model-picker-group">
             <label className="form-label" htmlFor="model-select">
               Active Research Model
@@ -557,24 +498,21 @@ export function PredictionWorkspace() {
             </div>
             <p>KNN has no frozen distribution reference. Select KNN and run a valid sample to see that state.</p>
           </details>
-          </>}
-          {currency === 'TWD' && loading ? (
+          {loading ? (
             <div className="inline-loading" role="status">
               Loading model schema and calibrator parameters…
             </div>
-          ) : currency === 'INR' || schema ? (
+          ) : schema ? (
             <form noValidate onSubmit={(e) => void submit(e)}><fieldset className="guardian-form-fields" disabled={submitting}>
               {/* Group 1: Demographics */}
               <div className="feature-section">
                 <h4 className="feature-section-title">1. Demographics & Credit Capacity</h4>
-                <p className="feature-section-desc">These demographic categories are included for historical model compatibility. They are separate from real-world lending requirements.</p>
                 <div className="feature-grid">
                   {demographicKeys.map((name) => (
                     <FeatureInput
                       key={name}
                       name={name}
-                      field={currency === 'INR' ? visitorFields[name] : schema!.raw_features[name]}
-                      currency={currency}
+                      field={schema.raw_features[name]}
                       value={values[name] ?? ''}
                       onChange={(val) => updateField(name, val)}
                     />
@@ -582,9 +520,57 @@ export function PredictionWorkspace() {
                 </div>
               </div>
 
-              {exampleHistory && <p className="source-tag">{currency === 'INR' ? 'Illustrative INR history' : 'Synthetic TWD research history'}</p>}
-              <MonthlyHistoryEditor key={currency} records={months} review={monthReview} onChange={updateMonths} currency={currency} loadExample={loadHistoryExample} />
-              <HistoryInsights review={monthReview} currency={currency} />
+              {/* Group 2: Repayment History */}
+              <div className="feature-section">
+                <h4 className="feature-section-title">2. Repayment Status History (PAY_0 to PAY_6)</h4>
+                <p className="feature-section-desc">
+                  -2: No consumption · -1: Paid duly · 0: Revolving credit · 1–9: Delinquent months
+                </p>
+                <div className="feature-grid">
+                  {delinquencyKeys.map((name) => (
+                    <FeatureInput
+                      key={name}
+                      name={name}
+                      field={schema.raw_features[name]}
+                      value={values[name] ?? ''}
+                      onChange={(val) => updateField(name, val)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Group 3: Bill Statements */}
+              <div className="feature-section">
+                <h4 className="feature-section-title">3. Monthly Bill Statements ({details?.geography === 'Taiwan' ? 'NT$' : 'model dataset units'})</h4>
+                <div className="feature-grid">
+                  {billKeys.map((name) => (
+                    <FeatureInput
+                      key={name}
+                      name={name}
+                      field={schema.raw_features[name]}
+                      value={values[name] ?? ''}
+                      onChange={(val) => updateField(name, val)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Group 4: Payments Paid */}
+              <div className="feature-section">
+                <h4 className="feature-section-title">4. Monthly Amounts Paid ({details?.geography === 'Taiwan' ? 'NT$' : 'model dataset units'})</h4>
+                <div className="feature-grid">
+                  {paymentKeys.map((name) => (
+                    <FeatureInput
+                      key={name}
+                      name={name}
+                      field={schema.raw_features[name]}
+                      value={values[name] ?? ''}
+                      onChange={(val) => updateField(name, val)}
+                    />
+                  ))}
+                </div>
+              </div>
+
               {error && (
                 <div className="form-error" role="alert">
                   {error}
@@ -595,14 +581,14 @@ export function PredictionWorkspace() {
                 <button
                   className="button-primary prediction-submit"
                   type="submit"
-                  disabled={currency === 'INR' || submitting || loading || !monthReview.ready}
+                  disabled={submitting || loading}
                 >
-                  {currency === 'INR' ? 'Prediction unavailable for INR' : submitting ? 'Executing XGBoost & SHAP…' : 'Run Prediction'}
+                  {submitting ? 'Executing XGBoost & SHAP…' : 'Run Prediction'}
                   <span aria-hidden="true"> →</span>
                 </button>
                 <button
                   type="button"
-                  className="button-quiet"
+                  className="button-secondary"
                   onClick={clearForm} disabled={submitting}
                 >
                   Reset
@@ -615,7 +601,7 @@ export function PredictionWorkspace() {
         </section>
 
         {/* Prediction Results & Explanation Panel */}
-        {currency === 'TWD' && <section className="panel prediction-result-panel" aria-live="polite">
+        <section className="panel prediction-result-panel" aria-live="polite">
           <div className="panel-heading">
             <div>
               <p className="eyebrow">INFERENCE ENGINE</p>
@@ -626,7 +612,7 @@ export function PredictionWorkspace() {
 
           {assessment && <ConfidenceGuardian assessment={assessment} />}
           {result ? (
-            <PredictionResult result={result} details={details} values={modelValues} syntheticProfile={syntheticProfile || exampleHistory} />
+            <PredictionResult result={result} details={details} values={values} syntheticProfile={syntheticProfile} />
           ) : !assessment && (
             <div className="result-empty">
               <span className="result-icon">◎</span>
@@ -650,7 +636,7 @@ export function PredictionWorkspace() {
                 {history.map((item) => (
                   <div key={item.id} className="history-item">
                     <div>
-                      <strong>{historyMoney(item.limit_bal, 'TWD')}</strong>
+                      <strong>NT$ {item.limit_bal.toLocaleString('en-US')}</strong>
                       <small>{item.timestamp} · {item.model_id}</small>
                     </div>
                     <div className="history-score">
@@ -664,7 +650,7 @@ export function PredictionWorkspace() {
               </div>
             </div>
           )}
-        </section>}
+        </section>
       </div>
 
       {details && (
@@ -695,17 +681,15 @@ function FeatureInput({
   field,
   value,
   onChange,
-  currency,
 }: {
   name: string
   field: FeatureField
   value: string
   onChange: (value: string) => void
-  currency: HistoryCurrency
 }) {
-  const label = name === 'LIMIT_BAL' ? `Credit Limit (${currency === 'INR' ? '₹' : 'TWD'})` : fieldLabel(name)
+  const label = fieldLabel(name)
   const id = `feature-${name}`
-  const hint = [profileHints[name], field.range ? `${field.range[0].toLocaleString('en-IN')} to ${field.range[1].toLocaleString('en-IN')}` : '']
+  const hint = [field.description, field.range ? `${field.range[0]} to ${field.range[1]}` : '', field.unit]
     .filter(Boolean)
     .join(' · ')
 
@@ -722,7 +706,6 @@ function FeatureInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           required={field.required}
-          aria-describedby={`${id}-hint`}
         >
           <option value="">Select…</option>
           {field.values.map((item) => (
@@ -780,7 +763,7 @@ function PredictionResult({
   const increasing = contributions.filter((item) => contributionDirection(item.direction) === 'increases_risk')
   const decreasing = contributions.filter((item) => contributionDirection(item.direction) === 'decreases_risk')
   const unknown = contributions.filter((item) => contributionDirection(item.direction) === 'unknown')
-  const currencyContext = result.geography.toLowerCase() === 'taiwan' ? 'Taiwan dataset values (TWD; original dataset units)' : `${result.geography} dataset units`
+  const currencyContext = result.geography.toLowerCase() === 'taiwan' ? 'Taiwan dataset values (NT$; original dataset units)' : `${result.geography} dataset units`
   const featureLabel = (name: string) => ({
     PAY_0: 'Most recent repayment status (September 2005)',
     PAY_2: 'Repayment status two months before the target month',
