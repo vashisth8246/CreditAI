@@ -105,8 +105,28 @@ function CorrelationMap({ summary }: { summary: Summary }) {
   return <div className="corr-scroll"><table className="corr-table"><thead><tr><th></th>{fields.map((name) => <th key={name}>{displayFeatureName(name)}</th>)}</tr></thead><tbody>{matrix.map((row) => <tr key={row.feature}><th>{displayFeatureName(row.feature)}</th>{fields.map((name) => { const value = row.values[name] ?? 0; const opacity = Math.min(0.8, Math.abs(value) * 0.8); return <td key={name} style={{ backgroundColor: value >= 0 ? `rgba(48, 196, 169, ${opacity})` : `rgba(110, 147, 246, ${opacity})` }} title={`${displayFeatureName(row.feature)} × ${displayFeatureName(name)}: ${value.toFixed(2)}`}>{value.toFixed(2)}</td> })}</tr>)}</tbody></table><p className="chart-footnote">Pearson correlation, complete observations only (n={summary.portfolio.numeric_correlation_complete_rows.toLocaleString()}); association is not causation.</p></div>
 }
 
+function Sidebar({ page, go }: { page: Page | 'money-health'; go: (target: Page) => void }) {
+  return <aside className="sidebar">
+      <div className="brand"><div className="brand-mark"><span>c</span><i /></div><div><strong>creditai</strong><small>RISK WORKBENCH</small></div></div>
+      <div className="workspace-switch"><span className="workspace-dot" /><div><strong>Research workspace</strong><small>Phase 9 · Research</small></div><span className="chevron">⌄</span></div>
+      <a className="money-health-nav" href="/money-health" aria-current={page === 'money-health' ? 'page' : undefined}>
+        <span className="money-health-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7.5V6a2 2 0 0 1 1.6-2l11-2A2 2 0 0 1 19 4v3.5" />
+            <rect x="3" y="7" width="18" height="13" rx="3" />
+            <path d="M21 11.5h-5a2 2 0 0 0 0 4h5m-5-2h.01" />
+          </svg>
+        </span>
+        <span className="money-health-nav-copy"><strong>My Money Health</strong><small>Personal finance &amp; challenges</small></span>
+        <span className="money-health-nav-arrow" aria-hidden="true">›</span>
+      </a>
+      <nav className="side-nav" aria-label="Main navigation">{nav.map((item, index) => <div key={item.id}>{item.section && <div className="nav-section">{item.section}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => go(item.id)} aria-current={page === item.id ? 'page' : undefined} title={index < 9 ? `Press ${index + 1} to navigate` : item.title}><span className="nav-symbol" aria-hidden="true">{item.icon}</span><span>{item.title}</span>{item.id === 'explorer' && <span className="nav-pill">LAB</span>}{index < 9 && <span className="nav-shortcut" aria-hidden="true">{index + 1}</span>}</button></div>)}</nav>
+      <div className="sidebar-foot"><div className="foot-status"><span className="pulse-dot" /><span>Research environment</span></div><p>Historical analysis only<br />Production risk score disabled</p><div className="sidebar-version">CREDITAI <span>·</span> 9</div></div>
+    </aside>
+}
+
 function ResearchApp() {
-  const [page, setPage] = useState<Page>('overview')
+  const [page, setPage] = useState<Page>(() => nav.find(item => '#' + item.id === window.location.hash)?.id ?? 'overview')
   const [summary, setSummary] = useState<Summary | null>(null)
   const [inventory, setInventory] = useState<InventoryItem[] | null>(null)
   const [features, setFeatures] = useState<Feature[] | null>(null)
@@ -208,15 +228,10 @@ function ResearchApp() {
   function go(target: Page) { setPage(target); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
   return <div className="shell">
-    <aside className="sidebar">
-      <div className="brand"><div className="brand-mark"><span>c</span><i /></div><div><strong>creditai</strong><small>RISK WORKBENCH</small></div></div>
-      <div className="workspace-switch"><span className="workspace-dot" /><div><strong>Research workspace</strong><small>Phase 9 · Research</small></div><span className="chevron">⌄</span></div>
-      <nav className="side-nav" aria-label="Main navigation"><a className="nav-item" href="/money-health">My Money Health</a>{nav.map((item, index) => <div key={item.id}>{item.section && <div className="nav-section">{item.section}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => go(item.id)} aria-current={page === item.id ? 'page' : undefined} title={index < 9 ? `Press ${index + 1} to navigate` : item.title}><span className="nav-symbol" aria-hidden="true">{item.icon}</span><span>{item.title}</span>{item.id === 'explorer' && <span className="nav-pill">LAB</span>}{index < 9 && <span className="nav-shortcut" aria-hidden="true">{index + 1}</span>}</button></div>)}</nav>
-      <div className="sidebar-foot"><div className="foot-status"><span className="pulse-dot" /><span>Research environment</span></div><p>Historical analysis only<br />Production risk score disabled</p><div className="sidebar-version">CREDITAI <span>·</span> 9</div></div>
-    </aside>
+    <Sidebar page={page} go={go} />
 
     <main className="main-shell">
-      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><a className="text-link" href="/money-health">My Money Health</a><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
+      <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
 
       {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
@@ -361,4 +376,10 @@ function DatasetDetailModal({ dataset, onClose }: { dataset: InventoryItem; onCl
 
 export default App
 
-function App() { return /^\/money-health\/?$/.test(window.location.pathname) ? <MoneyHealth /> : <ResearchApp /> }
+function App() {
+  if (!/^\/money-health\/?$/.test(window.location.pathname)) return <ResearchApp />
+  return <div className="shell money-health-shell">
+    <Sidebar page="money-health" go={target => window.location.assign(target === 'overview' ? '/' : '/#' + target)} />
+    <div className="main-shell"><MoneyHealth /></div>
+  </div>
+}
