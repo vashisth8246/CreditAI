@@ -1,4 +1,4 @@
-import { money } from './moneyHealth.ts'
+import { money, parseAmount } from './moneyHealth.ts'
 import type { Entries, Field, Result } from './moneyHealth.ts'
 
 export type ChallengeSuggestion = {
@@ -87,6 +87,17 @@ export function analyzeMoney(result: Result, profile: number) {
 }
 
 export const analysisMethod = 'Your Money Health is a descriptive analysis of the numbers you entered. It is not a credit score, investment recommendation, or prediction of future income.'
+
+export function scenarioSuggestions(baseline: Result, scenario: Result, profile: number) {
+  return analyzeMoney(scenario, profile).suggestions.filter(suggestion =>
+    !suggestion.changes || Object.entries(suggestion.changes).some(([id, value]) => {
+      const current = scenario.register.find(field => field.id === id)
+      const original = baseline.register.find(field => field.id === id)
+      return parseAmount(value) !== current?.amount &&
+        !(current?.kind === 'expense' && (current.amount ?? 0) < (original?.amount ?? 0))
+    })
+  )
+}
 
 export function analysisCharts(result: Result, profile: number) {
   const a = analyzeMoney(result, profile)
