@@ -1,43 +1,72 @@
-.monthly-history { display: grid; gap: 12px; }
-.monthly-history h3, .monthly-history p { margin: 0; }
-.monthly-history p { line-height: 1.5; }
-.monthly-readiness, .monthly-confirm {
+.monthly-history {
+  --month-columns: minmax(104px, 1fr) minmax(115px, 1.15fr) minmax(62px, .75fr) minmax(62px, .75fr) 42px;
   display: grid;
-  gap: 6px;
-  padding: 12px 14px;
-  border: 1px solid #c9e3d8;
-  border-radius: 12px;
+  gap: 4px;
+}
+.monthly-history p { margin: 0; line-height: 1.4; }
+.monthly-readiness, .monthly-confirm {
+  padding: 7px 10px;
+  border: 1px solid #d8e6e2;
+  border-radius: 7px;
   background: #f1faf5;
   color: #163d34;
+  font-size: 12px;
 }
-.monthly-actions, .monthly-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.monthly-record {
+.monthly-actions, .monthly-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.monthly-actions, .monthly-help { margin: 3px 0; }
+.monthly-actions button { min-height: 36px; padding: 6px 10px; }
+.monthly-help { color: #365950; font-size: 12px; }
+.monthly-help summary { cursor: pointer; }
+.monthly-help p { margin-top: 4px; }
+.monthly-columns, .monthly-record {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
-  padding: 12px;
-  border: 1px solid #d8e6e2;
-  border-radius: 12px;
-  background: #fff;
+  grid-template-columns: var(--month-columns);
+  gap: 4px 6px;
+  align-items: start;
+  min-width: 0;
 }
-.monthly-record label { min-width: 0; display: grid; align-content: start; gap: 4px; font-weight: 650; }
-.monthly-record .form-control { min-width: 0; width: 100%; min-height: 44px; box-sizing: border-box; font-size: 14px; }
-.monthly-record small { color: #922b27; overflow-wrap: anywhere; }
+.monthly-columns { font-size: 11px; font-weight: 700; color: #365950; padding-top: 3px; }
+.monthly-record label { min-width: 0; display: grid; gap: 2px; }
+.monthly-record .form-control { min-width: 0; width: 100%; padding-inline: 5px; font-size: 12px; }
+.monthly-record small { color: #922b27; overflow-wrap: anywhere; font-size: 11px; }
 .monthly-record [aria-invalid=true] { border-color: #c98781; }
-.monthly-record button { justify-self: start; }
+.monthly-field-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.monthly-remove {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 37px;
+  padding: 0;
+  border: 1px solid #d8e6e2;
+  border-radius: 7px;
+  background: #f5faf8;
+  color: #24594a;
+}
+.monthly-remove:hover { background: #e2f1eb; }
 .monthly-record .monthly-confirm { grid-column: 1 / -1; }
 .prediction-form-panel .button-quiet { background: #edf6f2; color: #234c41; }
 .prediction-form-panel .button-quiet:hover:not(:disabled) { background: #dceee5; }
-.monthly-history :focus-visible { outline: 2px solid #137a5a; outline-offset: 3px; }
-@media (max-width: 390px) {
-  .monthly-record { grid-template-columns: minmax(0, 1fr); }
+.monthly-history :focus-visible { outline: 2px solid #137a5a; outline-offset: 2px; }
+@media (max-width: 600px), (1150px < width <= 1240px) {
+  .monthly-columns { display: none; }
+  .monthly-record {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr) 44px;
+    border-bottom: 1px solid #d8e6e2;
+    padding: 5px 0 8px;
+  }
+  .monthly-record label:nth-child(2) { grid-column: 2 / -1; }
+  .monthly-record label:nth-child(3) { grid-column: 1; }
+  .monthly-remove { grid-column: 3; grid-row: 2; align-self: end; width: 44px; height: 44px; }
+  .monthly-field-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; font-size: 11px; font-weight: 650; }
+  .monthly-record .form-control { min-height: 40px; font-size: 13px; }
 }
 @keyframes creditai-panel-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .monthly-record, .monthly-confirm, .prediction-output {
-    animation: creditai-panel-in 180ms ease-out both;
+    animation: creditai-panel-in 160ms ease-out both;
   }
+  .monthly-remove { transition: background-color 120ms ease; }
 }

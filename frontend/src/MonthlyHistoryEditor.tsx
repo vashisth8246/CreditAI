@@ -41,12 +41,10 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
     }}>Cancel</button>
   </div>
   return <section className="feature-section monthly-history" aria-labelledby="monthly-history-heading">
-    <h3 id="monthly-history-heading">2. Monthly credit history</h3>
-    <p>Enter statement months from newest to oldest, or in any order. Amounts are whole New Taiwan dollars. Negative bills can represent a credit balance.</p>
-    <p>The research window maps newest to oldest onto the original September–April 2005 feature positions. This positional mapping is for historical research demonstrations and has no current-date lending validation.</p>
+    <h4 className="feature-section-title" id="monthly-history-heading">2. Monthly credit history</h4>
     <div className="monthly-readiness" role="status">
       <strong>{records.length} entered · {review.complete} complete · {review.window.length ? review.missing.length : 6} missing periods</strong>
-      <p>{review.ready ? 'Six complete consecutive records ready for research inference.' : records.length < 6 ? 'Insufficient monthly history for this research model. Six complete historical records are required for an XGBoost prediction. Add missing months to continue.' : 'History requires review. Complete the latest six consecutive months and resolve invalid or duplicated reporting periods.'}</p>
+      <p>{review.ready ? 'Ready for research inference.' : records.length < 6 ? 'Insufficient history. Add six complete consecutive months to run a prediction.' : 'History requires review. Complete the latest six consecutive months and resolve invalid or duplicated reporting periods.'}</p>
       {!!review.missing.length && <p>Missing periods: {review.missing.join(', ')}.</p>}
       {review.ready && <p>Research window: {review.window.at(-1)} through {review.window[0]}.{records.length > 6 ? ' Older records remain visible for context and are excluded from inference.' : ''}</p>}
     </div>
@@ -65,7 +63,15 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
       }}>Load 6-Month Research Example</button>
       <button type="button" className="button-quiet" disabled={!records.length} onClick={() => setConfirm('all')}>Clear History</button>
     </div>
+    <details className="monthly-help">
+      <summary>Repayment codes and research window</summary>
+      <p>−2: No consumption · −1: Paid duly · 0: Revolving credit · 1–9: Months late.</p>
+      <p>Use whole NT$ amounts. Negative bills can represent a credit balance. The latest six consecutive months map onto the September–April 2005 model positions for research only.</p>
+    </details>
     {typeof confirm !== 'number' && confirmation}
+    {records.length > 0 && <div className="monthly-columns" aria-hidden="true">
+      <span>Month</span><span>Repayment status</span><span>Bill (NT$)</span><span>Paid (NT$)</span><span>Remove</span>
+    </div>}
     {review.entries.map(({ record, errors }, index) => {
       const update = (field: 'period' | typeof historyFields[number], value: string) =>
         onChange(records.map(item => item.id === record.id ? { ...item, [field]: value } : item))
@@ -74,11 +80,11 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
         'aria-invalid': Boolean(errors[field]), 'aria-describedby': errors[field] ? inputId(field) + '-error' : undefined,
       })
       return <div className="monthly-record" role="group" aria-label={'Monthly record ' + (index + 1)} key={record.id}>
-        <label>Reporting period
+        <label><span className="monthly-field-label">Reporting month</span>
           <input className="form-control" id={inputId('period')} type="month" value={record.period} onChange={event => update('period', event.target.value)} {...invalidProps('period')} />
           {errors.period && <small id={inputId('period') + '-error'}>{errors.period}</small>}
         </label>
-        {historyFields.map(field => <label key={field}>{labels[field]}
+        {historyFields.map(field => <label key={field}><span className="monthly-field-label">{labels[field]}</span>
           {field === 'status' ? <select className="form-control" value={record.status} onChange={event => update(field, event.target.value)} {...invalidProps(field)}>
             <option value="">Select status</option>
             {errors.status && record.status && <option value={record.status}>Invalid code ({record.status})</option>}
@@ -86,10 +92,10 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
           </select> : <input className="form-control" type="number" step={1} min={historyLimits[field][0]} max={historyLimits[field][1]} value={record[field]} onChange={event => update(field, event.target.value)} {...invalidProps(field)} />}
           {errors[field] && <small id={inputId(field) + '-error'}>{errors[field]}</small>}
         </label>)}
-        <button id={'month-remove-' + record.id} type="button" className="button-quiet" aria-label={'Remove month ' + (record.period || index + 1)} onClick={() => {
+        <button id={'month-remove-' + record.id} type="button" className="monthly-remove" title={'Remove month ' + (record.period || index + 1)} aria-label={'Remove month ' + (record.period || index + 1)} onClick={() => {
           if (hasData(record)) setConfirm(record.id)
           else remove(record.id)
-        }}>Remove month</button>
+        }}><svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 5 10 10M15 5 5 15" /></svg></button>
         {confirm === record.id && confirmation}
       </div>
     })}
