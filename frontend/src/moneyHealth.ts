@@ -44,6 +44,8 @@ export const profiles = [
   ] },
 ]
 export type Entries = Record<string, string>
+export const budgetAmount = (entries: Entries, changes: Entries, id: string) =>
+  changes[id] ?? (entries[id]?.trim() || '0')
 export const example = (fields: Field[]): Entries =>
   Object.fromEntries(fields.map(({ id, example: value }) => [id, String(value)]))
 export const money = (paise: number) => new Intl.NumberFormat('en-IN', {

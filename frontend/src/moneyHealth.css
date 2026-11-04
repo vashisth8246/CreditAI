@@ -169,3 +169,10 @@
 .mh-planner-result dd[data-direction="1"] { color: #096348; }
 .mh-planner-result dd[data-direction="-1"] { color: #9a3429; }
 @media (prefers-reduced-motion: no-preference) { .mh-planner-edit { animation: mh-enter .2s ease-out both; } }
+.mh-budget-group { border: 0; padding: 0; margin: 12px 0; min-width: 0; }
+.mh-budget-group legend { font-weight: 750; margin-bottom: 6px; }
+.mh-budget-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; }
+.mh-budget-grid label { display: block; font-size: .9rem; }
+.mh-budget-grid input[aria-invalid="true"] { outline: 2px solid #a3352d; }
+.mh-budget-error { color: #a3352d; }
+@media (max-width: 768px) { .mh-budget-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
