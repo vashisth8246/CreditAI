@@ -1,9 +1,12 @@
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces'
 import { charts, metrics, money } from './moneyHealth'
 import type { Result } from './moneyHealth'
+import { analyzeMoney, analysisCharts, analysisMethod } from './moneyHealthAnalysis'
 
 type Report = {
   profile: string
+  profileIndex: number
+  hasScenario: boolean
   provenance: string
   example: boolean
   result: Result
@@ -51,6 +54,7 @@ function chartBlock(chart: ReturnType<typeof charts>[number]): Content {
 
 export function reportDefinition(report: Report): TDocumentDefinitions {
   const { result, scenario, profile, provenance, generated } = report
+  const analysis = analyzeMoney(result, report.profileIndex)
   const baseline = metrics(result)
   const revised = metrics(scenario)
   const metricBlocks = baseline.map(([label, value, formula, meaning]): Content => ({
@@ -101,11 +105,24 @@ export function reportDefinition(report: Report): TDocumentDefinitions {
           { text: field.help, style: 'note' },
         ],
       })),
+      section('Your Money Health Analysis'),
+      detail('Monthly money received', money(result.funds)),
+      detail('Total monthly expenses including EMI', money(result.outflow)),
+      detail(result.balance < 0 ? 'Monthly shortfall' : 'Money remaining', money(Math.abs(result.balance))),
+      detail('Balance as a share of funds', analysis.monthlyPercent === null ? 'Unavailable because no positive funds were entered.' : analysis.monthlyPercent.toFixed(2) + '%'),
+      analysis.cashFlow,
+      detail('Spending pressure', analysis.pressure === null ? 'Unavailable' : `${money(result.outflow)} ÷ ${money(result.funds)} = ${analysis.pressure.toFixed(2)}%`),
+      detail('Emergency savings coverage', analysis.coverageText),
+      detail('Debt payment pressure', !result.debt ? 'No monthly EMI entered.' : result.debtRatio === null ? 'Unavailable' : result.debtRatio.toFixed(2) + '%'),
+      detail('Savings goal feasibility', analysis.goalText),
+      ...(analysis.missing.length ? [detail('Not provided', analysis.missing.join(', ') + '. Missing amounts are excluded.' + (analysis.blankEssential.length ? ' Coverage may be overstated.' : ''))] : []),
+      analysisMethod,
       section('Financial summary and calculations'),
       { columns: [{ stack: metricBlocks.slice(0, 5) }, { stack: metricBlocks.slice(5) }], columnGap: 20 },
       section('Financial charts'),
-      ...charts(result, scenario).slice(0, 3).map(chartBlock),
-      section('What-If Planner'),
+      chartBlock({ title: 'Where your money goes', rows: analysis.allocation }),
+      ...analysisCharts(result, report.profileIndex).flatMap(chart => [chartBlock(chart), { text: chart.insight, style: 'note' }]),
+      ...(report.hasScenario ? [section('What-If Planner'),
       ...report.scenarioNotes.map(note => detail('Assumption', note)),
       detail('Balance difference', `${money(scenario.balance - result.balance)} = funds change ${money(scenario.funds - result.funds)} − spending change ${money(scenario.expenses - result.expenses)} − debt change ${money(scenario.debt - result.debt)}.`),
       { columns: [revised.slice(0, 5), revised.slice(5)].map((group, column) => ({
@@ -114,10 +131,10 @@ export function reportDefinition(report: Report): TDocumentDefinitions {
 
       chartBlock(charts(result, scenario)[3]),
       ...(report.goalRows.length ? [chartBlock({ title: 'Purchase savings goal', rows: report.goalRows }), detail('Projection', report.goalExplanation)] : []),
-      section('Observations and planning considerations'),
-      detail('Cash flow', `Reported funds of ${money(result.funds)} minus outflows of ${money(result.outflow)} leave ${money(result.balance)} for the month. ${result.balance < 0 ? 'The deficit shows the amount not covered by current monthly funds.' : 'The balance is available before any future unreported commitments.'}`),
-      detail('Spending', 'Review the largest reported categories in the spending chart before testing a reduction. Each reduction improves the monthly balance by the same amount if funds and debt stay constant.'),
-      detail('Savings', baseline[7][1] + '. ' + baseline[7][3] + ' The goal status compares the stated goal with the calculated balance.'),
+      ] : []),
+      section('What could you improve?'),
+      ...(analysis.suggestions.length ? [] : ['Review the entered amounts before choosing a next step.']),
+      ...analysis.suggestions.map(item => ({ text: item.text, margin: [0, 0, 0, 5] as [number, number, number, number] })),
       section('Assumptions, privacy and limitations'),
       detail('Scope', 'One reported or illustrative month. Missing optional amounts contribute zero to sums and remain unavailable in the register. Ratios display to two decimal places.'),
       detail('Privacy', 'The browser generates this report using active tab state. No personal identity is required. Keep the downloaded file private if it contains personal numbers.'),

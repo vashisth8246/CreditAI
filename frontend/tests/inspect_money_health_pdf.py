@@ -7,7 +7,7 @@ from pypdf.generic import ContentStream
 
 
 EXPECTED = {
-    "sample-Student": ("₹1,200", "Education", "EXAMPLE INPUT"),
+    "sample-Student": ("₹1,200", "Education", "EXAMPLE INPUT", "76.00%", "24.00%", "Scenario ₹1,500"),
     "sample-Working": ("₹14,000", "Monthly take-home salary", "EXAMPLE INPUT"),
     "sample-Freelancer": ("₹15,000", "Lower-income month estimate", "EXAMPLE INPUT"),
     "sample-Other": ("₹800", "Discretionary expenses", "EXAMPLE INPUT"),
@@ -25,8 +25,8 @@ def inspect(directory: Path) -> None:
         page_text = [page.extract_text() for page in reader.pages]
         text = " ".join(" ".join(page_text).split())
         for phrase in (*expected, "5W1H", "Complete input register", "Calculation:",
-                       "Monthly cash flow", "Spending breakdown", "Monthly funds allocation",
-                       "Baseline vs what-if", "Local rehearsal link"):
+                       "Monthly cash-flow comparison", "Expense breakdown", "Where your money goes",
+                       "Emergency savings coverage", "What could you improve?", "Local rehearsal link"):
             assert phrase in text, (name, phrase)
         for index, page in enumerate(page_text, 1):
             assert f"Page {index} of {len(page_text)}" in page, (name, index)

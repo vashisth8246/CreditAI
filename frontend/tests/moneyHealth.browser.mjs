@@ -74,7 +74,7 @@ try {
     ['not_validated', 'none', null, false, null])
   await call('Page.navigate', { url: app + '/money-health' })
   await ready('.mh')
-  for (const width of [320, 375, 390, 430, 1366, 1440, 1920]) {
+  for (const width of [320, 375, 390, 430, 768, 1366, 1440, 1920]) {
     await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
     assert(await evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'Overflow at ' + width)
   }
@@ -86,7 +86,7 @@ try {
   }
   await call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
   await screenshot('profile-cards-and-sidebar')
-  for (const width of [320, 375, 390, 430, 1366, 1920]) {
+  for (const width of [320, 375, 390, 430, 768, 1366, 1920]) {
     await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
     await screenshot('profiles-' + width, '.mh-choice-grid')
   }
@@ -118,6 +118,8 @@ try {
   }`)
   await click('Student')
   assert(!(await evaluate('document.querySelector("#education").required')))
+  await click('Calculate my money health')
+  assert(await evaluate('document.querySelector("#primary").validity.valueMissing && !document.querySelector(".mh-analysis")'))
   await evaluate('document.querySelector("fieldset").scrollIntoView()')
   await screenshot('grouped-inputs', 'fieldset')
   assert(await evaluate('[...document.querySelectorAll("input")].every(input => input.value === "")'))
@@ -126,10 +128,23 @@ try {
     ['Freelancer / Self-Employed', '₹15,000'], ['Other / Not Currently Earning', '₹800'],
   ]) {
     await click(profile)
-    await click('Calculate Sample')
+    await click('Load Example Input')
+    await click('Calculate my money health')
     await ready('.mh-metric')
     assert(await evaluate(`document.querySelector('[aria-label="Financial dashboard"]').textContent.includes(${JSON.stringify(balance)})`))
-    assert.equal(await evaluate('document.querySelectorAll(".mh-chart svg").length > 0'), true)
+    assert(await evaluate('document.activeElement.id === "money-health-results"'))
+    assert(await evaluate('document.querySelector(".mh-analysis-charts").getBoundingClientRect().top < innerHeight'))
+    assert.equal(await evaluate('document.querySelectorAll(".mh-analysis-charts figure").length'), 4)
+    assert(!await evaluate('document.body.innerText.includes("Baseline vs what-if")'))
+    await screenshot('analysis-' + profile.split(' ')[0])
+    if (profile === 'Student') {
+      assert(await evaluate('document.querySelector(".mh-analysis").innerText.includes("76.00%") && document.querySelector(".mh-snapshot").innerText.includes("24.00%")'))
+      await screenshot('analysis-charts', '.mh-analysis-charts')
+      await screenshot('analysis-recommendations', '#money-health-recommendations')
+      await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false})
+      await screenshot('analysis-mobile', '.mh-results-hero')
+      await call('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false})
+    }
     const presetNames = await evaluate('[...document.querySelectorAll(".mh-choice-grid button")].filter(button => button.textContent.includes("Example change")).map(button => button.querySelector("strong").textContent)')
     assert.equal(presetNames.length, profile.startsWith('Other') ? 3 : 4)
     for (const name of presetNames) {
@@ -138,17 +153,28 @@ try {
       if (profile === 'Student' && name.startsWith('Spend')) {
         assert(await evaluate('document.body.innerText.includes("Scenario ₹1,500")'))
         await evaluate('document.querySelector(".mh-custom").scrollIntoView({block:"center"})')
-        await screenshot('what-if-presets', '.mh-kicker:has(+ h2)')
+        await screenshot('what-if-presets', '#money-health-what-if')
+        await screenshot('analysis-what-if-comparison', '.mh-comparison')
       }
     }
     await click('Reset scenario')
+    if (profile === 'Student') {
+      await click('Apply this What-If')
+      assert(await evaluate('document.body.innerText.includes("Scenario ₹1,500")'))
+    }
     await download('sample-' + profile.split(' ')[0])
+    await click('Turn an improvement into a Money Challenge')
+    await ready('[aria-label="Money Passport"] form')
+    assert(await evaluate(`document.querySelector('[aria-label="Money Passport"] form').innerText.includes('Suggested from your analysis')`))
+
+    if (profile === 'Student') assert.equal(await evaluate('document.querySelector("[name=baseline]").value'), '700.00')
+    await click('Back to My Money Health')
   }
   const manual = [
     ['Student', { primary: '5000.29', food: '2500', transport: '600', personal: '700', savings: '2500' }, '₹1,200.29'],
     ['Working Professional', { primary: '50000', food: '22000', transport: '3000', personal: '3000', debt: '8000', savings: '75000' }, '₹14,000'],
     ['Freelancer / Self-Employed', { primary: '40000', low: '28000', personal: '25000', savings: '60000' }, '₹15,000'],
-    ['Other / Not Currently Earning', { primary: '0', essential: '3.25', discretionary: '0', savings: '0' }, '-₹3.25'],
+    ['Other / Not Currently Earning', { primary: '0', essential: '3.25', discretionary: '0', savings: '0' }, '₹3.25'],
   ]
   for (const [profile, fields, balance] of manual) {
     await click(profile)
@@ -158,7 +184,7 @@ try {
     await ready('.mh-metric')
     assert(await evaluate(`document.querySelector('[aria-label="Financial dashboard"]').textContent.includes(${JSON.stringify(balance)})`))
     assert(await evaluate('document.body.innerText.includes("SELF-REPORTED")'))
-    for (const width of [320, 375, 390, 430]) {
+    for (const width of [320, 375, 390, 430, 768]) {
       await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
       assert(await evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'Dashboard overflow at ' + width)
     }
@@ -178,7 +204,7 @@ try {
     }
     await download('personal-' + profile.split(' ')[0])
     await click('Clear All')
-    assert.equal(await evaluate('document.querySelectorAll("input").length'), 0)
+    assert.equal(await evaluate('[...document.querySelectorAll("input")].filter(input=>input.getClientRects().length).length'), 0)
   }
   await click('Freelancer / Self-Employed')
   await click('Calculate Sample')
@@ -197,7 +223,7 @@ try {
     let independent
     for (let attempt = 0; attempt < 100 && !independent; attempt++) {
       const check = await isolated.call('Runtime.evaluate', {
-        expression: 'document.querySelector(".mh") && [document.querySelectorAll("input").length, localStorage.length, sessionStorage.length]',
+        expression: 'document.querySelector(".mh") && [[...document.querySelectorAll("input")].filter(input=>input.getClientRects().length).length, localStorage.length, sessionStorage.length]',
         returnByValue: true,
       }, sessionId)
       independent = check.result.value
@@ -253,7 +279,7 @@ try {
     assert((await passport()).includes('EXAMPLE-BASED PLAN'))
     assert((await passport()).includes('No entries yet'))
     assert.equal(await evaluate('document.querySelector("progress").value'), 0)
-    for (const width of [320, 375, 390, 430]) {
+    for (const width of [320, 375, 390, 430, 768]) {
       await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
       assert(await evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'Passport overflow at ' + width)
     }
@@ -326,10 +352,10 @@ try {
   }
   await click('Clear All Data')
   assert.equal(await evaluate('localStorage.length'), 0)
-  console.log('Passport checks passed: four profiles, three types, consent, refresh, milestones, edit/delete, backup restore, PDF, private context and four mobile widths.')
+  console.log('Passport checks passed: four profiles, three types, consent, refresh, milestones, edit/delete, backup restore, PDF, private context and responsive widths.')
   await reload()
   await ready('.mh')
-  assert.equal(await evaluate('document.querySelectorAll("input").length'), 0)
+  assert.equal(await evaluate('[...document.querySelectorAll("input")].filter(input=>input.getClientRects().length).length'), 0)
   await evaluate('document.querySelector(".mh footer a").click()')
   await ready('.crumb')
   for (const label of ['Borrower prediction', 'Batch evaluation']) {
@@ -338,7 +364,7 @@ try {
   }
   await evaluate("[...document.querySelectorAll('.side-nav button')].find(button => button.textContent.includes('Agentic Commerce')).click()")
   assert(await evaluate("document.querySelector('.crumb').textContent.includes('Agentic Commerce')"))
-  console.log('Browser checks passed for route, refresh, samples, lower-income scenario, navigation and seven widths.')
+  console.log('Browser checks passed for route, refresh, samples, lower-income scenario, navigation and eight widths.')
 } finally {
   socket.close()
 }

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { ChallengeSuggestion } from './moneyHealthAnalysis'
 import { money, parseAmount } from './moneyHealth'
 import { importPassport, progress, readPassports, savePassports, storageKey, today, types, validatePassport } from './moneyChallenge'
 import type { Entry, Kind, Passport } from './moneyChallenge'
@@ -11,25 +12,37 @@ const value = (form: FormData, key: string) => String(form.get(key) ?? '').trim(
 const amount = (form: FormData, key: string) => parseAmount(value(form, key)) ?? 0
 const message = (error: unknown) => error instanceof Error ? error.message : 'The operation failed.'
 
-function Amount({ name, label, help, required = false }: { name: string; label: string; help: string; required?: boolean }) {
-  return <label>{label} · INR<input name={name} inputMode="decimal" required={required} /><small>{help}</small></label>
+function Amount({ name, label, help, required = false, initial }: { name: string; label: string; help: string; required?: boolean; initial?: number }) {
+  return <label>{label} · INR<input name={name} inputMode="decimal" required={required} defaultValue={initial === undefined ? undefined : (initial / 100).toFixed(2)} /><small>{help}</small></label>
 }
 
-export default function MoneyPassport({ initial, context, onBack, onSaved, onClear }: {
-  initial: ReturnType<typeof loadSaved>; context: Context | null; onBack: () => void
+export default function MoneyPassport({ initial, context, suggestion, onBack, onSaved, onClear }: {
+  initial: ReturnType<typeof loadSaved>; context: Context | null; suggestion?: ChallengeSuggestion; onBack: () => void
   onSaved: (state: ReturnType<typeof loadSaved>) => void; onClear: () => void
 }) {
   const recordPanel = useRef<HTMLDetailsElement>(null)
   const [passports, setPassports] = useState(initial.passports)
   const [persisted, setPersisted] = useState(initial.passports)
-  const [active, setActive] = useState(initial.passports[0]?.id ?? '')
-  const [kind, setKind] = useState<Kind>('savings')
+  const [active, setActive] = useState(suggestion ? '' : initial.passports[0]?.id ?? '')
+  const [kind, setKind] = useState<Kind>(suggestion?.kind ?? 'savings')
   const [preview, setPreview] = useState<Passport | null>(null)
   const [consent, setConsent] = useState(false)
   const [entryId, setEntryId] = useState('')
   const [status, setStatus] = useState('')
   const [error, setError] = useState(initial.error)
   const [busy, setBusy] = useState(false)
+  const [lastSuggestion, setLastSuggestion] = useState(suggestion)
+  const [draftVersion, setDraftVersion] = useState(0)
+  if (lastSuggestion !== suggestion) {
+    setLastSuggestion(suggestion)
+    if (suggestion) {
+      setKind(suggestion.kind)
+      setActive('')
+      setPreview(null)
+      setDraftVersion(draftVersion + 1)
+    }
+  }
+  const draft = suggestion?.kind === kind ? suggestion : undefined
   const date = today()
   const passport = passports.find(item => item.id === active)
   const summary = passport ? progress(passport, date) : null
@@ -111,8 +124,8 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
     {passports.length > 0 && <label>Choose passport <select value={active} onChange={event => { setActive(event.target.value); setConsent(false); setEntryId(''); setPreview(null); setStatus(''); setError('') }}>
       <option value="">New challenge</option>{passports.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
     </select></label>}
-    {!passport && <form key={kind} onSubmit={createPreview}>
-      <h3>Plan a challenge</h3>
+    {!passport && <form key={kind + draftVersion} onSubmit={createPreview}>
+      <h3>Plan a challenge</h3>{draft && <p>Suggested from your analysis. Review and edit the amounts before confirming.</p>}
       <p>Pick a goal, review the numbers, then decide whether to start.</p>
       <div className="mh-choice-grid">{(Object.keys(types) as Kind[]).map((option, index) =>
         <button type="button" className="mh-choice" key={option} aria-label={types[option]} aria-pressed={kind === option}
@@ -125,17 +138,17 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
       <div className="mh-grid">
         <label>Challenge name<input name="name" required maxLength={80} /><small>Use a goal label without personal identifiers.</small></label>
         {kind === 'spending' ? <>
-          <label>Spending category<input name="category" required maxLength={60} /><small>Every spending entry uses this category.</small></label>
-          <Amount name="baseline" label="Baseline spending" help="Your usual spending for a comparable period." required />
-          <Amount name="target" label="Reduction target" help="How much less you want to spend than the baseline." required />
+          <label>Spending category<input name="category" required maxLength={60} defaultValue={draft?.category} /><small>Every spending entry uses this category.</small></label>
+          <Amount name="baseline" initial={draft?.baseline} label="Baseline spending" help="Your usual spending for a comparable period." required />
+          <Amount name="target" initial={draft?.target} label="Reduction target" help="How much less you want to spend than the baseline." required />
         </> : <>
-          <Amount name="target" label="Target amount" help={kind === 'emergency' ? 'Leave blank if you set a coverage duration below.' : 'The total amount you want to reach.'} required={kind === 'savings'} />
+          <Amount name="target" initial={draft?.target} label="Target amount" help={kind === 'emergency' ? 'Leave blank if you set a coverage duration below.' : 'The total amount you want to reach.'} required={kind === 'savings'} />
           <Amount name="start" label="Starting allocation" help="Only include money you have explicitly set aside. Blank means zero." />
-          <Amount name="planned" label="Planned contribution" help="The amount you plan to add per period. This does not record an actual contribution." />
+          <Amount name="planned" initial={draft?.planned} label="Planned contribution" help="The amount you plan to add per period. This does not record an actual contribution." />
           <label>Contribution frequency<select name="frequency"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><small>First planned contribution is one period after the projection date.</small></label>
         </>}
         {kind === 'emergency' && <>
-          <Amount name="essential" label="Monthly essential expenses" help="Used to calculate coverage. Enter a positive amount to use a duration target." />
+          <Amount name="essential" initial={draft?.essential} label="Monthly essential expenses" help="Used to calculate coverage. Enter a positive amount to use a duration target." />
           <label>Coverage target in whole months<input name="coverage" inputMode="numeric" /><small>Optional alternative to an INR target.</small></label>
         </>}
         <label>{kind === 'spending' ? 'Last day of tracking' : 'Target date (optional)'}<input name="end" type="date" min={date} required={kind === 'spending'} />
