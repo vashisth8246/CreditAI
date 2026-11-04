@@ -1,0 +1,17 @@
+.dp { display: grid; gap: 16px; }
+.dp-hero { padding: clamp(16px,4vw,38px); background: linear-gradient(120deg,#113b34,#1a6551); color: #fff; border-radius: 16px; }
+.dp-hero .eyebrow { color: #bff4dd; }
+.dp-hero h1 { margin: 0; font-size: clamp(1.8rem,5vw,3.2rem); }
+.dp h2 { margin-top: 0; }
+.dp select, .dp input { max-width: 100%; min-width: 0; padding: 8px; border: 1px solid #91b7a8; border-radius: 6px; min-height: 40px; background: white; color: #17382f; }
+.dp-grid, .dp-controls { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); gap: 10px; margin: 12px 0; }
+.dp-grid article, .dp-action { padding: 12px; border: 1px solid #c9e3d8; border-radius: 10px; background: #f5faf7; overflow-wrap: anywhere; }
+.dp-grid h3 { text-transform: capitalize; margin-top: 0; }
+.dp-tag { display: inline-block; background: #e1eee6; color: #214f42; padding: 4px 8px; border-radius: 8px; }
+.dp-controls label { display: grid; gap: 4px; min-width: 0; }
+.dp meter { width: 100%; max-width: 420px; height: 18px; }
+.dp-table { overflow: auto; max-width: 100%; margin: 12px 0; }
+.dp-table table { border-collapse: collapse; min-width: 540px; width: 100%; }
+.dp-table caption { font-weight: 750; text-align: left; }
+.dp-table th, .dp-table td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #d5e9de; }
+.dp-id { overflow-wrap: anywhere; }

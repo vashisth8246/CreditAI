@@ -1,3 +1,4 @@
+import DecisionProof from './DecisionProof'
 import MoneyHealth from './MoneyHealthPage'
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -13,7 +14,7 @@ import { AGENTIC_COMMERCE_NAVIGATION, AgenticCommercePage, CommerceAuditTrailPag
 import './App.css'
 import './commerce-exhibition.css'
 
-type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'commerce' | 'commerce-audit' | 'architecture'
+type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'commerce' | 'commerce-audit' | 'architecture' | 'decisionproof'
 type Segment = 'vintage' | 'grade' | 'purpose'
 type MetricRow = Record<string, string | number | null>
 type SegmentRow = { segment: string; records: number; closed: number; defaults: number; observed_closed_default_rate: number | null }
@@ -41,6 +42,7 @@ const nav: { id: Page; title: string; icon: string; section?: string }[] = [
   { id: 'explainability', title: 'Explainability', icon: '✳' },
   { id: 'monitoring', title: 'Monitoring', icon: '⌁' },
   ...AGENTIC_COMMERCE_NAVIGATION,
+  { id: 'decisionproof', title: 'DecisionProof', icon: '◇', section: 'EVIDENCE RESEARCH' },
   { id: 'architecture', title: 'Architecture & audit', icon: '⌘', section: 'SYSTEM' },
 ]
 
@@ -235,6 +237,7 @@ function ResearchApp() {
 
       {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
+        : page === 'decisionproof' ? <DecisionProof />
         : page === 'performance' ? <div className="page-body"><ModelPerformanceLab /></div>
         : page === 'commerce' ? <AgenticCommercePage />
         : page === 'commerce-audit' ? <CommerceAuditTrailPage onStart={() => go('commerce')} />

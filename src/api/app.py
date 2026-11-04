@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, Stric
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .contract import ContractError, not_validated_response, validate_request
+from .decisionproof import router as decisionproof_router
 from .agentic_commerce import (
     agentic_commerce_status,
     agentic_commerce_workflow,
@@ -477,6 +478,8 @@ async def batch_export_csv_endpoint(payload: BatchExportRequest):
         headers={"Content-Disposition": 'attachment; filename="creditai_batch_predictions.csv"'},
     )
 
+
+app.include_router(decisionproof_router)
 
 # Serve the compiled Vite application from the same origin in production.
 # Mount last so that the API routes above retain precedence. Local backend-only

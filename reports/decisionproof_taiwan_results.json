@@ -1,0 +1,55 @@
+{
+  "baseline": {
+    "brier": 0.14581234617429722,
+    "error_rate": 0.21180400890868598,
+    "guardian_eligible": 4049,
+    "guardian_review": 441,
+    "log_loss": 0.4559543920285129
+  },
+  "dataset_sha256": "21b3cf4e30878150ae8db9386780e23febb613921747dec9e59dccb32f6104d3",
+  "heldout": 4500,
+  "limitation": "Original labels are used for a sensitivity replay, not labels for the perturbed inputs. No causal, document-verification, or Indian affordability claim.",
+  "schema_valid": 4490,
+  "variants": {
+    "credit_limit_minus_10pct": {
+      "brier": 0.14643175111490406,
+      "changed_input_count": 4490,
+      "classification_reversals_at_0_5": 24,
+      "error_rate": 0.21358574610244987,
+      "guardian_eligible": 4021,
+      "guardian_review": 469,
+      "log_loss": 0.4579535846398094,
+      "mean_absolute_probability_change": 0.009399131049053072
+    },
+    "credit_limit_plus_10pct": {
+      "brier": 0.14552709446344814,
+      "changed_input_count": 4490,
+      "classification_reversals_at_0_5": 18,
+      "error_rate": 0.21224944320712694,
+      "guardian_eligible": 4024,
+      "guardian_review": 466,
+      "log_loss": 0.4552488320379139,
+      "mean_absolute_probability_change": 0.0070918632691006865
+    },
+    "pay0_one_code_higher": {
+      "brier": 0.14620227607287564,
+      "changed_input_count": 4490,
+      "classification_reversals_at_0_5": 37,
+      "error_rate": 0.21380846325167038,
+      "guardian_eligible": 4029,
+      "guardian_review": 461,
+      "log_loss": 0.4585327369889025,
+      "mean_absolute_probability_change": 0.027590003016671152
+    },
+    "pay0_one_code_lower": {
+      "brier": 0.15538460542268884,
+      "changed_input_count": 4063,
+      "classification_reversals_at_0_5": 42,
+      "error_rate": 0.21937639198218262,
+      "guardian_eligible": 4051,
+      "guardian_review": 439,
+      "log_loss": 0.4793733194869942,
+      "mean_absolute_probability_change": 0.02316945481863444
+    }
+  }
+}
