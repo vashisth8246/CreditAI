@@ -41,6 +41,16 @@ const ready = async selector => {
   }
   throw Error('Missing ' + selector)
 }
+const reload = async () => {
+  await evaluate('window.__creditaiRehearsalPage = true')
+  await call('Page.reload', { ignoreCache: true })
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const ready = await evaluate('!window.__creditaiRehearsalPage && Boolean(document.querySelector(".mh"))').catch(() => false)
+    if (ready) return
+    await delay()
+  }
+  throw Error('Reload did not reach a fresh Money Health page')
+}
 const click = label => evaluate(`[...document.querySelectorAll('button')].find(el => el.textContent.trim() === ${JSON.stringify(label)}).click()`)
 try {
   let readyResponse
@@ -195,7 +205,7 @@ try {
     }
   })
   await call('Page.enable')
-  await call('Page.reload')
+  await reload()
   await ready('.mh')
   const challengeCases = [
     ['Student', 'savings', 'Student laptop', { target: '1000', planned: '100' }],
@@ -228,7 +238,7 @@ try {
     assert((await passport()).includes('Passport saved on this browser'))
     await click('Back to My Money Health')
   }
-  await call('Page.reload')
+  await reload()
   await ready('.mh')
   await click('Continue My Money Challenge')
   assert((await passport()).includes('Student laptop'))
@@ -286,7 +296,7 @@ try {
   await click('Clear All Data')
   assert.equal(await evaluate('localStorage.length'), 0)
   console.log('Passport checks passed: four profiles, three types, consent, refresh, milestones, edit/delete, backup restore, PDF, private context and four mobile widths.')
-  await call('Page.reload')
+  await reload()
   await ready('.mh')
   assert.equal(await evaluate('document.querySelectorAll("input").length'), 0)
   await evaluate('document.querySelector(".mh footer a").click()')

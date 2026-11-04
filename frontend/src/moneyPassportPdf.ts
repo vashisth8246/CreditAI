@@ -34,10 +34,10 @@ export function passportReport(passport: Passport, date: string, origin: string)
   return {
     pageSize: 'A4', pageMargins: [44, 45, 44, 48],
     info: { title: 'CreditAI | Money Passport', author: 'CreditAI' },
-    defaultStyle: { fontSize: 10, color: '#18352a', lineHeight: 1.16 },
+    defaultStyle: { fontSize: 10, color: '#18352a', lineHeight: 1.12 },
     styles: {
       title: { fontSize: 27, bold: true, margin: [0, 0, 0, 8] },
-      heading: { fontSize: 15, bold: true, color: '#16593f', margin: [0, 14, 0, 6] },
+      heading: { fontSize: 15, bold: true, color: '#16593f', margin: [0, 11, 0, 5] },
     },
     footer: (page, total) => ({
       margin: [44, 12, 44, 0], fontSize: 9,
@@ -79,8 +79,8 @@ export function passportReport(passport: Passport, date: string, origin: string)
       })) : ['No recorded entries.']),
       heading('Privacy and limitations'),
       'This report uses a visitor-entered plan, explicitly retained context if provided, and self-reported entries. Entries are not bank verified. Projections are estimates. CreditAI creates this report on this device. Protect downloaded reports and backups.',
-      heading('Explore CreditAI'),
-      { text: `${link.label} · ${link.url}`, link: link.url, decoration: 'underline' },
+      { unbreakable: true, stack: [heading('Explore CreditAI'),
+      { text: `${link.label} · ${link.url}`, link: link.url, decoration: 'underline' }] },
     ],
   }
 }
