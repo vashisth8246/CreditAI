@@ -37,3 +37,88 @@
 .mh input[type="checkbox"] { display: inline-block; width: auto; min-height: 0; margin-right: 6px; }
 .mh progress, .mh meter { width: 100%; accent-color: #176445; }
 .mh [aria-label="Money Passport"] { overflow-wrap: anywhere; }
+
+/* Exhibition visitor controls and dashboard */
+.mh-hero, .mh-passport-hero {
+  background: linear-gradient(125deg, #10372c, #195943 70%, #22664d);
+}
+.mh-panel { box-shadow: 0 8px 26px #15382b0b; }
+.mh-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.mh button.mh-choice {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 8px;
+  padding: 16px;
+  min-height: 102px;
+  text-align: left;
+  background: #f8fcfa;
+  border-color: #c9dfd4;
+  transition: transform .18s, background .18s, border-color .18s, box-shadow .18s;
+}
+.mh button.mh-choice:hover { transform: translateY(-2px); border-color: #4e977a; box-shadow: 0 7px 16px #14543916; }
+.mh button.mh-choice[aria-pressed="true"] { color: #123d2e; background: #e0f4e8; border-color: #3c896a; box-shadow: inset 0 0 0 1px #3c896a; }
+.mh-choice-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: #d8eee2; color: #165940; font-size: 22px; }
+.mh-choice small, .mh-hint { color: #426455; line-height: 1.45; }
+.mh-choice-check { position: absolute; inset: 12px 12px auto auto; color: #176445; font-weight: 800; }
+.mh-fieldset { margin: 18px 0; padding: 6px 14px 8px; min-width: 0; border: 1px solid #d2e7dc; border-radius: 12px; background: #f8fcfa; }
+.mh-fieldset legend { color: #165940; padding: 0 6px; font-weight: 750; }
+.mh-fieldset legend span { margin-right: 4px; }
+.mh-fieldset label small { display: inline-block; color: #436b5a; margin-left: 5px; font-size: .76em; }
+.mh-hint { margin: 5px 0; font-size: .87rem; }
+.mh-currency { position: relative; }
+.mh-currency span { position: absolute; left: 11px; top: 11px; color: #426455; }
+.mh-currency input { padding-left: 29px; }
+.mh-kicker { color: #2a7157; font-size: .75rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.mh-custom { margin: 16px 0; padding: 13px 15px; border: 1px solid #ccdfd5; border-radius: 12px; background: #f6fbf8; }
+.mh-custom summary { font-weight: 750; min-height: 30px; }
+.mh-custom[open] > :not(summary) { animation: mh-enter .2s ease-out both; }
+.mh-compare-card { margin: 0; display: grid; gap: 6px; border: 1px solid #d6e9df; border-radius: 12px; padding: 13px; background: #f7fcf9; overflow-wrap: anywhere; }
+.mh-compare-card span { color: #426455; font-size: .88em; }
+.mh-compare-card b { color: #176445; }
+.mh [aria-label="Financial dashboard"], .mh-fieldset, .mh-passport-hero { animation: mh-enter .24s ease-out both; }
+.mh-passport-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 15px; padding: clamp(16px, 4vw, 32px); border-radius: 18px; color: #f3fff8; }
+.mh-passport-hero h3 { margin: 0; font-size: clamp(1.5rem, 5vw, 2.7rem); overflow-wrap: anywhere; }
+.mh-passport-hero .mh-kicker { color: #b9f2d6; }
+.mh-status { display: inline-block; border-radius: 20px; padding: 5px 9px; background: #ffffff24; font-size: .85rem; }
+.mh-ring { position: relative; width: clamp(72px, 15vw, 120px); align-self: start; display: grid; place-items: center; }
+.mh-ring svg { width: 100%; }
+.mh-ring strong { position: absolute; font-size: clamp(.86rem, 2vw, 1.25rem); }
+.mh-ring-value { transition: stroke-dasharray .36s ease; stroke-linecap: round; }
+.mh-passport-stats { grid-column: 1 / -1; margin: 0; display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 115px), 1fr)); }
+.mh-passport-stats div { padding: 9px; border-radius: 9px; background: #ffffff1a; }
+.mh-passport-stats dt { color: #cbefdd; font-size: .78rem; }
+.mh-passport-stats dd { margin: 4px 0 0; font-weight: 750; }
+.mh-passport-actions { margin: 16px 0; }
+.mh-passport-actions a { min-height: 44px; display: inline-flex; align-items: center; padding: 9px 14px; border-radius: 9px; border: 1px solid #96bbab; color: #164a36; text-decoration: none; }
+.mh-milestones { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 118px), 1fr)); gap: 8px; }
+.mh-milestones li { border: 1px solid #cfe4d8; border-radius: 10px; background: #f8fbf9; padding: 10px; }
+.mh-milestones .is-reached { background: #dff4e8; border-color: #58a783; animation: mh-enter .24s ease-out both; }
+.mh-file-picker { position: relative; width: fit-content; max-width: 100%; margin: 10px 0; }
+.mh-file-picker span { display: block; padding: 10px 14px; min-height: 44px; border: 1px dashed #6eab90; border-radius: 9px; background: #e9f6ee; color: #164a36; }
+.mh-file-picker input { position: absolute; inset: 0; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.mh-file-picker:focus-within { outline: 3px solid #24b69b; outline-offset: 3px; border-radius: 9px; }
+.mh button:not(:disabled):active { transform: translateY(1px); }
+@keyframes mh-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .mh *, .mh *::before, .mh *::after { animation: none !important; transition: none !important; }
+  .mh button.mh-choice:hover, .mh button:not(:disabled):active { transform: none; }
+}
+@media print {
+  .mh *, .mh *::before, .mh *::after { animation: none !important; transition: none !important; }
+}
+.mh-compare-card { animation: mh-enter .2s ease-out both; }
+.mh [aria-label="Money Passport"] .mh-actions > a[href="/"] {
+  color: #176445;
+  text-decoration-color: #6da991;
+  text-underline-offset: 3px;
+}
+@media (max-width: 760px) {
+  html:has(.money-health-shell), body:has(.money-health-shell), #root:has(.money-health-shell) { min-width: 0; }
+}

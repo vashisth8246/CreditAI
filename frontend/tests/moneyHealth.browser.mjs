@@ -51,7 +51,7 @@ const reload = async () => {
   }
   throw Error('Reload did not reach a fresh Money Health page')
 }
-const click = label => evaluate(`[...document.querySelectorAll('button')].find(el => el.textContent.trim() === ${JSON.stringify(label)}).click()`)
+const click = label => evaluate(`[...document.querySelectorAll('button')].find(el => (el.getAttribute("aria-label") || el.textContent.trim()) === ${JSON.stringify(label)}).click()`)
 try {
   let readyResponse
   for (let attempt = 0; attempt < 150 && !readyResponse?.ok; attempt++) {
@@ -76,9 +76,22 @@ try {
   await ready('.mh')
   for (const width of [320, 375, 390, 430, 1366, 1440, 1920]) {
     await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
-    assert(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow at ' + width)
+    assert(await evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'Overflow at ' + width)
   }
-  const outputPath = (await import('node:url')).fileURLToPath(output)
+  const screenshot = async (name, selector) => {
+    if (selector) await evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block: "start", behavior: "instant"})`)
+    for (let frame = 0; frame < 3; frame++) await delay()
+    const shot = await call('Page.captureScreenshot', { format: 'png' })
+    await writeFile(new URL(name + '.png', output), Buffer.from(shot.data, 'base64'))
+  }
+  await call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
+  await screenshot('profile-cards-and-sidebar')
+  for (const width of [320, 375, 390, 430, 1366, 1920]) {
+    await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
+    await screenshot('profiles-' + width, '.mh-choice-grid')
+  }
+  await call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
+  const outputPath =(await import('node:url')).fileURLToPath(output)
   await call('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: outputPath })
   const download = async name => {
     await click('Download PDF')
@@ -104,6 +117,9 @@ try {
     input.dispatchEvent(new Event('input', { bubbles: true }))
   }`)
   await click('Student')
+  assert(!(await evaluate('document.querySelector("#education").required')))
+  await evaluate('document.querySelector("fieldset").scrollIntoView()')
+  await screenshot('grouped-inputs', 'fieldset')
   assert(await evaluate('[...document.querySelectorAll("input")].every(input => input.value === "")'))
   for (const [profile, balance] of [
     ['Student', '₹1,200'], ['Working Professional', '₹14,000'],
@@ -114,11 +130,23 @@ try {
     await ready('.mh-metric')
     assert(await evaluate(`document.querySelector('[aria-label="Financial dashboard"]').textContent.includes(${JSON.stringify(balance)})`))
     assert.equal(await evaluate('document.querySelectorAll(".mh-chart svg").length > 0'), true)
+    const presetNames = await evaluate('[...document.querySelectorAll(".mh-choice-grid button")].filter(button => button.textContent.includes("Example change")).map(button => button.querySelector("strong").textContent)')
+    assert.equal(presetNames.length, profile.startsWith('Other') ? 3 : 4)
+    for (const name of presetNames) {
+      await evaluate(`[...document.querySelectorAll('.mh-choice-grid button')].find(button => button.querySelector('strong')?.textContent === ${JSON.stringify(name)}).click()`)
+      assert(await evaluate('document.body.innerText.includes("Applied:") && !document.querySelector(".mh [role=alert]")'))
+      if (profile === 'Student' && name.startsWith('Spend')) {
+        assert(await evaluate('document.body.innerText.includes("Scenario ₹1,500")'))
+        await evaluate('document.querySelector(".mh-custom").scrollIntoView({block:"center"})')
+        await screenshot('what-if-presets', '.mh-kicker:has(+ h2)')
+      }
+    }
+    await click('Reset scenario')
     await download('sample-' + profile.split(' ')[0])
   }
   const manual = [
-    ['Student', { primary: '5000.29', food: '1500', transport: '600', education: '1000', personal: '700', savings: '2500' }, '₹1,200.29'],
-    ['Working Professional', { primary: '50000', housing: '14000', food: '8000', transport: '3000', personal: '3000', debt: '8000', savings: '75000' }, '₹14,000'],
+    ['Student', { primary: '5000.29', food: '2500', transport: '600', personal: '700', savings: '2500' }, '₹1,200.29'],
+    ['Working Professional', { primary: '50000', food: '22000', transport: '3000', personal: '3000', debt: '8000', savings: '75000' }, '₹14,000'],
     ['Freelancer / Self-Employed', { primary: '40000', low: '28000', personal: '25000', savings: '60000' }, '₹15,000'],
     ['Other / Not Currently Earning', { primary: '0', essential: '3.25', discretionary: '0', savings: '0' }, '-₹3.25'],
   ]
@@ -132,7 +160,7 @@ try {
     assert(await evaluate('document.body.innerText.includes("SELF-REPORTED")'))
     for (const width of [320, 375, 390, 430]) {
       await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
-      assert(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Dashboard overflow at ' + width)
+      assert(await evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'Dashboard overflow at ' + width)
     }
     if (profile === 'Working Professional') {
       await evaluate(`{
@@ -194,11 +222,7 @@ try {
     const field = document.querySelector('[aria-label="Money Passport"] [name="' + ${JSON.stringify(name)} + '"]')
     field.value = ${JSON.stringify(value)}
   }`)
-  const chooseKind = kind => evaluate(`{
-    const field = document.querySelector('[aria-label="Money Passport"] form select')
-    field.value = ${JSON.stringify(kind)}
-    field.dispatchEvent(new Event('change', { bubbles: true }))
-  }`)
+  const chooseKind = kind => click({ savings: 'Savings Goal', spending: 'Spending Reduction', emergency: 'Emergency Buffer' }[kind])
   socket.addEventListener('message', event => {
     if (JSON.parse(event.data).method === 'Page.javascriptDialogOpening') {
       void call('Page.handleJavaScriptDialog', { accept: true })
@@ -222,6 +246,7 @@ try {
     await setField('name', name)
     for (const [field, value] of Object.entries(values)) await setField(field, value)
     await evaluate("document.querySelector('[name=context]').click()")
+    if (profile === 'Student') await screenshot('challenge-creation', '[aria-label="Money Passport"] form')
     await click('Review plan')
     await click('Confirm challenge')
     assert((await passport()).includes(name))
@@ -230,10 +255,11 @@ try {
     assert.equal(await evaluate('document.querySelector("progress").value'), 0)
     for (const width of [320, 375, 390, 430]) {
       await call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
-      assert(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Passport overflow at ' + width)
+      assert(await evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'Passport overflow at ' + width)
     }
     assert(await evaluate('[...document.querySelectorAll("button")].find(x => x.textContent === "Save Money Passport").disabled'))
     await evaluate('document.querySelector(\'[aria-label="Money Passport"] input[type=checkbox]\').click()')
+    await evaluate('document.querySelector("#manage-passport > summary").click()')
     await click('Save Money Passport')
     assert((await passport()).includes('Passport saved on this browser'))
     await click('Back to My Money Health')
@@ -242,6 +268,7 @@ try {
   await ready('.mh')
   await click('Continue My Money Challenge')
   assert((await passport()).includes('Student laptop'))
+  await click('Record Progress')
   await setField('amount', '300.25')
   await setField('note', 'Recorded contribution')
   await click('Add entry')
@@ -251,6 +278,10 @@ try {
   await setField('amount', '550.50')
   await click('Save edit')
   assert((await passport()).includes('50% · ₹500 · Reached'))
+  await evaluate('document.querySelector(".mh-passport-hero").scrollIntoView()')
+  await screenshot('passport-progress', '.mh-passport-hero')
+  await evaluate('document.querySelector(".mh-passport-actions a").click()')
+  await screenshot('manage-passport', '#manage-passport')
   await click('Export Passport')
   await click('Download Money Passport PDF')
   const backupPath = new URL('CreditAI-Money-Passport.json', output)
@@ -300,7 +331,7 @@ try {
   await ready('.mh')
   assert.equal(await evaluate('document.querySelectorAll("input").length'), 0)
   await evaluate('document.querySelector(".mh footer a").click()')
-  await ready('.side-nav')
+  await ready('.crumb')
   for (const label of ['Borrower prediction', 'Batch evaluation']) {
     await evaluate(`[...document.querySelectorAll('.side-nav button')].find(button => button.textContent.includes(${JSON.stringify(label)})).click()`)
     assert(await evaluate(`document.querySelector('.crumb').textContent.includes(${JSON.stringify(label)})`))

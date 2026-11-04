@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { money, parseAmount } from './moneyHealth'
 import { importPassport, progress, readPassports, savePassports, storageKey, today, types, validatePassport } from './moneyChallenge'
@@ -19,6 +19,7 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
   initial: ReturnType<typeof loadSaved>; context: Context | null; onBack: () => void
   onSaved: (state: ReturnType<typeof loadSaved>) => void; onClear: () => void
 }) {
+  const recordPanel = useRef<HTMLDetailsElement>(null)
   const [passports, setPassports] = useState(initial.passports)
   const [persisted, setPersisted] = useState(initial.passports)
   const [active, setActive] = useState(initial.passports[0]?.id ?? '')
@@ -104,16 +105,6 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
     <div className="mh-actions">
       <button onClick={onBack}>Back to My Money Health</button>
       <button onClick={() => { setActive(''); setConsent(false); setPreview(null); setError(''); setStatus('') }}>New challenge</button>
-      <label>Choose backup to import <input type="file" accept=".json,application/json" onChange={async event => {
-        const file = event.currentTarget.files?.[0]
-        event.currentTarget.value = ''
-        if (!file) return
-        try {
-          if (file.size > 250000) throw Error('Passport file is too large.')
-          const imported = importPassport(await file.text(), today())
-          attempt(() => { add(imported); setStatus('Backup opened. Save it to keep it in this browser.') })
-        } catch (failure) { setError(message(failure)) }
-      }} /></label>
     </div>
     <h2>Money Passport</h2>
     <p>This passport is saved on this device/browser only after you consent and save it. Clearing browser data or changing devices may remove it. Export a backup to restore it later. Anyone using this browser profile can open saved passports.</p>
@@ -122,10 +113,16 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
     </select></label>}
     {!passport && <form key={kind} onSubmit={createPreview}>
       <h3>Plan a challenge</h3>
+      <p>Pick a goal, review the numbers, then decide whether to start.</p>
+      <div className="mh-choice-grid">{(Object.keys(types) as Kind[]).map((option, index) =>
+        <button type="button" className="mh-choice" key={option} aria-label={types[option]} aria-pressed={kind === option}
+          onClick={() => { setKind(option); setPreview(null) }}>
+          <span className="mh-choice-icon" aria-hidden="true">{['◎', '↘', '◇'][index]}</span>
+          <strong>{types[option]}</strong>
+          <small>{['Put money aside for something specific, like ₹5,000 for a course.', 'Track a category and spend less, like ₹300 less on takeout.', 'Build accessible savings for an unexpected expense or a slow month.'][index]}</small>
+          {kind === option && <span className="mh-choice-check" aria-hidden="true">✓</span>}
+        </button>)}</div>
       <div className="mh-grid">
-        <label>Challenge type <select value={kind} onChange={event => { setKind(event.target.value as Kind); setPreview(null) }}>
-          {Object.entries(types).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-        </select><small>Choose what you want to track.</small></label>
         <label>Challenge name<input name="name" required maxLength={80} /><small>Use a goal label without personal identifiers.</small></label>
         {kind === 'spending' ? <>
           <label>Spending category<input name="category" required maxLength={60} /><small>Every spending entry uses this category.</small></label>
@@ -157,15 +154,45 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
       <button className="mh-primary" onClick={() => attempt(() => add(preview))}>Confirm challenge</button>
     </div>}
     {passport && summary && <>
-      <h3>{passport.name}</h3>
-      <p>{types[passport.kind]} · Created {passport.created} · {passport.example ? 'EXAMPLE-BASED PLAN' : 'VISITOR-ENTERED PLAN'}</p>
-      <p><strong>{summary.status}</strong> · {summary.percentage.toFixed(2)}% of target</p>
-      <progress max={100} value={summary.percentage} aria-label="Challenge progress" />
-      <div className="mh-grid">
-        <p>Target <strong>{money(passport.target)}</strong><br />{passport.kind === 'spending' ? 'Reduction goal' : 'Planned balance'}</p>
-        <p>Current <strong>{money(summary.current)}</strong><br />{passport.kind === 'spending' ? 'Recorded spending' : 'Starting allocation plus net recorded entries'}</p>
-        <p>{passport.kind === 'spending' ? 'Above limit' : 'Remaining'} <strong>{money(summary.remaining)}</strong></p>
+      <header className="mh-passport-hero">
+        <div>
+          <p className="mh-kicker">{types[passport.kind]} · Money Passport</p>
+          <h3>{passport.name}</h3>
+          <p>Created {passport.created} · {passport.example ? 'EXAMPLE-BASED PLAN' : 'VISITOR-ENTERED PLAN'}</p>
+          <strong className="mh-status">{summary.status}</strong>
+        </div>
+        <div className="mh-ring" role="img" aria-label={summary.percentage.toFixed(2) + '% of target'}>
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="51" fill="none" stroke="#ffffff35" strokeWidth="8" />
+            <circle className="mh-ring-value" cx="60" cy="60" r="51" fill="none" stroke="#9cf5ce" strokeWidth="8"
+              pathLength="100" strokeDasharray={summary.percentage + ' 100'} transform="rotate(-90 60 60)" />
+          </svg>
+          <strong>{summary.percentage.toFixed(1)}%</strong>
+          <progress hidden max={100} value={summary.percentage} aria-label="Challenge progress" />
+        </div>
+        <dl className="mh-passport-stats">
+          <div><dt>{passport.kind === 'spending' ? 'Reduction goal' : 'Target'}</dt><dd>{money(passport.target)}</dd></div>
+          <div><dt>{passport.kind === 'spending' ? 'Recorded spending' : 'Current recorded amount'}</dt><dd>{money(summary.current)}</dd></div>
+          <div><dt>{passport.kind === 'spending' ? 'Above limit' : 'Remaining'}</dt><dd>{money(summary.remaining)}</dd></div>
+          <div><dt>Next milestone</dt><dd>{summary.milestones.find(item => !item.achieved)?.percent ?? 'All reached'}{summary.milestones.some(item => !item.achieved) ? '%' : ''}</dd></div>
+        </dl>
+      </header>
+      <div className="mh-actions mh-passport-actions">
+        <button className="mh-primary" onClick={() => { if (recordPanel.current) { recordPanel.current.open = true; recordPanel.current.scrollIntoView({ block: 'nearest' }); recordPanel.current.querySelector('input')?.focus() } }}>Record Progress</button>
+        <button disabled={busy} onClick={async () => {
+          setBusy(true)
+          setError('')
+          try { await downloadPassport(passport, date, window.location.origin) }
+          catch (failure) { setError(message(failure)) }
+          finally { setBusy(false) }
+        }}>{busy ? 'Preparing PDF…' : 'Download Money Passport PDF'}</button>
+        <a href="#manage-passport" onClick={event => {
+          event.preventDefault()
+          const panel = document.getElementById('manage-passport') as HTMLDetailsElement | null
+          if (panel) { panel.open = true; panel.scrollIntoView({ block: 'nearest' }); panel.querySelector('summary')?.focus() }
+        }}>Manage Passport</a>
       </div>
+      <details className="mh-custom"><summary>Plan and calculations</summary>
       {passport.kind === 'spending' ? <p>{passport.category} · Limit {money(summary.limit)} · Baseline less actual {money(summary.comparison)} · Actual less limit {money(summary.targetDifference)}. This comparison does not show a deposit or money set aside. Milestones are evaluated after the period ends and require recorded activity.</p> :
         <p>Starting allocation {money(passport.start)} · Planned {money(passport.planned)} {passport.frequency}.
           {summary.eta && ` Estimated completion ${summary.eta} at the planned pace.`}
@@ -173,18 +200,24 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
           {summary.feasible !== null && ` Planned contributions ${summary.feasible ? 'fit' : 'exceed'} the retained monthly balance using a 30-day month. Actual capacity may differ.`}
           {summary.coverage !== null && ` Current emergency coverage: ${summary.coverage.toFixed(2)} months at ${money(passport.essential)} per month.`}</p>}
       <p><strong>Next step</strong> · {passport.kind === 'spending' ? (summary.closed ? 'Review the recorded spending against your limit.' : 'Record spending for this category as it occurs.') : summary.remaining ? 'Record your next actual contribution when it occurs.' : 'Review the balance after any future withdrawals.'}</p>
+      </details>
       <h4>Planned milestones</h4>
-      <ul>{summary.milestones.map(milestone => <li key={milestone.percent}>{milestone.percent}% · {money(milestone.threshold)} · {milestone.achieved ? 'Reached' : 'Pending'}</li>)}</ul>
+      <ul className="mh-milestones">{summary.milestones.map(milestone => <li className={milestone.achieved ? 'is-reached' : undefined} key={milestone.percent}>{milestone.percent}% · {money(milestone.threshold)} · {milestone.achieved ? 'Reached' : 'Pending'}</li>)}</ul>
       <h4>Recorded timeline</h4>
+      <div className="mh-chart">
+        <p>{passport.kind === 'spending' ? 'Spending limit' : 'Target balance'}: {money(summary.limit)} · Recorded: {money(summary.current)}</p>
+        <meter min={0} max={Math.max(summary.limit, summary.current, 1)} value={summary.current} aria-label="Recorded amount compared with target" />
+      </div>
       {!summary.timeline.length && <p>No entries yet. Add an actual entry when it occurs.</p>}
       {summary.timeline.length > 0 && <div className="mh-chart">
         {summary.timeline.map(entry => <div key={entry.id}>
           <p>{entry.date} · {entry.kind} · {money(entry.amount)} · Running total {money(entry.cumulative)}{entry.note ? ' · ' + entry.note : ''}</p>
           <meter min={0} max={Math.max(summary.limit, ...summary.timeline.map(point => point.cumulative), 1)} value={entry.cumulative} aria-label={entry.date + ' running total'} />
-          <div className="mh-actions"><button onClick={() => setEntryId(entry.id)}>Edit entry</button>
+          <div className="mh-actions"><button onClick={() => { setEntryId(entry.id); if (recordPanel.current) { recordPanel.current.open = true; recordPanel.current.scrollIntoView({ block: 'nearest' }) } }}>Edit entry</button>
             <button onClick={() => attempt(() => { if (window.confirm('Delete this recorded entry?')) replaceEntries(passport.entries.filter(item => item.id !== entry.id)) })}>Delete entry</button></div>
         </div>)}
       </div>}
+      <details className="mh-custom" ref={recordPanel}><summary>Record an entry</summary>
       <form key={passport.id + entryId} onSubmit={updateEntry}>
         <h4>{edit ? 'Edit recorded entry' : 'Record actual progress'}</h4>
         <div className="mh-grid">
@@ -196,6 +229,21 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
         <button type="submit">{edit ? 'Save edit' : 'Add entry'}</button>
         {edit && <button type="button" onClick={() => setEntryId('')}>Cancel edit</button>}
       </form>
+      </details>
+    </>}
+    <details id="manage-passport" className="mh-custom mh-manage"><summary>Manage Passport</summary>
+      <p>Passports are saved only in this browser after you consent. Export a JSON backup before clearing browser data or switching devices. Anyone using this browser profile can open saved passports.</p>
+      <label className="mh-file-picker"><span>Import backup</span><input type="file" accept=".json,application/json" onChange={async event => {
+        const file = event.currentTarget.files?.[0]
+        event.currentTarget.value = ''
+        if (!file) return
+        try {
+          if (file.size > 250000) throw Error('Passport file is too large.')
+          const imported = importPassport(await file.text(), today())
+          attempt(() => { add(imported); setStatus('Backup opened. Save it to keep it in this browser.') })
+        } catch (failure) { setError(message(failure)) }
+      }} /></label>
+      {passport && <>
       <p>{persisted.some(item => item.id === passport.id) ? 'Saved in this browser. Entry changes save automatically.' : 'This passport is currently in this tab only.'}</p>
       <label><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} /> I consent to saving this passport in this browser.</label>
       <div className="mh-actions">
@@ -204,13 +252,6 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
           setStatus('Passport saved on this browser.')
         })}>Save Money Passport</button>
         <button onClick={() => saveFile(new Blob([JSON.stringify(passport, null, 2)], { type: 'application/json' }), 'CreditAI-Money-Passport.json')}>Export Passport</button>
-        <button disabled={busy} onClick={async () => {
-          setBusy(true)
-          setError('')
-          try { await downloadPassport(passport, date, window.location.origin) }
-          catch (failure) { setError(message(failure)) }
-          finally { setBusy(false) }
-        }}>{busy ? 'Preparing PDF…' : 'Download Money Passport PDF'}</button>
         <button onClick={() => attempt(() => {
           if (!window.confirm('Delete this passport? Cancel to export a backup first.')) return
           if (persisted.some(item => item.id === passport.id)) persist(persisted.filter(item => item.id !== passport.id), true)
@@ -232,8 +273,9 @@ export default function MoneyPassport({ initial, context, onBack, onSaved, onCle
         onSaved({ passports: [], error: '' })
         onClear()
       })}>Clear All Data</button>
-      <a href="/">Explore Full CreditAI →</a>
     </div>
+    </details>
+    <div className="mh-actions"><a href="/">Explore Full CreditAI →</a></div>
     {status && <p role="status">{status}</p>}
     {error && <p role="alert">{error}</p>}
   </section>

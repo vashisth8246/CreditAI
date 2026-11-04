@@ -2,12 +2,12 @@ type Kind = 'funds' | 'expense' | 'debt' | 'savings' | 'goal' | 'low'
 export type Field = { id: string; label: string; kind: Kind; required: boolean; example: number; help: string }
 const field = (id: string, label: string, kind: Kind, example: number, help: string, required = false): Field =>
   ({ id, label, kind, required, example, help })
-const expense = (id: string, label: string, example: number, help: string) =>
-  field(id, label, 'expense', example, help, true)
+const expense = (id: string, label: string, example: number, help: string, required = true) =>
+  field(id, label, 'expense', example, help, required)
 const common = (debt: number, savings: number, goal: number) => [
-  field('debt', 'Existing monthly EMI and debt payments', 'debt', debt, 'Total recurring loan payments. Exclude these from living expenses.'),
-  field('savings', 'Accessible savings', 'savings', savings, 'Cash available for emergencies or short-term needs. Exclude assets you cannot readily access.', true),
-  field('goal', 'Monthly savings goal', 'goal', goal, 'What you want to set aside each month. This does not count as spending.'),
+  field('debt', 'Existing monthly EMI and debt payments', 'debt', debt, 'Monthly payments toward existing loans. Enter ₹0 if you have none. Keep these out of your other spending.'),
+  field('savings', 'Accessible savings', 'savings', savings, 'Money you can use when needed, such as cash or a bank balance. Leave out property and assets that take time to sell.', true),
+  field('goal', 'Monthly savings goal', 'goal', goal, 'Money you want to save each month. This is a target and does not count as spending.'),
 ]
 export const profiles = [
   { name: 'Student', fields: [
@@ -15,17 +15,17 @@ export const profiles = [
     field('additional', 'Part-time earnings', 'funds', 0, 'Monthly earnings after deductions.'),
     expense('food', 'Food', 1500, 'Meals and groceries you pay for.'),
     expense('transport', 'Transport', 600, 'Monthly fares and travel costs.'),
-    expense('education', 'Education', 1000, 'Monthly fees, books and supplies.'),
+    expense('education', 'Education', 1000, 'Books, tuition, exam fees or courses. Enter ₹0 if you don’t pay these yourself.', false),
     expense('personal', 'Other personal expenses', 700, 'Spending outside the categories above.'),
     ...common(0, 2500, 1000),
   ] },
   { name: 'Working Professional', fields: [
     field('primary', 'Monthly take-home salary', 'funds', 50000, 'Pay after salary deductions, available for personal spending.', true),
     field('additional', 'Additional monthly income', 'funds', 0, 'Other recurring income after deductions.'),
-    expense('housing', 'Rent or housing', 14000, 'Housing payments other than loan EMIs.'),
+    expense('housing', 'Rent or housing', 14000, 'Monthly rent or housing costs you pay. Enter ₹0 if you don’t pay rent. Put housing loan payments under debt.', false),
     expense('food', 'Food and household', 8000, 'Groceries, meals and household supplies.'),
     expense('transport', 'Transport', 3000, 'Fares, fuel and regular travel.'),
-    expense('personal', 'Other living expenses', 3000, 'Other personal spending excluding debt and savings.'),
+    expense('personal', 'Other living expenses', 3000, 'Shopping, outings, subscriptions and other personal spending outside the categories above.'),
     ...common(8000, 75000, 10000),
   ] },
   { name: 'Freelancer / Self-Employed', fields: [
@@ -36,10 +36,10 @@ export const profiles = [
     ...common(0, 60000, 8000),
   ] },
   { name: 'Other / Not Currently Earning', fields: [
-    field('primary', 'Monthly family support or allowance', 'funds', 3000, 'Regular support available each month. Enter zero if none.', true),
+    field('primary', 'Monthly family support or allowance', 'funds', 3000, 'Regular support available each month. Enter ₹0 if you receive no support.', true),
     field('additional', 'Other monthly funds', 'funds', 0, 'Other recurring funds. Exclude withdrawals from accessible savings.'),
     expense('essential', 'Essential expenses', 1800, 'Necessities such as food and housing, excluding debt.'),
-    expense('discretionary', 'Discretionary expenses', 400, 'Other optional spending.'),
+    expense('discretionary', 'Discretionary expenses', 400, 'Shopping, movies, outings, games, subscriptions and other spending you can usually reduce.'),
     ...common(0, 1000, 500),
   ] },
 ]
@@ -58,7 +58,12 @@ export function parseAmount(raw = ''): number | null {
 }
 export function calculate(fields: Field[], entries: Entries) {
   const register = fields.map(field => {
-    const amount = parseAmount(entries[field.id])
+    let amount: number | null
+    try {
+      amount = parseAmount(entries[field.id])
+    } catch (error) {
+      throw new Error(field.label + ': ' + (error as Error).message)
+    }
     if (amount === null && field.required) throw new Error(`Enter ${field.label.toLowerCase()} or zero.`)
     return { ...field, amount }
   })
@@ -102,3 +107,44 @@ export const charts = (r: Result, scenario: Result) => [
   { title: 'Monthly funds allocation', rows: [['Available funds', r.funds], ['Total outflow', r.outflow], [r.balance < 0 ? 'Shortfall' : 'Unallocated', r.balance]] },
   { title: 'Baseline vs what-if', rows: [['Baseline balance', r.balance], ['Scenario balance', scenario.balance]] },
 ] as { title: string; rows: [string, number][] }[]
+
+export function scenarioPresets(profile: number, result: Result): { label: string; changes: Entries }[] {
+  const get = (id: string) => result.register.find(field => field.id === id)?.amount ?? 0
+  const rupees = (paise: number) => (Math.max(0, Math.min(paise, 999999999999)) / 100).toFixed(2)
+  const reduce = (paise: number, onlyOptional = false): Entries => {
+    const expenses = result.register.filter(field => field.kind === 'expense' &&
+      (!onlyOptional || field.id === 'discretionary')).reverse()
+    const changes: Entries = {}
+    for (const field of expenses) {
+      const cut = Math.min(paise, field.amount ?? 0)
+      if (cut > 0) changes[field.id] = rupees((field.amount ?? 0) - cut)
+      paise -= cut
+    }
+    return changes
+  }
+  return [
+    [
+      { label: 'Spend ₹300 less monthly', changes: reduce(30000) },
+      { label: 'Receive ₹500 more pocket money', changes: { primary: rupees(get('primary') + 50000) } },
+      { label: 'Save ₹500 monthly', changes: { goal: '500' } },
+      { label: 'Plan a ₹5,000 purchase', changes: { target: '5000' } },
+    ],
+    [
+      { label: 'Add ₹5,000 EMI', changes: { extra: rupees(Math.min(500000, 999999999999 - result.debt)) } },
+      { label: 'Increase salary by 10%', changes: { primary: rupees(Math.round(get('primary') * 1.1)) } },
+      { label: 'Reduce spending by ₹2,000', changes: reduce(200000) },
+      { label: 'Increase savings goal by ₹1,000', changes: { goal: rupees(get('goal') + 100000) } },
+    ],
+    [
+      { label: 'Earn 20% less', changes: { primary: rupees(Math.round(get('primary') * .8)) } },
+      { label: 'Increase expenses by ₹1,000', changes: { personal: rupees(get('personal') + 100000) } },
+      { label: 'Save ₹1,000 more in a good month', changes: { goal: rupees(get('goal') + 100000) } },
+      { label: 'Build a low-income reserve', changes: { target: rupees(Math.max(0, result.outflow - (result.register.find(field => field.id === 'low')?.amount ?? Math.round(get('primary') * .8)))) } },
+    ],
+    [
+      { label: 'Receive ₹500 less support', changes: { primary: rupees(get('primary') - 50000) } },
+      { label: 'Reduce optional spending by ₹300', changes: reduce(30000, true) },
+      { label: 'Save for a ₹3,000 purchase', changes: { target: '3000' } },
+    ],
+  ][profile] ?? []
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { calculate, charts, example, parseAmount, profiles, timeline } from '../src/moneyHealth.ts'
+import { calculate, charts, example, parseAmount, profiles, scenarioPresets, timeline } from '../src/moneyHealth.ts'
 
 for (const [index, funds, expenses, debt, balance] of [
   [0, 5000, 3800, 0, 1200], [1, 50000, 28000, 8000, 14000],
@@ -70,4 +70,37 @@ test('student balance retains individual paise across expense categories', () =>
   assert.equal(result.feasibility, 'Feasible on these inputs')
   assert.equal(result.register.find(field => field.id === 'debt')?.amount, null)
   assert.deepEqual(charts(result, result)[1].rows.map(([, value]) => value), [10, 20, 29, 31])
+})
+
+test('education and housing distinguish missing amounts from explicit zero', () => {
+  for (const [index, id] of [[0, 'education'], [1, 'housing']] as const) {
+    const { fields } = profiles[index]
+    const input = example(fields)
+    delete input[id]
+    const blank = calculate(fields, input)
+    const zero = calculate(fields, { ...input, [id]: '0' })
+    assert.equal(blank.register.find(field => field.id === id)?.amount, null)
+    assert.equal(zero.register.find(field => field.id === id)?.amount, 0)
+    assert.equal(blank.expenses, zero.expenses)
+    assert.throws(() => calculate(fields, { ...input, [id]: '-1' }))
+  }
+})
+
+test('presets use the baseline and keep low or missing spending nonnegative', () => {
+  const expected = [[150000, 170000, 120000, 120000], [900000, 1900000, 1600000, 1400000],
+    [700000, 1400000, 1500000, 1500000], [30000, 110000, 80000]]
+  for (const [profile, { fields }] of profiles.entries()) {
+    const input = example(fields)
+    const base = calculate(fields, input)
+    const presets = scenarioPresets(profile, base)
+    assert.deepEqual(presets.map(({ changes }) => calculate(fields, {
+      ...input, ...changes, ...(changes.extra ? { debt: (base.debt / 100 + Number(changes.extra)).toFixed(2) } : {}),
+    }).balance), expected[profile])
+  }
+  const { fields } = profiles[0]
+  const input = { ...example(fields), food: '20', transport: '0', education: '', personal: '10' }
+  const base = calculate(fields, input)
+  const lowered = calculate(fields, { ...input, ...scenarioPresets(0, base)[0].changes })
+  assert.equal(lowered.expenses, 0)
+  assert.equal(lowered.register.find(field => field.id === 'education')?.amount, null)
 })
