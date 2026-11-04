@@ -5,6 +5,8 @@ import type { FeatureField, FeatureContribution, ModelDetails, ModelSchema, Mode
 import { researchApi } from './api'
 import { displayFeatureName } from './analytics'
 import { calculateAssessment, contributionDirection, predictionFiveW } from './assessment'
+import { MonthlyHistoryEditor } from './MonthlyHistoryEditor'
+import { historyFromFeatures, inspectHistory, type MonthlyRecord } from './monthlyHistory'
 
 const fieldLabel = displayFeatureName
 
@@ -125,6 +127,10 @@ export function PredictionWorkspace() {
   const [schema, setSchema] = useState<ModelSchema | null>(null)
   const [details, setDetails] = useState<ModelDetails | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
+  const [months, setMonths] = useState<MonthlyRecord[]>([])
+  const [exampleHistory, setExampleHistory] = useState(false)
+  const monthReview = inspectHistory(months)
+  const modelValues = { ...values, ...monthReview.features }
   const [assessment, setAssessment] = useState<GuardianAssessment | null>(null)
   useEffect(() => {
     if (!assessment) return
@@ -272,7 +278,9 @@ export function PredictionWorkspace() {
     )
     setAssessment(null)
     setResult(null)
-    setValues(stringified)
+    setValues(Object.fromEntries(Object.entries(stringified).filter(([key]) => !key.startsWith('PAY_') && !key.startsWith('BILL_AMT'))))
+    setMonths(historyFromFeatures(stringified))
+    setExampleHistory(true)
     setSyntheticProfile(true)
     setError(null)
   }
@@ -280,6 +288,17 @@ export function PredictionWorkspace() {
   function clearForm() {
     setAssessment(null)
     setValues({})
+    setMonths([])
+    setExampleHistory(false)
+    setSyntheticProfile(false)
+    setResult(null)
+    setError(null)
+  }
+
+  function updateMonths(records: MonthlyRecord[], example = exampleHistory && records.length > 0) {
+    setMonths(records)
+    setExampleHistory(example)
+    setAssessment(null)
     setResult(null)
     setError(null)
   }
@@ -305,12 +324,12 @@ export function PredictionWorkspace() {
     event.preventDefault()
     setError(null)
     setResult(null)
-    if (!schema) return
+    if (!schema || !monthReview.ready) return
 
     setAssessment(null)
     setSubmitting(true)
     try {
-      const response = await researchApi.guardian(modelId, values)
+      const response = await researchApi.guardian(modelId, modelValues)
       setAssessment(response.assessment)
       const prediction = response.prediction
       if (!prediction) return
@@ -345,9 +364,6 @@ export function PredictionWorkspace() {
 
   // Group features into logical subsets for user readability
   const demographicKeys = ['LIMIT_BAL', 'SEX', 'EDUCATION', 'MARRIAGE', 'AGE']
-  const delinquencyKeys = ['PAY_0', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6']
-  const billKeys = ['BILL_AMT1', 'BILL_AMT2', 'BILL_AMT3', 'BILL_AMT4', 'BILL_AMT5', 'BILL_AMT6']
-  const paymentKeys = ['PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6']
 
   const isConnected = systemStatus?.backend_connectivity === 'connected'
 
@@ -370,7 +386,7 @@ export function PredictionWorkspace() {
           <span className="status-indicator-dot" />
           <div>
             <small>BACKEND</small>
-            <strong>{isConnected ? 'Connected (Port 8000)' : 'Disconnected'}</strong>
+            <strong>{isConnected ? 'Connected' : 'Disconnected'}</strong>
           </div>
         </div>
         <div className="status-node status-ok">
@@ -520,57 +536,11 @@ export function PredictionWorkspace() {
                 </div>
               </div>
 
-              {/* Group 2: Repayment History */}
-              <div className="feature-section">
-                <h4 className="feature-section-title">2. Repayment Status History (PAY_0 to PAY_6)</h4>
-                <p className="feature-section-desc">
-                  -2: No consumption · -1: Paid duly · 0: Revolving credit · 1–9: Delinquent months
-                </p>
-                <div className="feature-grid">
-                  {delinquencyKeys.map((name) => (
-                    <FeatureInput
-                      key={name}
-                      name={name}
-                      field={schema.raw_features[name]}
-                      value={values[name] ?? ''}
-                      onChange={(val) => updateField(name, val)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Group 3: Bill Statements */}
-              <div className="feature-section">
-                <h4 className="feature-section-title">3. Monthly Bill Statements ({details?.geography === 'Taiwan' ? 'NT$' : 'model dataset units'})</h4>
-                <div className="feature-grid">
-                  {billKeys.map((name) => (
-                    <FeatureInput
-                      key={name}
-                      name={name}
-                      field={schema.raw_features[name]}
-                      value={values[name] ?? ''}
-                      onChange={(val) => updateField(name, val)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Group 4: Payments Paid */}
-              <div className="feature-section">
-                <h4 className="feature-section-title">4. Monthly Amounts Paid ({details?.geography === 'Taiwan' ? 'NT$' : 'model dataset units'})</h4>
-                <div className="feature-grid">
-                  {paymentKeys.map((name) => (
-                    <FeatureInput
-                      key={name}
-                      name={name}
-                      field={schema.raw_features[name]}
-                      value={values[name] ?? ''}
-                      onChange={(val) => updateField(name, val)}
-                    />
-                  ))}
-                </div>
-              </div>
-
+              {exampleHistory && <p className="source-tag">Synthetic research history loaded</p>}
+              <MonthlyHistoryEditor records={months} review={monthReview} onChange={updateMonths}
+                loadExample={() => updateMonths(historyFromFeatures(Object.fromEntries(
+                  Object.entries(PRESET_BORROWERS[0].values).map(([key, value]) => [key, String(value)])
+                )), true)} />
               {error && (
                 <div className="form-error" role="alert">
                   {error}
@@ -581,7 +551,7 @@ export function PredictionWorkspace() {
                 <button
                   className="button-primary prediction-submit"
                   type="submit"
-                  disabled={submitting || loading}
+                  disabled={submitting || loading || !monthReview.ready}
                 >
                   {submitting ? 'Executing XGBoost & SHAP…' : 'Run Prediction'}
                   <span aria-hidden="true"> →</span>
@@ -612,7 +582,7 @@ export function PredictionWorkspace() {
 
           {assessment && <ConfidenceGuardian assessment={assessment} />}
           {result ? (
-            <PredictionResult result={result} details={details} values={values} syntheticProfile={syntheticProfile} />
+            <PredictionResult result={result} details={details} values={modelValues} syntheticProfile={syntheticProfile || exampleHistory} />
           ) : !assessment && (
             <div className="result-empty">
               <span className="result-icon">◎</span>

@@ -15,3 +15,16 @@
 .dp-table caption { font-weight: 750; text-align: left; }
 .dp-table th, .dp-table td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #d5e9de; }
 .dp-id { overflow-wrap: anywhere; }
+.dp > *, .dp .api-error { min-width: 0; overflow-wrap: anywhere; }
+.dp-example { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.dp-example label { display: grid; gap: 4px; min-width: 0; }
+.dp :focus-visible { outline: 2px solid #137a5a; outline-offset: 3px; }
+@keyframes decisionproof-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dp-hero, .dp-grid, .dp [aria-label="Verification plan"], .dp [aria-label="Stability results"] {
+    animation: decisionproof-reveal 180ms ease-out both;
+  }
+}

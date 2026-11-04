@@ -207,7 +207,7 @@ const API_BASES = CONFIGURED_API_BASE
     ? ['', 'http://127.0.0.1:8000', 'http://localhost:8000']
     : ['']
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let lastError: Error | null = null
 
   for (const base of API_BASES) {
@@ -223,7 +223,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         } catch {
           /* keep status message */
         }
-        throw new Error(detail)
+        throw Object.assign(new Error(detail), { diagnostic: `${response.status} ${response.url || url} · ${detail}` })
       }
       return (await response.json()) as T
     } catch (err) {

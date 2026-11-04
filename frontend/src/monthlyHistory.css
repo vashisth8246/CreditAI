@@ -1,0 +1,43 @@
+.monthly-history { display: grid; gap: 12px; }
+.monthly-history h3, .monthly-history p { margin: 0; }
+.monthly-history p { line-height: 1.5; }
+.monthly-readiness, .monthly-confirm {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #c9e3d8;
+  border-radius: 12px;
+  background: #f1faf5;
+  color: #163d34;
+}
+.monthly-actions, .monthly-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.monthly-record {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  padding: 12px;
+  border: 1px solid #d8e6e2;
+  border-radius: 12px;
+  background: #fff;
+}
+.monthly-record label { min-width: 0; display: grid; align-content: start; gap: 4px; font-weight: 650; }
+.monthly-record .form-control { min-width: 0; width: 100%; min-height: 44px; box-sizing: border-box; font-size: 14px; }
+.monthly-record small { color: #922b27; overflow-wrap: anywhere; }
+.monthly-record [aria-invalid=true] { border-color: #c98781; }
+.monthly-record button { justify-self: start; }
+.monthly-record .monthly-confirm { grid-column: 1 / -1; }
+.prediction-form-panel .button-quiet { background: #edf6f2; color: #234c41; }
+.prediction-form-panel .button-quiet:hover:not(:disabled) { background: #dceee5; }
+.monthly-history :focus-visible { outline: 2px solid #137a5a; outline-offset: 3px; }
+@media (max-width: 390px) {
+  .monthly-record { grid-template-columns: minmax(0, 1fr); }
+}
+@keyframes creditai-panel-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .monthly-record, .monthly-confirm, .prediction-output {
+    animation: creditai-panel-in 180ms ease-out both;
+  }
+}

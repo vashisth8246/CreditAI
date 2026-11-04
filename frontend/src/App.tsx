@@ -1,17 +1,18 @@
-import DecisionProof from './DecisionProof'
 import MoneyHealth from './MoneyHealthPage'
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { DataSource, InventoryItem } from './analytics'
 import { availabilityState, dataSourceLabel, displayFeatureName, displayUserText, filterInventory, formatMetric, formatPercent, safeProbability } from './analytics'
 import { DatasetInventoryTable } from './DatasetInventoryTable'
 import { datasetReadiness, formatIndianRupees, SIMULATED_SCORING_STEPS } from './assessment'
-import { PredictionWorkspace } from './PredictionWorkspace'
 import { ModelPerformanceLab } from './ModelPerformanceLab'
 import { BatchEvaluation } from './BatchEvaluation'
 import { researchApi } from './api'
 import { AGENTIC_COMMERCE_NAVIGATION, AgenticCommercePage, CommerceAuditTrailPage } from './agenticCommerce'
 import './App.css'
+
+const DecisionProof = lazy(() => import('./DecisionProof'))
+const PredictionWorkspace = lazy(() => import('./PredictionWorkspace').then(module => ({ default: module.PredictionWorkspace })))
 import './commerce-exhibition.css'
 
 type Page = 'overview' | 'prediction' | 'batch' | 'discovery' | 'portfolio' | 'lab' | 'performance' | 'explorer' | 'explainability' | 'monitoring' | 'commerce' | 'commerce-audit' | 'architecture' | 'decisionproof'
@@ -127,8 +128,12 @@ function Sidebar({ page, go }: { page: Page | 'money-health'; go: (target: Page)
     </aside>
 }
 
+function pageFromHash(): Page {
+  return nav.find(item => '#' + item.id === window.location.hash)?.id ?? 'overview'
+}
+
 function ResearchApp() {
-  const [page, setPage] = useState<Page>(() => nav.find(item => '#' + item.id === window.location.hash)?.id ?? 'overview')
+  const [page, setPage] = useState(pageFromHash)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [inventory, setInventory] = useState<InventoryItem[] | null>(null)
   const [features, setFeatures] = useState<Feature[] | null>(null)
@@ -149,6 +154,15 @@ function ResearchApp() {
   const [retrievedAt, setRetrievedAt] = useState<string | null>(null)
   const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null)
   const [showDatasetDetail, setShowDatasetDetail] = useState(false)
+
+  useEffect(() => {
+    const syncPage = () => {
+      setPage(pageFromHash())
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
+    window.addEventListener('hashchange', syncPage)
+    return () => window.removeEventListener('hashchange', syncPage)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -227,7 +241,10 @@ function ResearchApp() {
     } catch { setScoreState('error') }
   }
 
-  function go(target: Page) { setPage(target); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  function go(target: Page) {
+    if (window.location.hash !== '#' + target) window.location.hash = target
+    else window.scrollTo({ top: 0, behavior: 'instant' })
+  }
 
   return <div className="shell">
     <Sidebar page={page} go={go} />
@@ -235,9 +252,9 @@ function ResearchApp() {
     <main className="main-shell">
       <header className="topbar"><button className="mobile-brand" onClick={() => go('overview')}>◉ CreditAI</button><div className="crumb">Research <span>/</span> {nav.find((item) => item.id === page)?.title}</div><div className="top-actions"><span className="top-date" title="Historical source snapshot; retrieval does not make it current">Historical snapshot · {summary?.generated_at ?? 'date unavailable'} · retrieved {retrievedAt ? new Date(retrievedAt).toLocaleString() : 'not yet'}</span><span className="build-chip" title={buildInfo?.commit_sha ?? 'Build identity is unavailable'}>Build {buildInfo?.short_commit ?? (buildInfo ? 'local' : '…')}</span><div className={`api-chip api-${apiState}`}><span className="api-dot" />API {apiState === 'online' ? 'online' : apiState === 'checking' ? 'checking' : apiState === 'offline' ? 'offline' : 'not checked'}</div><button className="icon-button" aria-label="Check API health" onClick={() => { void checkHealth(); retryLoad() }} disabled={apiState === 'checking'} title="Check API health">↻</button><div className="avatar">CA</div></div></header>
 
-      {page === 'prediction' ? <div className="page-body"><PredictionWorkspace /></div>
+      {page === 'prediction' ? <div className="page-body"><Suspense fallback={<p role="status">Loading borrower workspace…</p>}><PredictionWorkspace /></Suspense></div>
         : page === 'batch' ? <div className="page-body"><BatchEvaluation /></div>
-        : page === 'decisionproof' ? <DecisionProof />
+        : page === 'decisionproof' ? <Suspense fallback={<p className="page-body" role="status">Loading DecisionProof workspace…</p>}><DecisionProof /></Suspense>
         : page === 'performance' ? <div className="page-body"><ModelPerformanceLab /></div>
         : page === 'commerce' ? <AgenticCommercePage />
         : page === 'commerce-audit' ? <CommerceAuditTrailPage onStart={() => go('commerce')} />

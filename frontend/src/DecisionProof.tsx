@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { request } from './api'
 import './decisionProof.css'
 
 const endpoint = '/v1/research/decisionproof'
@@ -6,7 +7,7 @@ const money = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency',
 const label = (name: string) => name.replaceAll('_', ' ')
 type Evidence = { id: string; field: string; values: number[]; claimed: number | null; status: string; explanation: string; source: string; period: string; collected_at: string }
 type Action = { id: string; label: string; reveals: string[]; cost: number; permitted: boolean }
-type Scenario = { id: string; title: string; explanation: string; evidence: Evidence[]; proposed_emi: number }
+type Scenario = { id: string; title: string; explanation: string; evidence: Evidence[]; proposed_emi: number; actions: Action[] }
 type Strategy = { actions: string[]; cost: number; resolved: boolean; unresolved_groups: number; possible_observations: number; reveals: string[] }
 type Result = { method: string; scenario: Scenario; status: string; policy: { residual_min: number; payment_ratio_bps: number; cost_profile: string }; meets_count: number;
   states: { income: number; expenses: number; existing_emi: number; residual: number; payment_ratio_bps: number | null; outcome: string }[];
@@ -16,11 +17,8 @@ type Result = { method: string; scenario: Scenario; status: string; policy: { re
 type Benchmark = { profiles: { cost_profile: string; cases: number; reversals: number; elapsed_ms: number;
   strategies: Record<string, { cost: number; actions: number; resolved: number; individually_removable_actions: number }> }[] }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(endpoint + path, init)
-  if (!response.ok) throw Error('DecisionProof request failed (HTTP ' + response.status + ').')
-  return response.json()
-}
+const diagnostic = (path: string, cause: unknown) =>
+  (cause as { diagnostic?: string })?.diagnostic ?? endpoint + path + ' · ' + String(cause)
 
 function downloadReport(result: Result) {
   const chosen = result.strategies.DecisionProof
@@ -57,50 +55,73 @@ export default function DecisionProof() {
   const [showPlan, setShowPlan] = useState(false)
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [attempt, setAttempt] = useState(0)
+  const [catalogError, setCatalogError] = useState('')
+  const [benchmarkBusy, setBenchmarkBusy] = useState(false)
   const [error, setError] = useState('')
   useEffect(() => {
-    let active = true
-    void request<{ scenarios: Scenario[] }>('/scenarios')
-      .then(data => { if (active) setScenarios(data.scenarios) })
-      .catch((cause: Error) => { if (active) setError(cause.message) })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [])
+    const controller = new AbortController()
+    void request<{ scenarios: Scenario[] }>(endpoint + '/scenarios', { signal: controller.signal })
+      .then(data => setScenarios(data.scenarios))
+      .catch(cause => { if (!controller.signal.aborted) setCatalogError(diagnostic('/scenarios', cause)) })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [attempt])
   const scenario = scenarios.find(item => item.id === id)
   const clearResult = () => { setResult(null); setShowPlan(false); setError('') }
   const chosen = result?.strategies.DecisionProof
   const maxCost = result ? Math.max(1, ...Object.values(result.strategies).map(row => row.cost)) : 1
+  async function analyze(useDefaults = false) {
+    clearResult()
+    setBusy(true)
+    if (useDefaults) { setResidual('20000'); setRatio('40'); setCost('base') }
+    try {
+      setResult(await request<Result>(endpoint + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        scenario_id: id, residual_min: useDefaults ? 20000 : Number(residual),
+        payment_ratio_bps: useDefaults ? 4000 : Math.round(Number(ratio) * 100), cost_profile: useDefaults ? 'base' : cost,
+      }) }))
+    } catch (cause) {
+      setError(diagnostic('/analyze', cause))
+    } finally { setBusy(false) }
+  }
   return <div className="page-body dp">
     <header className="dp-hero">
       <p className="eyebrow">CREDITAI RESEARCH LAB · SYNTHETIC APPLICATIONS</p>
       <h1>DecisionProof</h1><p>Find the minimum additional evidence needed to resolve a consequential lending-policy uncertainty.</p>
       <p>This simulated affordability policy is separate from Taiwan XGBoost and Confidence Guardian. No real underwriting, verification, or borrower records.</p>
     </header>
-    {error && <p className="form-error" role="alert">{error}</p>}
+    {error && <div className="api-error" role="alert">
+      <p>DecisionProof could not complete the request. Try the action again.</p>
+      <details><summary>Technical details</summary><p>{error}</p></details>
+    </div>}
     <section className="panel">
       <h2>1. Choose an evidence scenario</h2>
-      {loading ? <p role="status">Loading synthetic scenarios…</p> : !scenario ? <p>No scenarios are available. Reload to try again.</p> : <>
+      {loading ? <p className="inline-loading" role="status">Loading synthetic scenarios…</p> : catalogError ? <div className="api-error" role="alert">
+        <p>DecisionProof service is unavailable. Check that the current CreditAI backend is running, then retry.</p>
+        <button type="button" className="button-secondary" onClick={() => { setCatalogError(''); setLoading(true); setAttempt(value => value + 1) }}>Retry</button>
+        <details><summary>Technical details</summary><p>{catalogError}</p></details>
+      </div> : !scenario ? <p>The research service returned no matching scenarios.</p> : <>
+        <div className="dp-example">
         <label>Synthetic scenario <select disabled={busy} value={id} onChange={event => { setId(event.target.value); clearResult() }}>
           {scenarios.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
         </select></label>
+        <button type="button" className="button-primary" disabled={busy} onClick={() => void analyze(true)}>Load Example</button>
+        </div>
         <p>{scenario.explanation}</p>
-        <div className="dp-grid" aria-label="Evidence completeness and conflicts">{scenario.evidence.map(item => <article key={item.id}>
+        <div className="dp-grid" key={scenario.id} aria-label="Evidence completeness and conflicts">{scenario.evidence.map(item => <article key={item.id}>
           <h3>{label(item.field)}</h3><span className="dp-tag">{item.status}</span>
           <p><strong>Tested values:</strong> {item.values.map(money).join(' · ')}</p>
           <p>Claimed: {item.claimed === null ? 'not provided' : money(item.claimed)}. {item.explanation}</p>
           <small>{item.source} · {item.period}</small>
         </article>)}</div>
+        <details><summary>Available verification options</summary><ul>
+          {(result?.verification_options ?? scenario.actions).map(action => <li key={action.id}>{action.label} · {action.cost} effort units{action.permitted ? '' : ' · unavailable'}</li>)}
+        </ul></details>
       </>}
     </section>
     {scenario && <section className="panel">
       <h2>2. Analyze policy stability</h2><p>Proposed EMI: {money(scenario.proposed_emi)}. These thresholds are illustrative.</p>
-      <form onSubmit={async event => {
-        event.preventDefault(); clearResult(); setBusy(true)
-        try { setResult(await request<Result>('/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-          scenario_id: id, residual_min: Number(residual), payment_ratio_bps: Math.round(Number(ratio) * 100), cost_profile: cost,
-        }) })) }
-        catch (cause) { setError((cause as Error).message) } finally { setBusy(false) }
-      }}>
+      <form onSubmit={event => { event.preventDefault(); void analyze() }}>
         <div className="dp-controls">
           <label>Minimum residual (₹)<input required type="number" min="0" max="1000000" step="1" value={residual} disabled={busy} onChange={event => { setResidual(event.target.value); clearResult() }} /></label>
           <label>Maximum payment-to-income (%)<input required type="number" min="0" max="100" step=".01" value={ratio} disabled={busy} onChange={event => { setRatio(event.target.value); clearResult() }} /></label>
@@ -116,7 +137,7 @@ export default function DecisionProof() {
         <h2>{result.status === 'stable_under_tested_scenarios' ? 'Stable across tested states' : 'Sensitive to evidence'}</h2>
         <p role="status">{result.meets_count} of {result.states.length} states meet the simulated policy. Consequential fields: {result.consequential.map(label).join(', ') || 'none'}.</p>
         <meter min={0} max={result.states.length} value={result.meets_count} aria-label="States meeting simulated policy" />
-        <div className="dp-table"><table><caption>Modeled states · INR</caption><thead><tr>{['Income','Expenses','Existing EMI','Residual','Payment ratio','Result'].map(text => <th key={text}>{text}</th>)}</tr></thead>
+        <div className="dp-table" role="region" aria-label="Modeled states table" tabIndex={0}><table><caption>Modeled states · INR</caption><thead><tr>{['Income','Expenses','Existing EMI','Residual','Payment ratio','Result'].map(text => <th key={text}>{text}</th>)}</tr></thead>
           <tbody>{result.states.map((row, index) => <tr key={index}><td>{money(row.income)}</td><td>{money(row.expenses)}</td><td>{money(row.existing_emi)}</td><td>{money(row.residual)}</td><td>{row.payment_ratio_bps === null ? 'Unavailable' : row.payment_ratio_bps / 100 + '%'}</td><td>{row.outcome.startsWith('meets') ? 'Meets simulated policy' : 'Outside simulated policy'}</td></tr>)}</tbody>
         </table></div>
         <div className="dp-grid" aria-label="Threshold sensitivity">
@@ -134,6 +155,7 @@ export default function DecisionProof() {
             <p>Reveals {action.reveals.map(label).join(' and ')}. These modeled observations can distinguish states with different policy outcomes.</p>
           </article>)}
           <p>{chosen.cost} effort units · {chosen.possible_observations} possible observation groups · {chosen.unresolved_groups} unresolved groups.</p>
+          {chosen.resolved && <p>Any uncertainty left after this plan cannot change the policy outcome within its observed evidence group. Other checks add effort without being needed to resolve the decision.</p>}
           <h3>4. Compare strategies</h3>
           <div className="dp-grid">{Object.entries(result.strategies).map(([name, row]) => <article key={name}>
             <strong>{name}</strong><meter min={0} max={maxCost} value={row.cost} aria-label={name + ' cost'} />
@@ -148,7 +170,11 @@ export default function DecisionProof() {
     </>}
     <section className="panel">
       <h2>Synthetic benchmark</h2>
-      <button className="button-secondary" onClick={() => { void request<Benchmark>('/evaluation').then(setBenchmark).catch((cause: Error) => setError(cause.message)) }}>Run catalog benchmark</button>
+      <button className="button-secondary" disabled={loading || Boolean(catalogError) || benchmarkBusy} onClick={() => {
+        setError(''); setBenchmarkBusy(true)
+        void request<Benchmark>(endpoint + '/evaluation').then(setBenchmark)
+          .catch(cause => setError(diagnostic('/evaluation', cause))).finally(() => setBenchmarkBusy(false))
+      }}>{benchmarkBusy ? 'Running benchmark…' : 'Run catalog benchmark'}</button>
       {benchmark?.profiles.map(profile => <div key={profile.cost_profile} className="dp-table"><table>
         <caption>{label(profile.cost_profile)} · {profile.cases} cases · {profile.reversals} evidence-sensitive · {profile.elapsed_ms} ms</caption>
         <thead><tr>{['Strategy', 'Cost', 'Actions', 'Resolved', 'Removable actions'].map(text => <th key={text}>{text}</th>)}</tr></thead>
