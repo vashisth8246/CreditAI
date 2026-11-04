@@ -1,3 +1,5 @@
+import { ConfidenceGuardian } from './ConfidenceGuardian'
+import type { GuardianAssessment } from './api'
 import { useCallback, useEffect, useState } from 'react'
 import type { FeatureField, FeatureContribution, ModelDetails, ModelSchema, ModelSummary, Prediction, SystemStatus } from './api'
 import { researchApi } from './api'
@@ -123,6 +125,13 @@ export function PredictionWorkspace() {
   const [schema, setSchema] = useState<ModelSchema | null>(null)
   const [details, setDetails] = useState<ModelDetails | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
+  const [assessment, setAssessment] = useState<GuardianAssessment | null>(null)
+  useEffect(() => {
+    if (!assessment) return
+    const heading = document.getElementById('guardian-evidence-heading')
+    heading?.focus({ preventScroll: true })
+    heading?.closest('.guardian-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' })
+  }, [assessment])
   const [result, setResult] = useState<Prediction | null>(null)
   const [syntheticProfile, setSyntheticProfile] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -141,6 +150,8 @@ export function PredictionWorkspace() {
 
   const loadModel = useCallback(async (id: string, isInitial = false) => {
     if (!isInitial) {
+      setAssessment(null)
+      setResult(null)
       setLoading(true)
       setLoadError(null)
       setSchema(null)
@@ -257,14 +268,17 @@ export function PredictionWorkspace() {
 
   function applyPreset(preset: PresetProfile) {
     const stringified = Object.fromEntries(
-      Object.entries(preset.values).map(([k, v]) => [k, String(v)])
+      Object.entries(preset.values).map(([k, v]) => [k, Number.isNaN(v) ? '' : String(v)])
     )
+    setAssessment(null)
+    setResult(null)
     setValues(stringified)
     setSyntheticProfile(true)
     setError(null)
   }
 
   function clearForm() {
+    setAssessment(null)
     setValues({})
     setResult(null)
     setError(null)
@@ -280,6 +294,8 @@ export function PredictionWorkspace() {
   }
 
   function updateField(name: string, value: string) {
+    setAssessment(null)
+    setResult(null)
     setValues((current) => ({ ...current, [name]: value }))
     setSyntheticProfile(false)
     setError(null)
@@ -291,34 +307,13 @@ export function PredictionWorkspace() {
     setResult(null)
     if (!schema) return
 
-    const missing = Object.entries(schema.raw_features).filter(
-      ([name, field]) => field.required && (values[name] === undefined || values[name].trim() === '')
-    )
-    if (missing.length) {
-      setError(`Complete all required fields. Missing: ${missing.map(([name]) => fieldLabel(name)).join(', ')}.`)
-      return
-    }
-
-    const features = Object.fromEntries(
-      Object.entries(schema.raw_features).map(([name]) => [name, Number(values[name])])
-    )
-
-    const invalid = Object.entries(schema.raw_features).find(([name, field]) => {
-      const value = features[name]
-      return (
-        !Number.isFinite(value) ||
-        (field.range && (value < field.range[0] || value > field.range[1])) ||
-        (field.values && !field.values.includes(value))
-      )
-    })
-    if (invalid) {
-      setError(`${fieldLabel(invalid[0])} is outside supported ranges. Check valid values and retry.`)
-      return
-    }
-
+    setAssessment(null)
     setSubmitting(true)
     try {
-      const prediction = await researchApi.predict(modelId, features)
+      const response = await researchApi.guardian(modelId, values)
+      setAssessment(response.assessment)
+      const prediction = response.prediction
+      if (!prediction) return
       setResult(prediction)
 
       // Save to local prediction history (no PII, metadata only)
@@ -326,7 +321,7 @@ export function PredictionWorkspace() {
         id: `pred-${Date.now()}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         model_id: prediction.model_id,
-        limit_bal: features['LIMIT_BAL'] || 0,
+        limit_bal: Number(values.LIMIT_BAL) || 0,
         probability: prediction.probability,
         risk_category: prediction.risk_category,
         predicted_class: prediction.predicted_class,
@@ -444,7 +439,7 @@ export function PredictionWorkspace() {
                 setModelId(e.target.value)
                 void loadModel(e.target.value)
               }}
-              disabled={models.length === 0}
+              disabled={models.length === 0 || submitting}
             >
               {models.map((m) => (
                 <option key={m.model_id} value={m.model_id}>
@@ -463,6 +458,7 @@ export function PredictionWorkspace() {
                   key={preset.tag}
                   type="button"
                   className="preset-btn"
+                  disabled={submitting}
                   onClick={() => applyPreset(preset)}
                   title={preset.description}
                 >
@@ -473,6 +469,7 @@ export function PredictionWorkspace() {
               <button
                 type="button"
                 className="preset-clear-btn"
+                disabled={submitting}
                 onClick={clearForm}
                 title="Reset all inputs"
               >
@@ -481,12 +478,32 @@ export function PredictionWorkspace() {
             </div>
           </div>
 
+          <details className="guardian-demo">
+            <summary>Guardian research demonstrations</summary>
+            <div className="preset-buttons">
+              {([
+                ['Unusual valid profile', { LIMIT_BAL: 1000000, PAY_0: 9, PAY_2: 9, PAY_3: 9 }],
+                ['Missing age', { AGE: NaN }],
+                ['Invalid repayment code', { PAY_0: 99 }],
+                ['Bill exceeds credit limit', { LIMIT_BAL: 20000, BILL_AMT1: 75000 }],
+              ] as const).map(([label, overrides]) => <button className="preset-btn" type="button" key={label} disabled={submitting} onClick={() => {
+                applyPreset({ ...PRESET_BORROWERS[0], values: { ...PRESET_BORROWERS[0].values, ...overrides } })
+              }}>{label}</button>)}
+              <button className="preset-btn" type="button" disabled={submitting} onClick={() => {
+                setResult(null); setError(null); setAssessment(null); setSubmitting(true)
+                void researchApi.guardian('guardian-demo-unavailable', {}).then(response => setAssessment(response.assessment))
+                  .catch(() => setError('The evidence check could not reach the research service.'))
+                  .finally(() => setSubmitting(false))
+              }}>Check unavailable model</button>
+            </div>
+            <p>KNN has no frozen distribution reference. Select KNN and run a valid sample to see that state.</p>
+          </details>
           {loading ? (
             <div className="inline-loading" role="status">
               Loading model schema and calibrator parameters…
             </div>
           ) : schema ? (
-            <form onSubmit={(e) => void submit(e)}>
+            <form noValidate onSubmit={(e) => void submit(e)}><fieldset className="guardian-form-fields" disabled={submitting}>
               {/* Group 1: Demographics */}
               <div className="feature-section">
                 <h4 className="feature-section-title">1. Demographics & Credit Capacity</h4>
@@ -572,13 +589,12 @@ export function PredictionWorkspace() {
                 <button
                   type="button"
                   className="button-quiet"
-                  onClick={clearForm}
-                  disabled={submitting}
+                  onClick={clearForm} disabled={submitting}
                 >
                   Reset
                 </button>
               </div>
-            </form>
+            </fieldset></form>
           ) : (
             !loadError && <div className="inline-loading">Feature schema is currently unavailable.</div>
           )}
@@ -594,9 +610,10 @@ export function PredictionWorkspace() {
             </div>
           </div>
 
+          {assessment && <ConfidenceGuardian assessment={assessment} />}
           {result ? (
             <PredictionResult result={result} details={details} values={values} syntheticProfile={syntheticProfile} />
-          ) : (
+          ) : !assessment && (
             <div className="result-empty">
               <span className="result-icon">◎</span>
               <h3>Awaiting Input</h3>

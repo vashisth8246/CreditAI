@@ -1,0 +1,21 @@
+.guardian-panel { scroll-margin-top: 76px; padding: 15px; margin-bottom: 16px; border: 1px solid #b9d9ca; border-radius: 12px; background: #f2faf6; color: #173b32; overflow-wrap: anywhere; }
+.guardian-panel h3 { margin: 0 0 8px; }
+.guardian-status { display: inline-block; margin: 0 0 9px; padding: 5px 9px; border-radius: 9px; background: #e5eee9; color: #254b40; font-weight: 750; }
+.guardian-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,130px),1fr)); gap: 7px; }
+.guardian-facts > div { padding: 8px; border: 1px solid #d0e6d9; border-radius: 8px; background: white; display: grid; gap: 3px; }
+.guardian-findings { list-style: none; padding: 0; display: grid; gap: 7px; }
+.guardian-findings li { padding: 8px; border-left: 3px solid #946b45; background: #fffaf2; }
+.guardian-findings p { margin: 4px 0; }
+.guardian-limit { font-size: .84em; color: #345c50; }
+.guardian-demo { margin: 10px 0; padding: 8px; background: #f3faf6; border-radius: 8px; }
+.guardian-demo summary { cursor: pointer; font-weight: 700; }
+.guardian-demo .preset-buttons { margin-top: 8px; flex-wrap: wrap; }
+.guardian-lab { scroll-margin-top: 76px; margin-bottom: 16px; min-width: 0; overflow-wrap: anywhere; }
+.guardian-chart { margin: 12px 0; }
+.guardian-chart svg { display: block; max-width: 520px; width: 100%; height: auto; }
+.guardian-chart figcaption, .guardian-table caption { font-weight: 700; text-align: left; }
+.guardian-table { overflow-x: auto; margin-bottom: 10px; }
+.guardian-table table { border-collapse: collapse; min-width: 740px; width: 100%; }
+.guardian-table th, .guardian-table td { padding: 6px; border-bottom: 1px solid #d9e8e0; text-align: left; }
+.guardian-panel a, .guardian-lab a { color: #14684a; }
+.guardian-form-fields { border: 0; padding: 0; margin: 0; min-width: 0; }

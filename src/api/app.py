@@ -57,6 +57,7 @@ from ..inference import (
     ModelLoadError,
 )
 from ..inference.schemas import PredictionRequest
+from ..inference.guardian import assess, load_reference
 
 
 class Transaction(BaseModel):
@@ -300,6 +301,39 @@ async def get_model_evaluation_endpoint(model_id: str):
             return json.load(f)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load evaluation artifact: {str(e)}")
+
+
+class ReliabilityAssessmentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    model_id: StrictStr = Field(default="uci_taiwan_xgb", max_length=80)
+    features: dict[str, object] = Field(max_length=40)
+
+
+@app.get("/v1/research/reliability-evaluation")
+def reliability_evaluation():
+    artifact = load_reference()
+    if artifact is None:
+        return {"status": "not_evaluated", "reason": "Verified evaluation artifact unavailable."}
+    return {"status": "evaluated", **{key: value for key, value in artifact.items() if key != "reference"}}
+
+
+@app.post("/v1/research/reliability-assessment")
+def reliability_assessment(request: ReliabilityAssessmentRequest):
+    features, assessment = assess(request.features, request.model_id)
+    assessment["model_provenance"] = "UCI Taiwan historical credit-card research; not validated for Indian lending."
+    if features is None:
+        return {"assessment": assessment, "prediction": None}
+    try:
+        result = predict(request.model_id, features)
+    except (ArtifactNotFoundError, ModelLoadError):
+        assessment["status"] = "model_unavailable"
+        assessment["reasons"].append("The research model artifact could not be loaded. No prediction was produced.")
+        return {"assessment": assessment, "prediction": None}
+    except InvalidInputError:
+        assessment["status"] = "input_correction_required"
+        assessment["reasons"].append("The inference service rejected these inputs. Check them against the model schema.")
+        return {"assessment": assessment, "prediction": None}
+    return {"assessment": assessment, "prediction": result}
 
 
 @app.post("/v1/predict")

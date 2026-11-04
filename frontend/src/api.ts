@@ -1,4 +1,4 @@
-﻿import type { BatchInspectResponse, BatchPredictionResult, Mapping } from './batch'
+import type { BatchInspectResponse, BatchPredictionResult, Mapping } from './batch'
 
 export type { BatchPredictionResult, BatchRowResult } from './batch'
 
@@ -242,6 +242,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   )
 }
 
+type GuardianFinding = {
+  field: string; code: string; severity: 'error' | 'warning' | 'information'
+  explanation: string; evidence: string; action: string; blocks_inference: boolean
+}
+export type GuardianAssessment = {
+  status: 'review_eligible' | 'manual_review_recommended' | 'input_correction_required' | 'reliability_not_evaluated' | 'model_unavailable'
+  model_id: string; method: string; valid_fields: number; required_fields: number
+  findings: GuardianFinding[]; distribution_findings: GuardianFinding[]
+  distribution_evaluated: boolean; evaluation_available: boolean; reasons: string[]
+  reference?: { dataset: string; sha256: string; train_count: number } | null
+  model_provenance: string; limitations?: string
+}
+export type GuardianEvaluation = {
+  status: 'evaluated' | 'not_evaluated'; reason?: string
+  split?: { train: number; validation: number; test: number }
+  quality_findings?: Record<string, number>
+  evaluation?: { name: string; target_coverage?: number; cutoff?: number; coverage: number; retained: number; abstained: number;
+    error_rate: number | null; error_delta_bootstrap_95?: [number, number] | null; roc_auc: number | null; average_precision: number | null; brier: number | null; log_loss: number | null }[]
+}
+
 export const researchApi = {
   health: () => request<{ status: string; scoring: string }>('/health'),
   buildInfo: () => request<{ commit_sha: string | null; short_commit: string | null; scoring_status: string }>('/v1/build', { cache: 'no-store' }),
@@ -253,6 +273,11 @@ export const researchApi = {
     return request<EvaluationArtifact>(`/v1/models/${encodeURIComponent(id)}/evaluation`)
   },
   dashboardSnapshot: <T,>(signal?: AbortSignal) => request<T>('/v1/dashboard/snapshot', { cache: 'no-store', signal }),
+  guardian: (model_id: string, features: Record<string, string>) =>
+    request<{ assessment: GuardianAssessment; prediction: Prediction | null }>('/v1/research/reliability-assessment', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model_id, features }),
+    }),
+  guardianEvaluation: () => request<GuardianEvaluation>('/v1/research/reliability-evaluation'),
   predict: (model_id: string, features: Record<string, number>) =>
     request<Prediction>('/v1/predict', {
       method: 'POST',

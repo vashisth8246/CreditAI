@@ -1,3 +1,4 @@
+import { GuardianLab } from './ConfidenceGuardian'
 // ModelPerformanceLab.tsx – updated for model selection and KNN feature contributions
 import { useEffect, useState } from 'react';
 import type { EvaluationArtifact } from './api';
@@ -107,6 +108,7 @@ export function ModelPerformanceLab() {
         <span className="source-tag source-historical">Test split evaluation</span>
       </div>
 
+      <GuardianLab />
       {/* Model selector dropdown */}
       <div className="model-selector" style={{ marginBottom: '1rem' }}>
         <label htmlFor="model-select" style={{ marginRight: '0.5rem' }}>

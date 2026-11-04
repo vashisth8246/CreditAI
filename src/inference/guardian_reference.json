@@ -1,0 +1,1241 @@
+{
+  "archived_baseline_reproduced": {
+    "brier": 0.14412179090099117,
+    "roc_auc": 0.78065343566045
+  },
+  "calibration_sha256": "6b94f41d3521c37e22d41b91e505006f1c737d022c214f803a5b9a057f185cdc",
+  "classification_threshold": 0.5,
+  "dataset_sha256": "21b3cf4e30878150ae8db9386780e23febb613921747dec9e59dccb32f6104d3",
+  "evaluation": [
+    {
+      "abstained": 0,
+      "abstention_rate": 0.0,
+      "average_precision": 0.5491863742662509,
+      "brier": 0.1458088075023352,
+      "calibration_bins": [
+        {
+          "count": 643,
+          "lower": 0,
+          "observed_rate": 0.06376360808709176,
+          "predicted_mean": 0.08242490979489737,
+          "upper": 0.1
+        },
+        {
+          "count": 2533,
+          "lower": 0.1,
+          "observed_rate": 0.14093959731543623,
+          "predicted_mean": 0.1452939157672772,
+          "upper": 0.2
+        },
+        {
+          "count": 729,
+          "lower": 0.2,
+          "observed_rate": 0.3058984910836763,
+          "predicted_mean": 0.23773881748270684,
+          "upper": 0.3
+        },
+        {
+          "count": 276,
+          "lower": 0.3,
+          "observed_rate": 0.5217391304347826,
+          "predicted_mean": 0.3506172913527034,
+          "upper": 0.4
+        },
+        {
+          "count": 265,
+          "lower": 0.4,
+          "observed_rate": 0.6867924528301886,
+          "predicted_mean": 0.44691323330797667,
+          "upper": 0.5
+        },
+        {
+          "count": 54,
+          "lower": 0.5,
+          "observed_rate": 0.9074074074074074,
+          "predicted_mean": 0.5200766189559601,
+          "upper": 1
+        }
+      ],
+      "coverage": 1.0,
+      "defaults": 996,
+      "error_delta_bootstrap_95": null,
+      "error_rate": 0.21155555555555555,
+      "log_loss": 0.45600181077724905,
+      "name": "Ungated XGBoost replay",
+      "retained": 4500,
+      "roc_auc": 0.766069128110616,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 0,
+          "retained": 3086,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 0,
+          "retained": 1414,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 0,
+          "retained": 1766,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 0,
+          "retained": 2734,
+          "total": 2734
+        }
+      }
+    },
+    {
+      "abstained": 10,
+      "abstention_rate": 0.0022222222222222365,
+      "average_precision": 0.5511265553003275,
+      "brier": 0.14581234617429722,
+      "calibration_bins": [
+        {
+          "count": 642,
+          "lower": 0,
+          "observed_rate": 0.06386292834890965,
+          "predicted_mean": 0.08245036757174115,
+          "upper": 0.1
+        },
+        {
+          "count": 2529,
+          "lower": 0.1,
+          "observed_rate": 0.14076710162119416,
+          "predicted_mean": 0.1453052385184946,
+          "upper": 0.2
+        },
+        {
+          "count": 727,
+          "lower": 0.2,
+          "observed_rate": 0.30674002751031637,
+          "predicted_mean": 0.23778691684069866,
+          "upper": 0.3
+        },
+        {
+          "count": 275,
+          "lower": 0.3,
+          "observed_rate": 0.5236363636363637,
+          "predicted_mean": 0.35058444378826253,
+          "upper": 0.4
+        },
+        {
+          "count": 263,
+          "lower": 0.4,
+          "observed_rate": 0.6920152091254753,
+          "predicted_mean": 0.44710423144415296,
+          "upper": 0.5
+        },
+        {
+          "count": 54,
+          "lower": 0.5,
+          "observed_rate": 0.9074074074074074,
+          "predicted_mean": 0.5200766189559601,
+          "upper": 1
+        }
+      ],
+      "coverage": 0.9977777777777778,
+      "defaults": 995,
+      "error_delta_bootstrap_95": [
+        -0.0001932937391734661,
+        0.0006184198796523162
+      ],
+      "error_rate": 0.21180400890868598,
+      "log_loss": 0.4559543920285129,
+      "name": "Schema validity only",
+      "retained": 4490,
+      "roc_auc": 0.7670613439155722,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 8,
+          "retained": 3078,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 2,
+          "retained": 1412,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 3,
+          "retained": 1763,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 7,
+          "retained": 2727,
+          "total": 2734
+        }
+      }
+    },
+    {
+      "abstained": 22,
+      "abstention_rate": 0.004888888888888943,
+      "average_precision": 0.552538226602018,
+      "brier": 0.14575745018930028,
+      "calibration_bins": [
+        {
+          "count": 640,
+          "lower": 0,
+          "observed_rate": 0.0625,
+          "predicted_mean": 0.08243702719697328,
+          "upper": 0.1
+        },
+        {
+          "count": 2522,
+          "lower": 0.1,
+          "observed_rate": 0.140761300555115,
+          "predicted_mean": 0.14532360621141105,
+          "upper": 0.2
+        },
+        {
+          "count": 726,
+          "lower": 0.2,
+          "observed_rate": 0.3071625344352617,
+          "predicted_mean": 0.23775057010857611,
+          "upper": 0.3
+        },
+        {
+          "count": 274,
+          "lower": 0.3,
+          "observed_rate": 0.5255474452554745,
+          "predicted_mean": 0.35060910653925764,
+          "upper": 0.4
+        },
+        {
+          "count": 262,
+          "lower": 0.4,
+          "observed_rate": 0.6946564885496184,
+          "predicted_mean": 0.44724235692220776,
+          "upper": 0.5
+        },
+        {
+          "count": 54,
+          "lower": 0.5,
+          "observed_rate": 0.9074074074074074,
+          "predicted_mean": 0.5200766189559601,
+          "upper": 1
+        }
+      ],
+      "coverage": 0.9951111111111111,
+      "defaults": 993,
+      "error_delta_bootstrap_95": [
+        -0.00033235966308639494,
+        0.0009974948255542717
+      ],
+      "error_rate": 0.21192496650290307,
+      "log_loss": 0.4557401443939194,
+      "name": "Schema and quality warnings",
+      "retained": 4478,
+      "roc_auc": 0.7679917239904582,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 19,
+          "retained": 3067,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 3,
+          "retained": 1411,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 11,
+          "retained": 1755,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 11,
+          "retained": 2723,
+          "total": 2734
+        }
+      }
+    },
+    {
+      "abstained": 222,
+      "abstention_rate": 0.04933333333333334,
+      "average_precision": 0.5452299701174302,
+      "brier": 0.14398120542114443,
+      "calibration_bins": [
+        {
+          "count": 596,
+          "lower": 0,
+          "observed_rate": 0.06040268456375839,
+          "predicted_mean": 0.08294121323596843,
+          "upper": 0.1
+        },
+        {
+          "count": 2440,
+          "lower": 0.1,
+          "observed_rate": 0.13975409836065575,
+          "predicted_mean": 0.14560777102480035,
+          "upper": 0.2
+        },
+        {
+          "count": 702,
+          "lower": 0.2,
+          "observed_rate": 0.3005698005698006,
+          "predicted_mean": 0.2377497430164562,
+          "upper": 0.3
+        },
+        {
+          "count": 250,
+          "lower": 0.3,
+          "observed_rate": 0.52,
+          "predicted_mean": 0.3506573457366672,
+          "upper": 0.4
+        },
+        {
+          "count": 245,
+          "lower": 0.4,
+          "observed_rate": 0.6938775510204082,
+          "predicted_mean": 0.4474216863464457,
+          "upper": 0.5
+        },
+        {
+          "count": 45,
+          "lower": 0.5,
+          "observed_rate": 0.9111111111111111,
+          "predicted_mean": 0.5195450243781189,
+          "upper": 1
+        }
+      ],
+      "coverage": 0.9506666666666667,
+      "cutoff": 11.0,
+      "defaults": 929,
+      "error_delta_bootstrap_95": [
+        -0.00594739577349986,
+        -9.627423499182605e-05
+      ],
+      "error_rate": 0.2085086489013558,
+      "log_loss": 0.4515427542460326,
+      "name": "Quality + distribution",
+      "retained": 4278,
+      "roc_auc": 0.7659353032137544,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 167,
+          "retained": 2919,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 55,
+          "retained": 1359,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 104,
+          "retained": 1662,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 118,
+          "retained": 2616,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.95,
+      "validation_distribution_coverage": 0.9595555555555556
+    },
+    {
+      "abstained": 230,
+      "abstention_rate": 0.05111111111111111,
+      "average_precision": 0.4262701407319738,
+      "brier": 0.14008486494502825,
+      "calibration_bins": [
+        {
+          "count": 642,
+          "lower": 0,
+          "observed_rate": 0.06386292834890965,
+          "predicted_mean": 0.08245036757174115,
+          "upper": 0.1
+        },
+        {
+          "count": 2529,
+          "lower": 0.1,
+          "observed_rate": 0.14076710162119416,
+          "predicted_mean": 0.1453052385184946,
+          "upper": 0.2
+        },
+        {
+          "count": 727,
+          "lower": 0.2,
+          "observed_rate": 0.30674002751031637,
+          "predicted_mean": 0.23778691684069866,
+          "upper": 0.3
+        },
+        {
+          "count": 275,
+          "lower": 0.3,
+          "observed_rate": 0.5236363636363637,
+          "predicted_mean": 0.35058444378826253,
+          "upper": 0.4
+        },
+        {
+          "count": 97,
+          "lower": 0.4,
+          "observed_rate": 0.6391752577319587,
+          "predicted_mean": 0.4159590133967519,
+          "upper": 0.5
+        }
+      ],
+      "coverage": 0.9488888888888889,
+      "cutoff": 0.06468688309976767,
+      "defaults": 826,
+      "error_delta_bootstrap_95": [
+        -0.021612991839928455,
+        -0.014333722043828519
+      ],
+      "error_rate": 0.19344262295081968,
+      "log_loss": 0.44301245470753664,
+      "name": "Probability margin comparator",
+      "retained": 4270,
+      "roc_auc": 0.7310763288366194,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 153,
+          "retained": 2933,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 77,
+          "retained": 1337,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 99,
+          "retained": 1667,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 131,
+          "retained": 2603,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.95
+    },
+    {
+      "abstained": 451,
+      "abstention_rate": 0.10022222222222221,
+      "average_precision": 0.5429614744692762,
+      "brier": 0.1439143612050688,
+      "calibration_bins": [
+        {
+          "count": 526,
+          "lower": 0,
+          "observed_rate": 0.055133079847908745,
+          "predicted_mean": 0.08387727819985724,
+          "upper": 0.1
+        },
+        {
+          "count": 2332,
+          "lower": 0.1,
+          "observed_rate": 0.13893653516295026,
+          "predicted_mean": 0.14582427705474835,
+          "upper": 0.2
+        },
+        {
+          "count": 682,
+          "lower": 0.2,
+          "observed_rate": 0.30058651026392963,
+          "predicted_mean": 0.23806527992275492,
+          "upper": 0.3
+        },
+        {
+          "count": 241,
+          "lower": 0.3,
+          "observed_rate": 0.5103734439834025,
+          "predicted_mean": 0.3505485184734522,
+          "upper": 0.4
+        },
+        {
+          "count": 229,
+          "lower": 0.4,
+          "observed_rate": 0.7030567685589519,
+          "predicted_mean": 0.44739334824555677,
+          "upper": 0.5
+        },
+        {
+          "count": 39,
+          "lower": 0.5,
+          "observed_rate": 0.8974358974358975,
+          "predicted_mean": 0.5174570874693417,
+          "upper": 1
+        }
+      ],
+      "coverage": 0.8997777777777778,
+      "cutoff": 8.0,
+      "defaults": 877,
+      "error_delta_bootstrap_95": [
+        -0.006743319256919958,
+        0.0014860382193736758
+      ],
+      "error_rate": 0.20894047913064953,
+      "log_loss": 0.45139928519186506,
+      "name": "Quality + distribution",
+      "retained": 4049,
+      "roc_auc": 0.7662906331196142,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 344,
+          "retained": 2742,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 107,
+          "retained": 1307,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 199,
+          "retained": 1567,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 252,
+          "retained": 2482,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.9,
+      "validation_distribution_coverage": 0.9046666666666666
+    },
+    {
+      "abstained": 471,
+      "abstention_rate": 0.10466666666666669,
+      "average_precision": 0.33564486931368004,
+      "brier": 0.1316332797794231,
+      "calibration_bins": [
+        {
+          "count": 642,
+          "lower": 0,
+          "observed_rate": 0.06386292834890965,
+          "predicted_mean": 0.08245036757174115,
+          "upper": 0.1
+        },
+        {
+          "count": 2529,
+          "lower": 0.1,
+          "observed_rate": 0.14076710162119416,
+          "predicted_mean": 0.1453052385184946,
+          "upper": 0.2
+        },
+        {
+          "count": 727,
+          "lower": 0.2,
+          "observed_rate": 0.30674002751031637,
+          "predicted_mean": 0.23778691684069866,
+          "upper": 0.3
+        },
+        {
+          "count": 131,
+          "lower": 0.3,
+          "observed_rate": 0.4732824427480916,
+          "predicted_mean": 0.3244159507594202,
+          "upper": 0.4
+        }
+      ],
+      "coverage": 0.8953333333333333,
+      "cutoff": 0.150925406515943,
+      "defaults": 682,
+      "error_delta_bootstrap_95": [
+        -0.04817711282935191,
+        -0.03687803827128857
+      ],
+      "error_rate": 0.16927277240009928,
+      "log_loss": 0.4242193014957795,
+      "name": "Probability margin comparator",
+      "retained": 4029,
+      "roc_auc": 0.6965422705324591,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 294,
+          "retained": 2792,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 177,
+          "retained": 1237,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 186,
+          "retained": 1580,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 285,
+          "retained": 2449,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.9
+    },
+    {
+      "abstained": 879,
+      "abstention_rate": 0.19533333333333336,
+      "average_precision": 0.5553985311780373,
+      "brier": 0.14529885436470202,
+      "calibration_bins": [
+        {
+          "count": 406,
+          "lower": 0,
+          "observed_rate": 0.05172413793103448,
+          "predicted_mean": 0.08521691656095094,
+          "upper": 0.1
+        },
+        {
+          "count": 2116,
+          "lower": 0.1,
+          "observed_rate": 0.138468809073724,
+          "predicted_mean": 0.14674806144206906,
+          "upper": 0.2
+        },
+        {
+          "count": 640,
+          "lower": 0.2,
+          "observed_rate": 0.2984375,
+          "predicted_mean": 0.23818467397710802,
+          "upper": 0.3
+        },
+        {
+          "count": 219,
+          "lower": 0.3,
+          "observed_rate": 0.5068493150684932,
+          "predicted_mean": 0.34993941067415524,
+          "upper": 0.4
+        },
+        {
+          "count": 203,
+          "lower": 0.4,
+          "observed_rate": 0.7241379310344828,
+          "predicted_mean": 0.44788114374812976,
+          "upper": 0.5
+        },
+        {
+          "count": 37,
+          "lower": 0.5,
+          "observed_rate": 0.918918918918919,
+          "predicted_mean": 0.5179115387906673,
+          "upper": 1
+        }
+      ],
+      "coverage": 0.8046666666666666,
+      "cutoff": 5.0,
+      "defaults": 797,
+      "error_delta_bootstrap_95": [
+        -0.005521537207291417,
+        0.0060287627746535895
+      ],
+      "error_rate": 0.21154377243855288,
+      "log_loss": 0.4548675627554247,
+      "name": "Quality + distribution",
+      "retained": 3621,
+      "roc_auc": 0.7670029430477605,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 662,
+          "retained": 2424,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 217,
+          "retained": 1197,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 381,
+          "retained": 1385,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 498,
+          "retained": 2236,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.8,
+      "validation_distribution_coverage": 0.8166666666666667
+    },
+    {
+      "abstained": 897,
+      "abstention_rate": 0.19933333333333336,
+      "average_precision": 0.2251482182532144,
+      "brier": 0.11657019566602635,
+      "calibration_bins": [
+        {
+          "count": 642,
+          "lower": 0,
+          "observed_rate": 0.06386292834890965,
+          "predicted_mean": 0.08245036757174115,
+          "upper": 0.1
+        },
+        {
+          "count": 2529,
+          "lower": 0.1,
+          "observed_rate": 0.14076710162119416,
+          "predicted_mean": 0.1453052385184946,
+          "upper": 0.2
+        },
+        {
+          "count": 432,
+          "lower": 0.2,
+          "observed_rate": 0.24537037037037038,
+          "predicted_mean": 0.2173758101248307,
+          "upper": 0.3
+        }
+      ],
+      "coverage": 0.8006666666666666,
+      "cutoff": 0.25868872962994793,
+      "defaults": 503,
+      "error_delta_bootstrap_95": [
+        -0.0800948872873575,
+        -0.06378156596922377
+      ],
+      "error_rate": 0.13960588398556759,
+      "log_loss": 0.38976885686400115,
+      "name": "Probability margin comparator",
+      "retained": 3603,
+      "roc_auc": 0.6475572372218303,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 569,
+          "retained": 2517,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 328,
+          "retained": 1086,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 389,
+          "retained": 1377,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 508,
+          "retained": 2226,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.8
+    },
+    {
+      "abstained": 1402,
+      "abstention_rate": 0.3115555555555556,
+      "average_precision": 0.5404492943107045,
+      "brier": 0.1464075503819507,
+      "calibration_bins": [
+        {
+          "count": 287,
+          "lower": 0,
+          "observed_rate": 0.041811846689895474,
+          "predicted_mean": 0.08538568257370271,
+          "upper": 0.1
+        },
+        {
+          "count": 1862,
+          "lower": 0.1,
+          "observed_rate": 0.1423200859291085,
+          "predicted_mean": 0.1478978448797773,
+          "upper": 0.2
+        },
+        {
+          "count": 577,
+          "lower": 0.2,
+          "observed_rate": 0.29116117850953205,
+          "predicted_mean": 0.2378674426446186,
+          "upper": 0.3
+        },
+        {
+          "count": 174,
+          "lower": 0.3,
+          "observed_rate": 0.4885057471264368,
+          "predicted_mean": 0.3511881077922447,
+          "upper": 0.4
+        },
+        {
+          "count": 166,
+          "lower": 0.4,
+          "observed_rate": 0.7289156626506024,
+          "predicted_mean": 0.4473505065216968,
+          "upper": 0.5
+        },
+        {
+          "count": 32,
+          "lower": 0.5,
+          "observed_rate": 0.90625,
+          "predicted_mean": 0.5171162033248458,
+          "upper": 1
+        }
+      ],
+      "coverage": 0.6884444444444444,
+      "cutoff": 3.0,
+      "defaults": 680,
+      "error_delta_bootstrap_95": [
+        -0.00793585816035808,
+        0.007262141760918139
+      ],
+      "error_rate": 0.21110393802453195,
+      "log_loss": 0.4580778019424478,
+      "name": "Quality + distribution",
+      "retained": 3098,
+      "roc_auc": 0.758648372500365,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 1017,
+          "retained": 2069,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 385,
+          "retained": 1029,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 595,
+          "retained": 1171,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 807,
+          "retained": 1927,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.7,
+      "validation_distribution_coverage": 0.7031111111111111
+    },
+    {
+      "abstained": 1322,
+      "abstention_rate": 0.2937777777777778,
+      "average_precision": 0.1953720450743943,
+      "brier": 0.10748103136855211,
+      "calibration_bins": [
+        {
+          "count": 642,
+          "lower": 0,
+          "observed_rate": 0.06386292834890965,
+          "predicted_mean": 0.08245036757174115,
+          "upper": 0.1
+        },
+        {
+          "count": 2529,
+          "lower": 0.1,
+          "observed_rate": 0.14076710162119416,
+          "predicted_mean": 0.1453052385184946,
+          "upper": 0.2
+        },
+        {
+          "count": 7,
+          "lower": 0.2,
+          "observed_rate": 0.2857142857142857,
+          "predicted_mean": 0.20014788973960776,
+          "upper": 0.3
+        }
+      ],
+      "coverage": 0.7062222222222222,
+      "cutoff": 0.29964079979963787,
+      "defaults": 399,
+      "error_delta_bootstrap_95": [
+        -0.09476444516138428,
+        -0.07776064703469483
+      ],
+      "error_rate": 0.12555066079295155,
+      "log_loss": 0.3675920740259587,
+      "name": "Probability margin comparator",
+      "retained": 3178,
+      "roc_auc": 0.6326873318596961,
+      "subgroups": {
+        "age_30_plus": {
+          "abstained": 846,
+          "retained": 2240,
+          "total": 3086
+        },
+        "age_under_30": {
+          "abstained": 476,
+          "retained": 938,
+          "total": 1414
+        },
+        "gender_code_1": {
+          "abstained": 578,
+          "retained": 1188,
+          "total": 1766
+        },
+        "gender_code_2": {
+          "abstained": 744,
+          "retained": 1990,
+          "total": 2734
+        }
+      },
+      "target_coverage": 0.7
+    }
+  ],
+  "method": "taiwan-marginal-support-v1",
+  "model_id": "uci_taiwan_xgb",
+  "model_sha256": "0ccc6e599511cf7a6449f3179efe1633c0d097f230878b20a26a72d4752c798f",
+  "quality_findings": {
+    "invalid_code": 8,
+    "negative_statement": 296,
+    "out_of_range": 2,
+    "statement_limit_mismatch": 12
+  },
+  "reference": {
+    "categorical": {
+      "EDUCATION": {
+        "1": 7379,
+        "2": 9833,
+        "3": 3440,
+        "4": 348
+      },
+      "PAY_0": {
+        "-1": 3971,
+        "-2": 1933,
+        "0": 10285,
+        "1": 2616,
+        "2": 1887,
+        "3": 213,
+        "4": 51,
+        "5": 13,
+        "6": 10,
+        "7": 8,
+        "8": 13
+      },
+      "PAY_2": {
+        "-1": 4248,
+        "-2": 2652,
+        "0": 10985,
+        "1": 25,
+        "2": 2753,
+        "3": 224,
+        "4": 68,
+        "5": 20,
+        "6": 10,
+        "7": 14,
+        "8": 1
+      },
+      "PAY_3": {
+        "-1": 4140,
+        "-2": 2864,
+        "0": 11038,
+        "1": 3,
+        "2": 2685,
+        "3": 166,
+        "4": 57,
+        "5": 14,
+        "6": 16,
+        "7": 15,
+        "8": 2
+      },
+      "PAY_4": {
+        "-1": 3957,
+        "-2": 3051,
+        "0": 11509,
+        "1": 2,
+        "2": 2242,
+        "3": 131,
+        "4": 50,
+        "5": 24,
+        "6": 2,
+        "7": 31,
+        "8": 1
+      },
+      "PAY_5": {
+        "-1": 3860,
+        "-2": 3210,
+        "0": 11856,
+        "2": 1841,
+        "3": 127,
+        "4": 62,
+        "5": 11,
+        "6": 3,
+        "7": 29,
+        "8": 1
+      },
+      "PAY_6": {
+        "-1": 3998,
+        "-2": 3441,
+        "0": 11379,
+        "2": 1961,
+        "3": 138,
+        "4": 39,
+        "5": 8,
+        "6": 9,
+        "7": 26,
+        "8": 1
+      }
+    },
+    "continuous": {
+      "AGE": [
+        [
+          21.0,
+          22.0,
+          22.0,
+          23.0,
+          23.0,
+          25.0
+        ],
+        [
+          69.0,
+          63.0,
+          60.0,
+          56.0,
+          53.0,
+          49.0
+        ]
+      ],
+      "BILL_AMT1": [
+        [
+          -2650.2500000000005,
+          -363.04499999999996,
+          -78.02999999999997,
+          0.0,
+          0.0,
+          280.0
+        ],
+        [
+          520453.19800000003,
+          411974.960000001,
+          350179.61999999976,
+          261033.02499999895,
+          201176.74999999988,
+          142066.30000000005
+        ]
+      ],
+      "BILL_AMT2": [
+        [
+          -5978.049,
+          -680.0699999999999,
+          -152.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          512657.99300000165,
+          397292.20000000007,
+          336475.0499999987,
+          251121.92499999984,
+          194577.3,
+          136822.90000000005
+        ]
+      ],
+      "BILL_AMT3": [
+        [
+          -5386.352000000001,
+          -900.05,
+          -150.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          494290.4000000001,
+          389695.0450000002,
+          324324.6699999996,
+          243170.34999999971,
+          188188.64999999988,
+          132260.90000000002
+        ]
+      ],
+      "BILL_AMT4": [
+        [
+          -4729.271000000001,
+          -1000.0,
+          -203.01,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          480593.18900000124,
+          361027.3950000007,
+          307358.4699999993,
+          226042.02499999947,
+          174829.09999999995,
+          123123.3
+        ]
+      ],
+      "BILL_AMT5": [
+        [
+          -7941.133,
+          -1220.04,
+          -222.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          463614.16300000064,
+          338992.9750000024,
+          285805.95999999985,
+          210000.17499999885,
+          166861.4,
+          115908.80000000013
+        ]
+      ],
+      "BILL_AMT6": [
+        [
+          -11924.511000000002,
+          -1460.025,
+          -325.0899999999999,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          456264.33200000005,
+          328962.950000001,
+          277433.8999999989,
+          204302.24999999997,
+          162699.49999999994,
+          112281.70000000019
+        ]
+      ],
+      "LIMIT_BAL": [
+        [
+          10000.0,
+          10000.0,
+          10000.0,
+          20000.0,
+          20000.0,
+          30000.0
+        ],
+        [
+          680010.0000000021,
+          550000.0,
+          500000.0,
+          500000.0,
+          440000.0,
+          360000.0
+        ]
+      ],
+      "PAY_AMT1": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          210007.7730000016,
+          100068.00500000041,
+          66480.97999999824,
+          32005.824999999928,
+          18213.05,
+          10233.100000000002
+        ]
+      ],
+      "PAY_AMT2": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          258911.31900000232,
+          120409.4600000005,
+          75724.25999999931,
+          32926.67499999951,
+          19034.149999999998,
+          10443.400000000009
+        ]
+      ],
+      "PAY_AMT3": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          217035.9650000002,
+          107143.51000000091,
+          70000.76999999987,
+          30460.7249999995,
+          18000.0,
+          10000.0
+        ]
+      ],
+      "PAY_AMT4": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          200000.12800000003,
+          100000.0,
+          65356.959999998726,
+          30525.0,
+          16833.599999999962,
+          10000.0
+        ]
+      ],
+      "PAY_AMT5": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          195833.17100000085,
+          100488.59500000053,
+          65756.06999999983,
+          30004.049999999996,
+          16477.949999999986,
+          9601.000000000022
+        ]
+      ],
+      "PAY_AMT6": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          220371.62900000013,
+          126685.29000000007,
+          84363.6699999999,
+          37017.174999999814,
+          17630.549999999977,
+          9516.300000000028
+        ]
+      ]
+    },
+    "train_count": 21000
+  },
+  "review_target_coverage": 0.9,
+  "review_threshold": 8.0,
+  "split": {
+    "index_sha256": {
+      "test": "3dd8b0958bb37064f0901624c2b17a0e6c3af09f52fa1d744f71d7c641c70103",
+      "train": "fa825ff1b8d3f3e11efad788945d7b1ff323d9f79cb2fb6910b73fb15e0e5740",
+      "validation": "a3c66f21ce0d6595e1e4c1560c77808587ec8f46e49a2e507e4fd8c6fdf8c45b"
+    },
+    "seed": 42,
+    "test": 4500,
+    "train": 21000,
+    "validation": 4500
+  }
+}
