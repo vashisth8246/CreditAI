@@ -156,3 +156,16 @@
 @media (min-width: 1040px) {
   .mh-analysis-charts { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+.mh-planner { scroll-margin-top: 1rem; }
+.mh-planner-controls, .mh-planner-edit { display: grid; gap: 8px; }
+.mh-planner-controls { max-width: 42rem; margin: 12px 0; }
+.mh-planner-controls label { display: grid; gap: 4px; }
+.mh-planner-controls select { width: 100%; min-height: 42px; padding: 7px; border: 1px solid #b9d3c7; border-radius: 8px; background: white; color: #183b35; }
+.mh-planner-edit, .mh-planner-result { padding: 12px; border: 1px solid #ccdfd5; border-radius: 10px; background: #f5fbf8; }
+.mh-planner-result h3, .mh-planner-result p { margin: 0 0 8px; }
+.mh-planner-result dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 8px; }
+.mh-planner-result dt { font-size: .86rem; }
+.mh-planner-result dd { margin: 0; font-weight: 750; overflow-wrap: anywhere; }
+.mh-planner-result dd[data-direction="1"] { color: #096348; }
+.mh-planner-result dd[data-direction="-1"] { color: #9a3429; }
+@media (prefers-reduced-motion: no-preference) { .mh-planner-edit { animation: mh-enter .2s ease-out both; } }

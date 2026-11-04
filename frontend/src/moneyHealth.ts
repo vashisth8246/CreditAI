@@ -84,6 +84,14 @@ export function calculate(fields: Field[], entries: Entries) {
   }
 }
 export type Result = ReturnType<typeof calculate>
+export function calculateScenario(fields: Field[], entries: Entries, changes: Entries) {
+  const override = Object.fromEntries(fields.flatMap(({ id }) => changes[id]?.trim() ? [[id, changes[id]]] : []))
+  if (changes.extra?.trim()) {
+    const debt = (parseAmount(override.debt ?? entries.debt) ?? 0) + (parseAmount(changes.extra) ?? 0)
+    override.debt = (debt / 100).toFixed(2)
+  }
+  return calculate(fields, { ...entries, ...override })
+}
 export function timeline(target: number | null, allocated: number, contribution: number) {
   if (target === null) return null
   const remaining = Math.max(0, target - allocated)

@@ -1,8 +1,8 @@
 import MoneyPassport from './MoneyPassport'
 import { loadSaved } from './moneyPassportStorage'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { calculate, charts, example, metrics, money, parseAmount, profiles, scenarioPresets, timeline } from './moneyHealth'
+import { calculate, calculateScenario, charts, example, metrics, money, parseAmount, profiles, scenarioPresets, timeline } from './moneyHealth'
 import type { Entries, Field, Result } from './moneyHealth'
 import { applicationLink, downloadMoneyHealthPdf } from './moneyHealthPdf'
 import { Chart, Dashboard } from './MoneyHealthDashboard'
@@ -19,8 +19,16 @@ export default function MoneyHealth() {
   const [entries, setEntries] = useState<Entries>({})
   const [source, setSource] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
+  const focusPlanner = useRef(false)
   useEffect(() => {
     if (!result) return
+    if (focusPlanner.current) {
+      focusPlanner.current = false
+      const heading = document.getElementById('money-health-planner-heading')
+      heading?.focus({ preventScroll: true })
+      heading?.closest('section')?.scrollIntoView({ block: 'start', behavior: 'instant' })
+      return
+    }
     const heading = document.getElementById('money-health-results')
     heading?.focus({ preventScroll: true })
     heading?.closest('header')?.scrollIntoView({ block: 'start', behavior: 'instant' })
@@ -69,18 +77,28 @@ export default function MoneyHealth() {
     setSource(true)
     if (immediate) run(input)
   }
+  const loadPlannerExample = () => {
+    if (!chosen || profile === null) return
+    if (!source && Object.values(entries).some(value => value.trim()) &&
+        !window.confirm('Replace your current personal entries with the example?')) return
+    const input = example(chosen.fields)
+    const baseline = calculate(chosen.fields, input)
+    const first = scenarioPresets(profile, baseline)[0]
+    clear()
+    setEntries(input)
+    setSource(true)
+    focusPlanner.current = true
+    setResult(baseline)
+    setPreset(first.label)
+    setChanges(first.changes)
+  }
   let scenario = result
   let scenarioError = ''
   let goalRows: [string, number][] = []
   let months: number | null = null
   if (result && chosen) {
     try {
-      const override = Object.fromEntries(chosen.fields.flatMap(({ id }) => changes[id]?.trim() ? [[id, changes[id]]] : []))
-      if (changes.extra?.trim()) {
-        const debt = (parseAmount(override.debt ?? entries.debt) ?? 0) + (parseAmount(changes.extra) ?? 0)
-        override.debt = (debt / 100).toFixed(2)
-      }
-      const modified = calculate(chosen.fields, { ...entries, ...override })
+      const modified = calculateScenario(chosen.fields, entries, changes)
       const target = parseAmount(changes.target)
       const allocated = parseAmount(changes.allocated) ?? 0
       const contribution = parseAmount(changes.contribution) ?? 0
@@ -104,7 +122,32 @@ export default function MoneyHealth() {
   const provenance = source ? 'EXAMPLE INPUT — NOT A REAL VISITOR OR DATASET RECORD' : 'SELF-REPORTED'
   const print = () => window.print()
   const changed = result && scenario ? scenario.register.filter((field, index) => field.amount !== result.register[index].amount) : []
-  const presets = result && profile !== null ? scenarioPresets(profile, result) : []
+  const reducedExpense = changed.length === 1 && changed[0].kind === 'expense' ? changed[0] : undefined
+  const originalExpense = result?.register.find(field => field.id === reducedExpense?.id)?.amount
+  const spendingDraft: ChallengeSuggestion | undefined = reducedExpense?.amount != null && originalExpense != null && reducedExpense.amount < originalExpense
+    ? { kind: 'spending', category: reducedExpense.label, baseline: originalExpense, target: originalExpense - reducedExpense.amount }
+    : undefined
+  const presets = result && profile !== null ? scenarioPresets(profile, result).filter(option => Object.keys(option.changes).length) : []
+  if (result && profile === 2 && entries.low?.trim()) presets.push({ label: 'Use lower-income estimate', changes: { primary: entries.low } })
+  const selectedPreset = presets.find(option => option.label === preset)
+  const selectedField = selectedPreset && Object.keys(selectedPreset.changes)[0]
+  const selectedLabel = selectedField === 'extra' ? 'Additional monthly EMI' : selectedField === 'target' ? 'Savings target' :
+    chosen?.fields.find(field => field.id === selectedField)?.label
+  const baselineValue = selectedField === 'extra' || selectedField === 'target' ? '0' : selectedField ? entries[selectedField] : undefined
+  const proposedValue = selectedField ? changes[selectedField] : undefined
+  const displayAmount = (raw?: string) => {
+    try { const amount = parseAmount(raw); return amount === null ? 'Unavailable' : money(amount) }
+    catch { return 'Invalid amount' }
+  }
+  const editChange = (id: string, value: string) => setChanges(current => ({ ...current, [id]: value }))
+  const renderEmiSlider = () => {
+    let value = 0
+    try { value = (parseAmount(changes.extra) ?? 0) / 100 } catch { /* the scenario shows the validation error */ }
+    return <label>Adjust additional monthly EMI · INR
+      <input type="range" min="0" max={Math.max(50000, value)} step="0.01" value={value}
+        onChange={event => editChange('extra', event.target.value)} />
+    </label>
+  }
   const fieldGroups = [
     { title: 'Money coming in', icon: '↙', matches: (field: Field) => ['funds', 'low'].includes(field.kind) },
     { title: 'Essential spending', icon: '⌂', matches: (field: Field) => field.kind === 'expense' && !isOptionalExpense(field, profile ?? -1) },
@@ -165,6 +208,11 @@ export default function MoneyHealth() {
           {profile === index && <span className="mh-choice-check" aria-hidden="true">✓</span>}
         </button>)}</div>
     </section>
+    {chosen && !result && <section className="mh-panel mh-controls" aria-label="What-If Planner example">
+      <h2>Try the What-If Planner</h2>
+      <p>Use the verified {chosen.name} example to see a before-and-after scenario.</p>
+      <button type="button" className="mh-primary" onClick={loadPlannerExample}>Load Example</button>
+    </section>}
     {chosen && <form className="mh-panel mh-controls" onSubmit={event => { event.preventDefault(); run(entries) }} autoComplete="off">
       <h2>2. Enter your monthly numbers</h2>
       <div className="mh-actions">
@@ -211,19 +259,58 @@ export default function MoneyHealth() {
         {result.register.map(field => <p key={field.id}><strong>{field.label}</strong> · {field.required ? 'Required' : 'Optional'} · INR · {field.amount === null ? 'Unavailable' : field.amount === 0 ? 'Zero' : 'Provided'} · {field.amount === null ? '—' : money(field.amount)} · {source ? (entries[field.id] === String(field.example) ? 'Example' : 'Edited example') : 'Self-reported'}<br />{field.help}</p>)}
       </section>
       <Dashboard result={result} profile={profile ?? 0} provenance={provenance} example={source} />
-      <section className="mh-panel" id="money-health-what-if">
-        <p className="mh-kicker">04 · What-If Planner</p><h2>What if your money situation changes?</h2>
-        <p>Choose an example change or enter your own amount. CreditAI recalculates your monthly finances instantly. These are hypothetical scenarios, not predictions.</p>
-        <div className="mh-choice-grid mh-controls">{presets.map(option =>
-          <button key={option.label} className="mh-choice" aria-pressed={preset === option.label}
-            onClick={() => { setPreset(option.label); setChanges(option.changes) }}>
-            <span className="mh-kicker">Example change</span><strong>{option.label}</strong>
-          </button>)}</div>
-        <div className="mh-actions mh-controls">
-          {preset && <span role="status">Applied: {preset}. The comparison below shows the amounts that changed.</span>}
-          <button onClick={() => { setChanges({}); setPreset('') }}>Reset scenario</button>
+      <section className="mh-panel mh-planner" id="money-health-what-if">
+        <div className="mh-actions mh-controls"><div><p className="mh-kicker">04 · What-If Planner</p><h2 id="money-health-planner-heading" tabIndex={-1}>What if your money situation changes?</h2></div>
+          <button type="button" className="mh-primary" onClick={loadPlannerExample}>Load Example</button>
         </div>
-        <details className="mh-custom mh-controls"><summary>Customize My Scenario</summary>
+        <p>{chosen.name} · {source ? 'Example baseline' : 'Your entered baseline'}. This comparison uses one hypothetical month.</p>
+        <div className="mh-planner-controls mh-controls">
+          <label>1. Choose a scenario
+            <select value={preset} onChange={event => {
+              const next = presets.find(option => option.label === event.target.value)
+              setPreset(next?.label ?? ''); setChanges(next?.changes ?? {})
+            }}>
+              <option value="">Choose a change</option>
+              {['Save More', 'Spend Less', 'Earn More', 'Manage EMI', 'Emergency Planning'].map(group => {
+                const options = presets.filter(option => {
+                  const keys = Object.keys(option.changes)
+                  const category = keys.includes('extra') ? 'Manage EMI' : keys.includes('goal') || (keys.includes('target') && profile !== 2) ? 'Save More' :
+                    keys.includes('target') || /less support|earn 20% less|lower-income/i.test(option.label) ? 'Emergency Planning' :
+                    keys.includes('primary') ? 'Earn More' : 'Spend Less'
+                  return category === group
+                })
+                return options.length > 0 && <optgroup key={group} label={group}>{options.map(option => <option key={option.label}>{option.label}</option>)}</optgroup>
+              })}
+            </select>
+          </label>
+          {selectedField && <div className="mh-planner-edit">
+            <label>2. Adjust {selectedLabel}
+              <input inputMode="decimal" value={proposedValue ?? ''} onChange={event => editChange(selectedField, event.target.value)} />
+            </label>
+            {selectedField === 'extra' && <>{renderEmiSlider()}<small>This payment is added to existing EMI.</small></>}
+            <small>Before {displayAmount(baselineValue)} · After {displayAmount(proposedValue?.trim() ? proposedValue : baselineValue)}{(() => {
+              try {
+                const before = parseAmount(baselineValue)
+                const after = parseAmount(proposedValue?.trim() ? proposedValue : baselineValue)
+                return before === null || after === null ? '' : ' · Change ' + money(after - before)
+              } catch { return '' }
+            })()}</small>
+            {Object.keys(selectedPreset.changes).length > 1 && <small>The other changes in this preset stay in place. Review them under Advanced.</small>}
+          </div>}
+        </div>
+        {scenarioError && <p role="alert">{scenarioError}</p>}
+        {scenario && <div className="mh-planner-result" aria-label="Before and after monthly balance">
+          <h3>3. See the result</h3>
+          <dl><div><dt>Before</dt><dd>{money(result.balance)}</dd></div><div><dt>After</dt><dd>{money(scenario.balance)}</dd></div>
+            <div><dt>Monthly change</dt><dd data-direction={Math.sign(scenario.balance - result.balance)}>{money(scenario.balance - result.balance)}</dd></div></dl>
+          <p>{scenario.balance === result.balance ? scenario.goal !== result.goal ? 'Your savings target changed. Your monthly balance stays the same.' : 'Your monthly balance stays the same.' :
+            `This leaves ${money(Math.abs(scenario.balance - result.balance))} ${scenario.balance > result.balance ? 'more' : 'less'} each month, assuming everything else stays the same.`}</p>
+          <small>{metrics(scenario).filter(([label]) => ['Expense ratio', 'Savings goal', 'Savings coverage'].includes(label)).map(([label, value]) => label + ': ' + value).join(' · ')}</small>
+        </div>}
+        <div className="mh-actions mh-controls"><button type="button" onClick={() => { setChanges({}); setPreset('') }}>Reset Scenario</button>
+          {spendingDraft && <button type="button" onClick={() => openChallenge(spendingDraft)}>Review a Money Challenge draft</button>}
+        </div>
+        <details className="mh-custom mh-controls"><summary>Advanced — Change Multiple Values</summary>
           <p className="mh-hint">Enter replacement amounts in INR. Leave a field blank to keep the original. Enter ₹0 to remove that amount from the scenario.</p>
         <div className="mh-grid mh-controls">
           {chosen.fields.filter(f => ['funds', 'expense', 'goal'].includes(f.kind)).map(field => <label key={field.id}>
@@ -235,16 +322,11 @@ export default function MoneyHealth() {
             <input inputMode="decimal" value={changes[id] ?? ''} onChange={event => { setPreset(''); setChanges({ ...changes, [id]: event.target.value }) }} />
             <small>{id === 'extra' ? 'Additional monthly loan payment, on top of existing payments.' : id === 'target' ? 'Total you want to have available for this goal.' : id === 'allocated' ? 'Existing accessible savings you choose to set aside for this goal.' : 'Amount you plan to add each month toward this goal.'}</small>
           </label>)}
-          {profile === 1 && <label>Adjust additional monthly EMI · INR
-            <input type="range" min="0" max="50000" step="100"
-              value={/^\d{1,10}(\.\d{1,2})?$/.test(changes.extra ?? '') ? Math.min(50000, Number(changes.extra)) : 0}
-              onChange={event => { setPreset(''); setChanges({ ...changes, extra: event.target.value }) }} />
-          </label>}
+          {profile === 1 && selectedField !== 'extra' && renderEmiSlider()}
           {profile === 2 && entries.low?.trim() && <button onClick={() => { setPreset(''); setChanges({ ...changes, primary: entries.low }) }}>Use lower-income estimate</button>}
 
         </div>
         </details>
-        {scenarioError && <p role="alert">{scenarioError}</p>}
         {scenario && hasScenario && <>
           <h3>Changed assumptions</h3>
           {changed.length ? <ul>{changed.map(field => {
@@ -252,9 +334,8 @@ export default function MoneyHealth() {
             return <li key={field.id}>{field.label} changed from {before === null ? 'unavailable' : money(before)} to {field.amount === null ? 'unavailable' : money(field.amount)}.</li>
           })}</ul> : <p>Baseline monthly inputs are currently used.</p>}
           <p>Balance changes by {money(scenario.balance - result.balance)} because funds change by {money(scenario.funds - result.funds)}, spending by {money(scenario.expenses - result.expenses)} and debt by {money(scenario.debt - result.debt)}.</p>
-          <div className="mh-comparison" key={JSON.stringify(changes)}>{metrics(scenario).map(([label, value], index) => <p className="mh-compare-card" key={label}>
-            <strong>{label}</strong><span>Baseline {metrics(result)[index][1]}</span><b>Scenario {value}</b>
-          </p>)}</div>
+          <div className="mh-report-only">{metrics(scenario).map(([label, value], index) =>
+            <p key={label}>{label} · Baseline {metrics(result)[index][1]} · Scenario {value}</p>)}</div>
           <Chart {...charts(result, scenario)[3]} insight={`Monthly balance changes by ${money(scenario.balance - result.balance)}.`} />
           {goalRows.length > 0 && <>
             <Chart title={profile === 2 ? "Low-income reserve goal" : "Purchase savings goal"} rows={goalRows} />
