@@ -70,3 +70,22 @@
   }
   .monthly-remove { transition: background-color 120ms ease; }
 }
+.history-insights { font-size: 12px; color: #23434a; }
+.history-insights p { margin: 5px 0 9px; }
+.history-stats, .history-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 9px 0; }
+.history-chart-grid { align-items: start; }
+.history-stats > div, .history-chart-grid > section { min-width: 0; border: 1px solid #d8e6e2; border-radius: 8px; padding: 8px; background: #f6faf8; }
+.history-stats dd { margin: 4px 0 0; font-weight: 750; overflow-wrap: anywhere; }
+.history-progress { display: grid; gap: 4px; }
+.history-progress progress { width: 100%; accent-color: #14836a; }
+.history-insights h5 { margin: 8px 0 4px; font-size: 13px; }
+.history-chart, .history-timeline { list-style: none; padding: 0; margin: 5px 0 10px; max-height: 25rem; overflow: auto; }
+.history-chart li, .history-timeline li { padding: 4px 0; border-bottom: 1px solid #d8e6e2; }
+.history-axis { position: relative; height: 6px; margin: 3px 0; background: linear-gradient(90deg, #e1ebe7 49.5%, #68827b 49.5% 50.5%, #e1ebe7 50.5%); }
+.history-axis i { position: absolute; height: 100%; background: #244c65; }
+.history-axis .history-paid, .history-ratio i { background: #14836a; }
+.history-ratio { background: #e1ebe7; }
+@media (max-width: 600px) { .history-chart-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: no-preference) { .history-chart-grid { animation: creditai-panel-in 160ms ease-out both; } }
+.prediction-layout.prediction-layout-inr { grid-template-columns: minmax(0, 1fr); }
+.monthly-actions button[aria-pressed=true] { background: #e0f4eb; color: #155847; border-color: #76bca6; }

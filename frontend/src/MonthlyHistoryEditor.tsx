@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { historyFields, historyLimits, monthIndex, periodAt, type MonthlyRecord, type inspectHistory } from './monthlyHistory'
+import { currentMonth, historyFields, limitsFor, monthIndex, periodAt, repaymentKeys, repaymentLabel, type HistoryCurrency, type MonthlyRecord, type inspectHistory } from './monthlyHistory'
 import './monthlyHistory.css'
 
-const labels = { status: 'Repayment status', bill: 'Bill amount (NT$)', paid: 'Amount paid (NT$)' }
-const statuses = ['No consumption', 'Paid duly', 'Revolving credit']
-const describe = (code: number) => statuses[code + 2] ?? (code + (code === 1 ? ' month late' : ' months late'))
 const hasData = ({ status, bill, paid }: MonthlyRecord) => Boolean(status || bill || paid)
 
-export function MonthlyHistoryEditor({ records, review, onChange, loadExample }: {
+export function MonthlyHistoryEditor({ records, review, onChange, loadExample, currency }: {
+  currency: HistoryCurrency
   records: MonthlyRecord[]
   review: ReturnType<typeof inspectHistory>
   onChange: (records: MonthlyRecord[]) => void
@@ -17,6 +15,9 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
   const addButton = useRef<HTMLButtonElement>(null)
   const confirmButton = useRef<HTMLButtonElement>(null)
   const [confirm, setConfirm] = useState<number | 'all' | 'example' | null>(null)
+  const unit = currency === 'INR' ? '₹' : 'TWD'
+  const labels = { status: 'Repayment status', bill: 'Statement Balance (' + unit + ')', paid: 'Amount Paid (' + unit + ')' }
+  const limits = limitsFor(currency)
   useEffect(() => {
     if (confirm !== null) confirmButton.current?.focus()
   }, [confirm])
@@ -42,16 +43,18 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
   </div>
   return <section className="feature-section monthly-history" aria-labelledby="monthly-history-heading">
     <h4 className="feature-section-title" id="monthly-history-heading">2. Monthly credit history</h4>
+    <p className="monthly-help">The model was trained on April–September 2005 Taiwan credit-card records. Newer dates are accepted for research demonstrations, but this model has not been validated on recent borrowers.</p>
+    <p className="monthly-help">Research inference requires six consecutive complete months because the model has a separate input for each month’s status, balance and payment.</p>
     <div className="monthly-readiness" role="status">
       <strong>{records.length} entered · {review.complete} complete · {review.window.length ? review.missing.length : 6} missing periods</strong>
-      <p>{review.ready ? 'Ready for research inference.' : records.length < 6 ? 'Insufficient history. Add six complete consecutive months to run a prediction.' : 'History requires review. Complete the latest six consecutive months and resolve invalid or duplicated reporting periods.'}</p>
+      <p>{review.needed ? `${review.needed} more complete ${review.needed === 1 ? 'month is' : 'months are'} needed in the latest six-month window. Add missing periods or complete the existing rows.` : review.ready ? currency === 'TWD' ? 'Ready for Taiwan research inference.' : 'Six consecutive months complete. INR history is available for descriptive analysis.' : 'Correct invalid or duplicate reporting periods.'}</p>
       {!!review.missing.length && <p>Missing periods: {review.missing.join(', ')}.</p>}
-      {review.ready && <p>Research window: {review.window.at(-1)} through {review.window[0]}.{records.length > 6 ? ' Older records remain visible for context and are excluded from inference.' : ''}</p>}
+      {review.ready && <p>{currency === 'TWD' ? 'Selected research window' : 'Latest six-month window'}: {review.window.at(-1)} through {review.window[0]}.{records.length > 6 ? ' Older records are included in descriptive analytics only.' : ''}</p>}
     </div>
     <div className="monthly-actions">
       <button ref={addButton} type="button" className="button-secondary" disabled={records.length >= 120} onClick={() => {
         const indexes = records.flatMap(record => { const index = monthIndex(record.period); return index === null ? [] : [index] })
-        const previous = indexes.length ? Math.min(...indexes) - 1 : 2005 * 12 + 8
+        const previous = indexes.length ? Math.min(...indexes) - 1 : monthIndex(currentMonth())!
         const id = nextId.current++
         onChange([...records, { id, period: previous >= 12 ? periodAt(previous) : '', status: '', bill: '', paid: '' }])
         setConfirm(null)
@@ -60,17 +63,20 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
       <button type="button" className="button-secondary" onClick={() => {
         if (records.some(hasData)) setConfirm('example')
         else loadExample()
-      }}>Load 6-Month Research Example</button>
+      }}>{currency === 'TWD' ? 'Load 6-Month Research Example' : 'Load INR Example'}</button>
       <button type="button" className="button-quiet" disabled={!records.length} onClick={() => setConfirm('all')}>Clear History</button>
     </div>
     <details className="monthly-help">
       <summary>Repayment codes and research window</summary>
       <p>−2: No consumption · −1: Paid duly · 0: Revolving credit · 1–9: Months late.</p>
-      <p>Use whole NT$ amounts. Negative bills can represent a credit balance. The latest six consecutive months map onto the September–April 2005 model positions for research only.</p>
+      <p>{currency === 'TWD' ? 'Enter whole TWD amounts.' : 'Rupee amounts accept up to two decimal places.'} Negative balances can represent a credit balance.</p>
+      {currency === 'TWD' && review.ready && <p>Model positions, newest first: {review.window.map((period, index) =>
+        period + ' → ' + repaymentKeys[index] + ', BILL_AMT' + (index + 1) + ', PAY_AMT' + (index + 1)
+      ).join(' · ')}.</p>}
     </details>
     {typeof confirm !== 'number' && confirmation}
     {records.length > 0 && <div className="monthly-columns" aria-hidden="true">
-      <span>Month</span><span>Repayment status</span><span>Bill (NT$)</span><span>Paid (NT$)</span><span>Remove</span>
+      <span>Month</span><span>Repayment status</span><span>{labels.bill}</span><span>{labels.paid}</span><span>Remove</span>
     </div>}
     {review.entries.map(({ record, errors }, index) => {
       const update = (field: 'period' | typeof historyFields[number], value: string) =>
@@ -81,15 +87,15 @@ export function MonthlyHistoryEditor({ records, review, onChange, loadExample }:
       })
       return <div className="monthly-record" role="group" aria-label={'Monthly record ' + (index + 1)} key={record.id}>
         <label><span className="monthly-field-label">Reporting month</span>
-          <input className="form-control" id={inputId('period')} type="month" value={record.period} onChange={event => update('period', event.target.value)} {...invalidProps('period')} />
+          <input className="form-control" id={inputId('period')} type="month" min="0001-01" max={currentMonth()} value={record.period} onChange={event => update('period', event.target.value)} {...invalidProps('period')} />
           {errors.period && <small id={inputId('period') + '-error'}>{errors.period}</small>}
         </label>
         {historyFields.map(field => <label key={field}><span className="monthly-field-label">{labels[field]}</span>
           {field === 'status' ? <select className="form-control" value={record.status} onChange={event => update(field, event.target.value)} {...invalidProps(field)}>
             <option value="">Select status</option>
             {errors.status && record.status && <option value={record.status}>Invalid code ({record.status})</option>}
-            {Array.from({ length: 12 }, (_, code) => code - 2).map(code => <option key={code} value={code}>{code} · {describe(code)}</option>)}
-          </select> : <input className="form-control" type="number" step={1} min={historyLimits[field][0]} max={historyLimits[field][1]} value={record[field]} onChange={event => update(field, event.target.value)} {...invalidProps(field)} />}
+            {Array.from({ length: 12 }, (_, code) => code - 2).map(code => <option key={code} value={code}>{code} · {repaymentLabel(code)}</option>)}
+          </select> : <input className="form-control" type="number" step={currency === 'INR' ? '0.01' : '1'} min={limits[field][0]} max={limits[field][1]} value={record[field]} onChange={event => update(field, event.target.value)} {...invalidProps(field)} />}
           {errors[field] && <small id={inputId(field) + '-error'}>{errors[field]}</small>}
         </label>)}
         <button id={'month-remove-' + record.id} type="button" className="monthly-remove" title={'Remove month ' + (record.period || index + 1)} aria-label={'Remove month ' + (record.period || index + 1)} onClick={() => {

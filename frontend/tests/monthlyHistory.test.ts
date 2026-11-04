@@ -42,5 +42,5 @@ test('twelve months select only the latest window across a year boundary', () =>
 test('duplicate months and invalid fields block model submission', () => {
   const review = inspectHistory([...sample.slice(0, 5), { ...sample[0], id: 7, status: '99', bill: '-335001', paid: '-1' }])
   assert.equal(review.ready, false)
-  assert.deepEqual(Object.keys(review.entries[5].errors), ['period', 'status', 'bill', 'paid'])
+  assert.deepEqual(Object.keys(review.entries.find(entry => entry.record.id === 7)!.errors), ['period', 'status', 'bill', 'paid'])
 })
