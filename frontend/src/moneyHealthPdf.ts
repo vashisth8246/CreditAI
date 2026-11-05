@@ -59,7 +59,7 @@ export function reportDefinition(report: Report): TDocumentDefinitions {
   const revised = metrics(scenario)
   const metricBlocks = baseline.map(([label, value, formula, meaning]): Content => ({
     unbreakable: true, margin: [0, 0, 0, 7],
-    stack: [{ text: `${label}  /  ${value}`, bold: true }, `Calculation: ${formula} → ${value}`, meaning],
+    stack: [{ text: `${label}  /  ${value}`, bold: true }, `Calculation: ${formula} = ${value}`, meaning],
   }))
   const link = applicationLink(report.origin)
   const section = (text: string): Content => ({ text, style: 'heading', headlineLevel: 1 })
@@ -126,7 +126,7 @@ export function reportDefinition(report: Report): TDocumentDefinitions {
       ...report.scenarioNotes.map(note => detail('Assumption', note)),
       detail('Balance difference', `${money(scenario.balance - result.balance)} = funds change ${money(scenario.funds - result.funds)} − spending change ${money(scenario.expenses - result.expenses)} − debt change ${money(scenario.debt - result.debt)}.`),
       { columns: [revised.slice(0, 5), revised.slice(5)].map((group, column) => ({
-        stack: group.map(([label, value], index) => detail(label, `Baseline ${baseline[column * 5 + index][1]} → Scenario ${value}`)),
+        stack: group.map(([label, value], index) => detail(label, `Baseline ${baseline[column * 5 + index][1]} / Scenario ${value}`)),
       })), columnGap: 20 },
 
       chartBlock(charts(result, scenario)[3]),

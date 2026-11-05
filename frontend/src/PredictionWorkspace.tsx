@@ -763,6 +763,7 @@ function PredictionResult({
   const increasing = contributions.filter((item) => contributionDirection(item.direction) === 'increases_risk')
   const decreasing = contributions.filter((item) => contributionDirection(item.direction) === 'decreases_risk')
   const unknown = contributions.filter((item) => contributionDirection(item.direction) === 'unknown')
+  const contributionExtent = Math.max(0, ...contributions.map(item => Math.abs(item.contribution)))
   const currencyContext = result.geography.toLowerCase() === 'taiwan' ? 'Taiwan dataset values (NT$; original dataset units)' : `${result.geography} dataset units`
   const featureLabel = (name: string) => ({
     PAY_0: 'Most recent repayment status (September 2005)',
@@ -780,6 +781,9 @@ function PredictionResult({
       <div><strong>{featureLabel(item.feature)}</strong><code>{item.feature}</code></div>
       <span>{submitted !== undefined ? `Submitted value: ${submitted}${/^(LIMIT_BAL|BILL_AMT\d|PAY_AMT\d)$/.test(item.feature) ? ` · ${currencyContext}` : ''}` : 'Engineered signal derived from submitted fields'}</span>
       <b>{item.contribution.toFixed(4)} model-output units</b>
+      {contributionExtent > 0 && <div className="creditai-driver-track" aria-hidden="true">
+        <i className={contributionDirection(item.direction)} style={{ width: `${Math.abs(item.contribution) / contributionExtent * 100}%` }} />
+      </div>}
     </div>
   })
 
@@ -814,6 +818,7 @@ function PredictionResult({
             className={`gauge-fill ${riskClass}`}
             style={{ width: `${pct}%` }}
           />
+          <span className="creditai-threshold" aria-hidden="true" style={{ left: `${threshold * 100}%` }} />
         </div>
         <div className="gauge-legend">
           <span>0%</span>

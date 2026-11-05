@@ -1,0 +1,34 @@
+:root {
+  --creditai-accent: #14684a;
+  --creditai-ink: #18323b;
+  --creditai-border: #cbded6;
+  --creditai-chart-track: #e2eee8;
+  --creditai-motion: 180ms ease-out;
+}
+.shell .nav-item[aria-current="page"] { box-shadow: inset 3px 0 #69c2a5; }
+.shell .nav-item:hover, .shell .nav-item:focus-visible { background-color: #214b4d; }
+.shell :is(.panel, .mh-panel, .dp-grid article) { border-color: var(--creditai-border); }
+.shell :is(.chart-footnote, .gauge-legend, .attribution-caption) { color: #435f66; line-height: 1.5; }
+.shell .axis-label { fill: #435f66; }
+.shell .probability-track { position: relative; }
+.creditai-threshold { position: absolute; inset-block: 0; width: 2px; background: #172f39; transform: translateX(-50%); }
+.evidence-driver > .creditai-driver-track { grid-column: 1 / -1; display: block; height: 5px; background: var(--creditai-chart-track); border-radius: 4px; overflow: hidden; }
+.creditai-driver-track i { display: block; height: 100%; background: var(--creditai-accent); }
+.creditai-driver-track i.increases_risk { background: #9a4035; }
+.dp meter { accent-color: var(--creditai-accent); }
+.dp meter::-webkit-meter-optimum-value { background: var(--creditai-accent); }
+.commerce-stage[aria-current="step"] { outline: 1px solid #70a890; outline-offset: -1px; }
+.mh-planner-result dl { color: var(--creditai-ink); }
+.mh-chart .mh-bar:hover { background: #f2f8f5; }
+@media (prefers-reduced-motion: no-preference) {
+  .shell :is(.nav-item, .button-primary, .button-secondary, .mh-primary) { transition: background-color var(--creditai-motion), border-color var(--creditai-motion), color var(--creditai-motion); }
+  .shell :is(.prediction-output, .batch-chart, .guardian-panel, .dp [aria-label="Stability results"], .mh-chart) { animation: creditai-reveal var(--creditai-motion) both; }
+  .shell :is(.gauge-fill, .batch-risk-fill) { transition: width var(--creditai-motion); }
+  .mh-ring-value { transition: stroke-dasharray var(--creditai-motion); }
+  .mh-chart .creditai-chart-value { transition: width var(--creditai-motion), x var(--creditai-motion); }
+}
+@keyframes creditai-reveal { from { opacity: .82; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) {
+  .batch-upload-panel .panel-heading { flex-wrap: wrap; }
+  .batch-upload-panel .panel-heading > div { min-width: 0; }
+}

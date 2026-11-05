@@ -16,7 +16,6 @@ export function RiskDistributionChart({ summary }: { summary: BatchSummary }) {
     { label: 'Medium', hint: '25% to <50%', count: summary.mediumRisk, className: 'medium' },
     { label: 'High', hint: '>=50%', count: summary.highRisk, className: 'high' },
   ]
-  const max = Math.max(1, ...rows.map((row) => row.count))
   return (
     <section className="panel batch-chart" aria-labelledby="batch-risk-chart-title">
       <div className="panel-heading">
@@ -39,7 +38,7 @@ export function RiskDistributionChart({ summary }: { summary: BatchSummary }) {
               <div className="batch-risk-track" title={`${row.label}: ${row.count} of ${summary.succeeded} scored rows`}>
                 <i
                   className={`batch-risk-fill ${row.className}`}
-                  style={{ width: `${(row.count / max) * 100}%` }}
+                  style={{ width: `${(row.count / summary.succeeded) * 100}%` }}
                 />
               </div>
               <small>
@@ -76,12 +75,12 @@ export function ProbabilityHistogram({ summary }: { summary: BatchSummary }) {
                 className="hist-column"
                 key={bin.label}
                 tabIndex={0}
-                title={`${bin.label}: ${bin.count} of ${total} scored borrowers`}
+                aria-label={`${bin.label}: ${bin.count} of ${total} scored rows`}
               >
                 <span className="hist-count">{bin.count}</span>
                 <div
                   className="hist-bar"
-                  style={{ height: `${Math.max(bin.count ? 6 : 2, (bin.count / max) * 150)}px`, opacity: bin.count ? 1 : 0.35 }}
+                  style={{ height: `${(bin.count / max) * 150}px` }}
                 />
                 <span className="hist-label">{bin.label}</span>
                 <span className="chart-tooltip">{bin.count} borrowers ({total ? ((bin.count / total) * 100).toFixed(1) : '0.0'}%)</span>

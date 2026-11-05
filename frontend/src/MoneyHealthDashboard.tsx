@@ -8,11 +8,11 @@ export function Chart({ title, rows, insight }: { title: string; rows: [string, 
   return <figure className="mh-chart">
     <figcaption>{title} · INR</figcaption>
     {rows.length === 0 && <p>No categories provided.</p>}
-    {rows.map(([label, amount]) => <div key={label} className="mh-bar">
+    {rows.map(([label, amount]) => <div key={label} className="mh-bar" title={label + ' · ' + money(amount)}>
       <div><span>{label}</span><strong>{money(amount)}</strong></div>
       <svg aria-hidden="true" viewBox={signed ? '-100 0 200 8' : '0 0 100 8'} preserveAspectRatio="none">
         <rect x={signed ? -100 : 0} width={signed ? 200 : 100} height="8" fill="#e5eee8" />
-        <rect x={amount < 0 ? amount / extent * 100 : 0} width={Math.abs(amount) / extent * 100} height="8" fill={amount < 0 ? '#a53939' : '#18704e'} />
+        <rect className="creditai-chart-value" x={amount < 0 ? amount / extent * 100 : 0} width={Math.abs(amount) / extent * 100} height="8" fill={amount < 0 ? '#a53939' : '#18704e'} />
         <path d="M0 0 V8" stroke="#283b32" strokeWidth=".4" />
       </svg>
     </div>)}

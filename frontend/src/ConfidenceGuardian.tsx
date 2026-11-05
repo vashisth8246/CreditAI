@@ -45,6 +45,12 @@ export function GuardianLab() {
   const baseline = rows[0]
   const gated = rows.filter(row => row.name === 'Quality + distribution')
   const selected = gated.find(row => row.target_coverage === .90)
+  const plotted = gated.flatMap(row => row.error_rate === null ? [] : [{ coverage: row.coverage, error: row.error_rate }])
+    .sort((a, b) => a.coverage - b.coverage)
+  const xMin = Math.min(.65, ...plotted.map(row => row.coverage))
+  const yMax = Math.max(.3, baseline?.error_rate ?? 0, ...plotted.map(row => row.error))
+  const x = (coverage: number) => 50 + (coverage - xMin) / (1 - xMin) * 370
+  const y = (error: number) => 150 - error / yMax * 132
   return <section className="panel guardian-lab" aria-label="Guardian evaluation">
     <p className="eyebrow">HELD-OUT RESEARCH · SELECTIVE PREDICTION</p>
     <h2>Confidence Guardian Evaluation</h2>
@@ -57,11 +63,11 @@ export function GuardianLab() {
         <figcaption>Held-out coverage versus retained classification error</figcaption>
         <svg viewBox="0 0 440 185" role="img" aria-label="Coverage versus error for the distribution gate, compared with the ungated baseline. Exact values appear below.">
           <path d="M50 15 V150 H420" fill="none" stroke="#69847a"/>
-          {[0, .1, .2, .3].map(n => <g key={n}><text x="2" y={154-n*440} fontSize="11">{Math.round(n*100)}%</text><path d={`M50 ${150-n*440} H420`} stroke="#dbe9e1"/></g>)}
-          {[.7,.8,.9,1].map(n => <text key={n} x={50+(n-.65)*1000} y="170" fontSize="11" textAnchor="middle">{Math.round(n*100)}%</text>)}
-          {baseline.error_rate !== null && <path d={`M50 ${150-baseline.error_rate*440} H420`} stroke="#986049" strokeDasharray="5 4"/>}
-          <polyline points={[...gated].reverse().map(row => `${50+(row.coverage-.65)*1000},${150-(row.error_rate ?? 0)*440}`).join(' ')} fill="none" stroke="#14684a" strokeWidth="2"/>
-          {gated.map(row => <circle key={row.target_coverage} cx={50+(row.coverage-.65)*1000} cy={150-(row.error_rate ?? 0)*440} r="4" fill="#14684a"/>)}
+          {[0, 1, 2, 3].map(i => yMax * i / 3).map(n => <g key={n}><text x="2" y={y(n)+4} fontSize="11">{percentage(n)}</text><path d={`M50 ${y(n)} H420`} stroke="#dbe9e1"/></g>)}
+          {[.7,.8,.9,1].map(n => <text key={n} x={x(n)} y="170" fontSize="11" textAnchor="middle">{Math.round(n*100)}%</text>)}
+          {baseline.error_rate !== null && <path d={`M50 ${y(baseline.error_rate)} H420`} stroke="#986049" strokeDasharray="5 4"/>}
+          {plotted.length > 1 && <polyline points={plotted.map(row => `${x(row.coverage)},${y(row.error)}`).join(' ')} fill="none" stroke="#14684a" strokeWidth="2"/>}
+          {plotted.map((row, index) => <circle key={index} cx={x(row.coverage)} cy={y(row.error)} r="4" fill="#14684a"><title>{percentage(row.coverage)} coverage · {percentage(row.error)} retained error</title></circle>)}
         </svg>
         <small>Horizontal: actual test coverage. Vertical: classification error among retained cases. Dashed line: all-row error.</small>
       </figure>

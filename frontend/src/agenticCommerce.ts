@@ -319,7 +319,7 @@ export function AgenticCommercePage() {
         const status = stageStates[index]
         const complete = status.startsWith('Complete')
         const current = status.startsWith('Current') || (index === 0 && !session && step === 'purchase')
-        return h('li', { key: stage, className: `commerce-stage ${complete ? 'is-complete' : current ? 'is-current' : 'is-future'}` },
+        return h('li', { key: stage, 'aria-current': current ? 'step' : undefined, className: `commerce-stage ${complete ? 'is-complete' : current ? 'is-current' : 'is-future'}` },
           h('span', { className: 'commerce-stage-number', 'aria-hidden': 'true' }, String(index + 1).padStart(2, '0')),
           h('span', { className: 'commerce-stage-name' }, stage), h('span', { className: 'commerce-stage-status' }, status))
       }),
